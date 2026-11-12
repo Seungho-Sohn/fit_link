@@ -20,7 +20,7 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   String view = 'feed';
-  static const tabs = [['feed', '피드'], ['chal', '챌린지'], ['group', '그룹'], ['rank', '랭킹']];
+  static const tabs = [(id: 'feed', label: '피드'), (id: 'chal', label: '챌린지'), (id: 'group', label: '그룹'), (id: 'rank', label: '랭킹')];
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +41,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
         child: Row(children: [
           for (final t in tabs)
             GestureDetector(
-              onTap: () => setState(() => view = t[0]),
+              onTap: () => setState(() => view = t.id),
               child: Container(
                 margin: const EdgeInsets.only(right: 22),
                 padding: const EdgeInsets.symmetric(vertical: 11),
-                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: view == t[0] ? C.gold : Colors.transparent, width: 1.5))),
-                child: Text(t[1], style: F.inter(size: 12, color: view == t[0] ? C.goldBright : C.textFaint, ls: .03)),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: view == t.id ? C.gold : Colors.transparent, width: 1.5))),
+                child: Text(t.label, style: F.inter(size: 12, color: view == t.id ? C.goldBright : C.textFaint, ls: .03)),
               ),
             ),
         ]),
@@ -363,7 +363,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         for (final r in rankList)
           Divided(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            child: _rankRow(r[0], r[1].substring(0, 1), r[1], r[2], r[3], gold: r[4] == 'top1'),
+            child: _rankRow(r.rank, r.name.substring(0, 1), r.name, r.meta, r.score, gold: r.top),
           ),
       ];
 

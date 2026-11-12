@@ -436,9 +436,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _routineCard() {
     const ex = [
-      ['1', '랫풀다운', 'Hammer Strength · 4세트 × 12', '중강도'],
-      ['2', '시티드 로우', 'Plate-Loaded · 4세트 × 10', '고강도'],
-      ['3', '풀오버', '덤벨 · 3세트 × 15', '저강도'],
+      (no: '1', name: '랫풀다운', detail: 'Hammer Strength · 4세트 × 12', intensity: '중강도'),
+      (no: '2', name: '시티드 로우', detail: 'Plate-Loaded · 4세트 × 10', intensity: '고강도'),
+      (no: '3', name: '풀오버', detail: '덤벨 · 3세트 × 15', intensity: '저강도'),
     ];
     return Container(
       margin: const EdgeInsets.only(top: 20),
@@ -461,16 +461,16 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(border: e == ex.last ? null : const Border(bottom: BorderSide(color: C.hairlineSoft))),
             child: Row(children: [
-              SizedBox(width: 20, child: Text(e[0], style: F.serif(size: 14, color: C.goldDim))),
+              SizedBox(width: 20, child: Text(e.no, style: F.serif(size: 14, color: C.gold))),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(e[1], style: F.inter(size: 12.5)),
+                  Text(e.name, style: F.inter(size: 12.5)),
                   const SizedBox(height: 2),
-                  Text(e[2], style: F.inter(size: 9.5, color: C.textFaint, w: FontWeight.w300)),
+                  Text(e.detail, style: F.inter(size: 9.5, color: C.textFaint, w: FontWeight.w300)),
                 ]),
               ),
-              Tag(e[3], color: C.goldBright, size: 9),
+              Tag(e.intensity, color: C.goldBright, size: 9),
             ]),
           ),
       ]),

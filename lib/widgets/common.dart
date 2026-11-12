@@ -458,11 +458,11 @@ class _BodyPainter extends CustomPainter {
         ..strokeWidth = 1.1
         ..style = PaintingStyle.stroke;
       for (final l in const [
-        [28.0, 40.0, 36.0],
-        [27.0, 50.0, 37.0],
-        [29.0, 60.0, 35.0]
+        (x1: 28.0, y: 40.0, x2: 36.0),
+        (x1: 27.0, y: 50.0, x2: 37.0),
+        (x1: 29.0, y: 60.0, x2: 35.0),
       ]) {
-        canvas.drawLine(Offset(l[0] * sx, l[1] * sy), Offset(l[2] * sx, l[1] * sy), line);
+        canvas.drawLine(Offset(l.x1 * sx, l.y * sy), Offset(l.x2 * sx, l.y * sy), line);
       }
     }
   }

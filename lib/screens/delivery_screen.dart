@@ -18,7 +18,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   bool favView = false;
   int delivMode = 0, payMode = 0;
 
-  static const sorts = [['reco', '추천순'], ['rating', '별점순'], ['dist', '거리순'], ['tip', '배달비순'], ['time', '빠른배달순']];
+  static const sorts = [(key: 'reco', label: '추천순'), (key: 'rating', label: '별점순'), (key: 'dist', label: '거리순'), (key: 'tip', label: '배달비순'), (key: 'time', label: '빠른배달순')];
 
   @override
   void dispose() {
@@ -94,7 +94,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           searchBar(search, '매장 · 메뉴 검색 (예: 닭가슴살)', () => setState(() {})),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(children: [for (final s in sorts) SelChip(s[1], on: sort == s[0], onTap: () => setState(() => sort = s[0]))]),
+            child: Row(children: [for (final s in sorts) SelChip(s.label, on: sort == s.key, onTap: () => setState(() => sort = s.key))]),
           ),
           const SizedBox(height: 14),
           Box(
