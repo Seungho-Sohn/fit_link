@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
+import '../services/location.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -277,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ]),
               const SizedBox(height: 4),
-              Text('${g.dist} · ${g.area}평', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
+              Text('${distanceLabel(gangnamStation, g.pos)} · ${g.area}평', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
               if (pick) Padding(padding: const EdgeInsets.only(top: 7), child: Text(reason, style: F.inter(size: 10, color: C.goldBright))),
             ]),
           ),

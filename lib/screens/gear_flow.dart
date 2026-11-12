@@ -1,21 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../data/mock_data.dart';
+import '../services/location.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/gym_map.dart';
+
+/// 기구 매칭 결과 (목업): 헬스장 · 매칭 점수 · 평점 · 태그 · 운영 시간
+const _matches = [
+  (gym: '스틸핏 강남점', score: 98, rating: 4.8, tag1: 'Hammer Strength 동일모델', tag2: 'PT 가능', has: true, hours: '06:00–24:00'),
+  (gym: '코어짐24 역삼', score: 91, rating: 4.6, tag1: 'Hammer Strength 동일라인', tag2: '24시간', has: true, hours: '24시간'),
+  (gym: '바디스퀘어 논현', score: 42, rating: 4.4, tag1: '타사 브랜드 대체품', tag2: '주차가능', has: false, hours: '06:00–23:00'),
+];
+
+typedef _Match = ({String gym, int score, double rating, String tag1, String tag2, bool has, String hours});
+
+const _filters = ['브랜드 일치만', '거리순', '평점순', '24시간'];
 
 /// 시그니처 기능: 기구 사진 → AI 브랜드·모델 인식 → 동일 기구 보유 헬스장 매칭 (6단계)
 class GearFlow extends StatefulWidget {
-  const GearFlow({super.key});
+  /// 테스트에서 주입: 위치 조회, 지도 타일 표시 여부
+  final Future<MyLocation> Function() locate;
+  final bool mapTiles;
+  const GearFlow({super.key, this.locate = currentLocation, this.mapTiles = true});
   @override
   State<GearFlow> createState() => _GearFlowState();
 }
 
 class _GearFlowState extends State<GearFlow> {
   int step = 1;
-  int filter = 0;
+  int filter = 1; // 거리순: 처음엔 모든 헬스장을 가까운 순으로
+  MyLocation? loc;
+  String selected = _matches.first.gym;
   AppState get s => AppState.I;
 
-  void go(int n) => setState(() => step = n);
+  LatLng get here => loc?.pos ?? gangnamStation;
+  Gym gymOf(_Match m) => gymByName(m.gym);
+  _Match get sel => _matches.firstWhere((m) => m.gym == selected);
+
+  void go(int n) {
+    setState(() => step = n);
+    if (n >= 4 && loc == null) _locate();
+  }
+
+  Future<void> _locate() async {
+    final l = await widget.locate();
+    if (mounted) setState(() => loc = l);
+  }
+
+  /// 선택한 필터에 맞춘 매칭 목록
+  List<_Match> get matches {
+    final list = [..._matches];
+    switch (_filters[filter]) {
+      case '브랜드 일치만':
+        list.retainWhere((m) => m.has);
+      case '거리순':
+        list.sort((a, b) => metersBetween(here, gymOf(a).pos).compareTo(metersBetween(here, gymOf(b).pos)));
+      case '평점순':
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+      case '24시간':
+        list.retainWhere((m) => m.hours == '24시간');
+    }
+    return list;
+  }
+
+  Future<void> _directions() async {
+    final g = gymOf(sel);
+    // 카카오맵 길찾기 공개 링크 (키 불필요). 앱이 있으면 앱, 없으면 웹으로 열린다.
+    final url = Uri.parse('https://map.kakao.com/link/to/${Uri.encodeComponent(g.name)},${g.pos.latitude},${g.pos.longitude}');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) s.toast('지도 앱을 열지 못했어요');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,37 +150,63 @@ class _GearFlowState extends State<GearFlow> {
           ],
         );
       case 4:
+        final list = matches;
         return ScreenFrame(
-          header: const StepTitle(eyebrow: '04 · Matching', title: '해머스트렝스 보유 헬스장 3곳', desc: '동일 브랜드·모델 보유 여부 기준으로 정렬했습니다.'),
+          header: StepTitle(eyebrow: '04 · Matching', title: '해머스트렝스 보유 헬스장 ${_matches.where((m) => m.has).length}곳', desc: loc == null ? '내 위치를 확인하고 있어요…' : (loc!.real ? '내 위치 기준 거리예요.' : '위치를 확인할 수 없어 강남역 기준 거리예요.')),
           footer: [GoldButton('지도에서 보기', onTap: () => go(5))],
           children: [
-            ChipRow(items: const ['브랜드 일치만', '거리순', '평점순', '24시간'], selected: const ['브랜드 일치만', '거리순', '평점순', '24시간'][filter], solid: true, onSelect: (v) => setState(() => filter = const ['브랜드 일치만', '거리순', '평점순', '24시간'].indexOf(v))),
+            ChipRow(items: _filters, selected: _filters[filter], solid: true, onSelect: (v) => setState(() => filter = _filters.indexOf(v))),
             const SizedBox(height: 16),
-            _gym('98', '스틸핏 강남점', '450m · 도보 6분 · 4.8', 'Hammer Strength 동일모델', 'PT 가능', true),
-            _gym('91', '코어짐 24 역삼', '820m · 도보 11분 · 4.6', 'Hammer Strength 동일라인', '24시간', true),
-            _gym('42', '바디플랜 피트니스', '1.1km · 도보 15분 · 4.4', '타사 브랜드 대체품', '주차가능', false),
+            for (final m in list) _gym(m),
+            if (list.isEmpty) Padding(padding: const EdgeInsets.only(top: 20), child: Text('조건에 맞는 헬스장이 없어요.', style: F.inter(size: 11, color: C.textFaint))),
           ],
         );
       case 5:
+        final g = gymOf(sel);
         return ScreenFrame(
-          header: const StepTitle(eyebrow: '05 · Map', title: '지도에서 위치 확인', desc: '내 위치 기준으로 매칭된 헬스장입니다.'),
-          footer: [GoldButton('리스트로 돌아가기', ghost: true, onTap: () => go(4))],
-          children: [_map()],
+          header: StepTitle(eyebrow: '05 · Map', title: '지도에서 위치 확인', desc: loc?.real == true ? '내 위치 기준으로 매칭된 헬스장입니다.' : '위치 권한이 없으면 강남역을 기준으로 보여드려요.'),
+          footer: [
+            GoldButton('이 헬스장 선택', onTap: () => go(6)),
+            GoldButton('리스트로 돌아가기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => go(4)),
+          ],
+          children: [
+            GymMap(
+              key: ValueKey(here),
+              me: here,
+              meIsReal: loc?.real ?? false,
+              pins: [for (final m in _matches) (id: m.gym, pos: gymOf(m).pos, label: '${m.gym.split(' ').first} · ${m.score}')],
+              selectedId: selected,
+              onSelect: (id) => setState(() => selected = id),
+              showTiles: widget.mapTiles,
+            ),
+            Box(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              border: C.hairline,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(g.name, style: F.inter(size: 13, w: FontWeight.w500)),
+                const SizedBox(height: 3),
+                Text('${distanceLabel(here, g.pos)} · ${sel.tag1} · ${sel.score} 매칭', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
+              ]),
+            ),
+          ],
         );
       case 6:
+        final g = gymOf(sel);
+        final d = distanceLabel(here, g.pos);
         return ScreenFrame(
           header: const StepTitle(eyebrow: '06 · Confirmed', title: '헬스장이 선택됐습니다'),
           footer: [
-            GoldButton('길찾기 시작', onTap: () => go(5)),
+            GoldButton('길찾기 시작 (카카오맵)', onTap: _directions),
             GoldButton('이 운동에 필요한 장비, 마켓에서 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.market)),
           ],
-          children: const [
-            ConfirmHero('스틸핏 강남점', '선택한 Hammer Strength 기구를 보유 중이며,\n현재 위치에서 도보 6분 거리입니다.'),
+          children: [
+            ConfirmHero(g.name, sel.has ? '선택한 Hammer Strength 기구를 보유 중이며,\n현재 위치에서 ${d.split(' · ').first} 거리입니다.' : '같은 브랜드는 없지만 대체 기구를 보유 중이며,\n현재 위치에서 ${d.split(' · ').first} 거리입니다.'),
             DetailList([
-              ('기구 매칭률', '98%'),
-              ('거리', '450m'),
-              ('예상 도보', '6분'),
-              ('운영 시간', '06:00–24:00'),
+              ('기구 매칭률', '${sel.score}%'),
+              ('거리', d.split(' · ').first),
+              ('예상 도보', d.contains('도보') ? d.split('도보 ').last : '도보 1시간 이상'),
+              ('운영 시간', sel.hours),
             ]),
           ],
         );
@@ -156,8 +238,11 @@ class _GearFlowState extends State<GearFlow> {
         ),
       );
 
-  Widget _gym(String n, String name, String meta, String tag1, String tag2, bool has) => GestureDetector(
-        onTap: () => go(5),
+  Widget _gym(_Match m) => GestureDetector(
+        onTap: () {
+          setState(() => selected = m.gym);
+          go(5);
+        },
         child: Divided(
           top: true,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 2),
@@ -167,102 +252,26 @@ class _GearFlowState extends State<GearFlow> {
               height: 44,
               decoration: BoxDecoration(border: Border.all(color: C.hairline)),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(n, style: F.gnum(size: 14)),
+                Text('${m.score}', style: F.gnum(size: 14)),
                 Text('MATCH', style: F.inter(size: 7, color: C.textFaint, ls: .1)),
               ]),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(name, style: F.inter(size: 14, w: FontWeight.w500)),
+                Text(m.gym, style: F.inter(size: 14, w: FontWeight.w500)),
                 const SizedBox(height: 4),
-                Text(meta, style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300)),
+                Text('${distanceLabel(here, gymOf(m).pos)} · ${m.rating}', style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300)),
                 const SizedBox(height: 9),
                 Wrap(spacing: 6, children: [
-                  Tag(tag1, color: has ? C.goldBright : C.textFaint, border: has ? C.goldDim : C.hairlineSoft),
-                  Tag(tag2),
+                  Tag(m.tag1, color: m.has ? C.goldBright : C.textFaint, border: m.has ? C.goldDim : C.hairlineSoft),
+                  Tag(m.tag2),
                 ]),
               ]),
             ),
           ]),
         ),
       );
-
-  Widget _map() {
-    Widget pin(double x, double y, String label, {bool me = false, bool sel = false}) => Align(
-          alignment: Alignment(x * 2 - 1, y * 2 - 1),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Transform.rotate(
-              angle: .785,
-              child: Container(
-                width: sel ? 18 : 14,
-                height: sel ? 18 : 14,
-                decoration: BoxDecoration(
-                  color: me ? C.ivory : (sel ? C.goldBright : C.goldDim),
-                  border: Border.all(color: C.onyx),
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(9), topRight: Radius.circular(9), bottomRight: Radius.circular(9)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 5),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(color: const Color(0xE60A0A0B), border: Border.all(color: C.hairlineSoft)),
-              child: Text(label, style: F.inter(size: 9, ls: .03)),
-            ),
-          ]),
-        );
-    return Container(
-      height: 390,
-      decoration: BoxDecoration(color: const Color(0xFF131109), border: Border.all(color: C.hairlineSoft)),
-      child: Stack(children: [
-        const Positioned.fill(child: CustomPaint(painter: _GridPainter())),
-        pin(.52, .74, '나', me: true),
-        pin(.34, .34, '스틸핏 강남 · 98', sel: true),
-        pin(.70, .26, '코어짐24 · 91'),
-        pin(.78, .58, '바디플랜 · 42'),
-        Positioned(
-          left: 16,
-          right: 16,
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(color: const Color(0xF015140F), border: Border.all(color: C.hairline)),
-            child: Row(children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('스틸핏 강남점', style: F.inter(size: 13, w: FontWeight.w500)),
-                  const SizedBox(height: 3),
-                  Text('450m · Hammer Strength 보유 · 98 매칭', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
-                ]),
-              ),
-              GestureDetector(
-                onTap: () => go(6),
-                child: Container(color: C.gold, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9), child: Text('선택', style: F.inter(size: 10.5, w: FontWeight.w600, color: C.ink, ls: .08))),
-              ),
-            ]),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-class _GridPainter extends CustomPainter {
-  const _GridPainter();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = C.goldA(.06);
-    for (double x = 0; x < size.width; x += 34) {
-      canvas.drawRect(Rect.fromLTWH(x, 0, 1, size.height), p);
-    }
-    for (double y = 0; y < size.height; y += 34) {
-      canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1), p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// 분석 화면의 기구 라인 일러스트 (원본 viewBox 100x140)

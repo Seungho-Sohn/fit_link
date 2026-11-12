@@ -20,6 +20,12 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - Requires Flutter 3.24+ / Dart 3.5+ (uses `PopScope.onPopInvokedWithResult`, switch expressions).
 - Tests: `test/app_state_test.dart` unit-tests `AppState` logic via `AppState.fresh()` (a non-singleton instance; needs `TestWidgetsFlutterBinding.ensureInitialized()` because `toast()` touches a `GlobalKey`). `test/widget_test.dart` pumps every `AppPage`/`MarketView`/`DelivView` and fails on any exception (layout overflow, missing font). New pages/views are covered automatically since it iterates the enums' `values`.
 
+## Map & location
+
+- `GymMap` (`lib/widgets/gym_map.dart`) uses `flutter_map` + public OpenStreetMap tiles (no API key; OSM's tile policy only allows light use, so production needs a tile provider — swap `GymMap.tileUrl`). Tiles are dark-inverted via `darkModeTileBuilder`; attribution must stay visible.
+- `lib/services/location.dart`: `currentLocation()` (geolocator) falls back to `gangnamStation` on any failure/denial, and `distanceLabel()` formats distances. Gym distances are always computed from coordinates on `Gym.pos` (mock gyms sit around Gangnam), never stored as strings.
+- `GearFlow` steps 4–6 use the mock `_matches` list joined to `gyms` by name; it takes `locate` and `mapTiles` params so tests avoid the location plugin and tile network (`test/map_test.dart`). "길찾기" opens a public Kakao Map link via `url_launcher`.
+
 ## Fonts (all bundled — no runtime download)
 
 - `main()` sets `GoogleFonts.config.allowRuntimeFetching = false`. `google_fonts` resolves each requested weight from `assets/google_fonts/<Family>-<Weight>.ttf` (e.g. `Inter-SemiBold.ttf`); files are the exact ones the package would download (sha256 = hash in the package source). **Using a family or weight/style not present there throws at runtime** — add the file first. Only normal (non-italic) styles are bundled; `NotoSerifKR` only has Regular and SemiBold.

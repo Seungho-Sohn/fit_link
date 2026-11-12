@@ -1,4 +1,5 @@
 // HTML <script> 안의 하드코딩 데이터를 그대로 옮긴 목업 데이터
+import 'package:latlong2/latlong.dart';
 
 String won(num n) {
   final s = n.round().toString();
@@ -310,9 +311,10 @@ const news = [
 
 /* ===== 헬스장 혼잡도 ===== */
 class Gym {
-  final String name, dist;
+  final String name;
   final int now, area;
-  const Gym(this.name, this.dist, this.now, this.area);
+  final LatLng pos;
+  const Gym(this.name, this.now, this.area, this.pos);
   double get spp => area / now; // 1인당 평수
   int get dens {
     final d = (130 / spp).round();
@@ -320,13 +322,16 @@ class Gym {
   }
 }
 
+/// 목업 헬스장 (좌표는 강남 일대 실제 지역 기준의 가상 위치)
 const gyms = [
-  Gym('스틸핏 강남점', '450m · 도보 6분', 37, 150),
-  Gym('코어짐24 역삼', '820m · 도보 11분', 90, 120),
-  Gym('바디스퀘어 논현', '1.0km · 도보 14분', 62, 200),
-  Gym('아이언짐 삼성', '1.6km · 도보 21분', 128, 140),
-  Gym('머슬팩토리 선릉', '1.3km · 도보 17분', 200, 320),
+  Gym('스틸핏 강남점', 37, 150, LatLng(37.4997, 127.0300)),
+  Gym('코어짐24 역삼', 90, 120, LatLng(37.5009, 127.0368)),
+  Gym('바디스퀘어 논현', 62, 200, LatLng(37.5085, 127.0236)),
+  Gym('아이언짐 삼성', 128, 140, LatLng(37.5088, 127.0631)),
+  Gym('머슬팩토리 선릉', 200, 320, LatLng(37.5045, 127.0490)),
 ];
+
+Gym gymByName(String name) => gyms.firstWhere((g) => g.name == name);
 
 /* ===== PT 트레이너 ===== */
 class Trainer {

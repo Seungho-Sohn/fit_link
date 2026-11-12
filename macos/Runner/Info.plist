@@ -28,5 +28,7 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocationUsageDescription</key>
+	<string>내 위치에서 가까운 헬스장과 거리를 보여드립니다.</string>
 </dict>
 </plist>
