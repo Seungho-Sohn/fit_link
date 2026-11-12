@@ -1,5 +1,7 @@
 # FIT LINK
 
+🌐 웹 데모: **https://seungho-sohn.github.io/fit_link/**
+
 피트니스 종합 앱 **FIT LINK**의 Flutter 앱입니다. 단일 HTML 프로토타입(`FIT_LINK_prototype.html`)의 화면·문구·인터랙션을 옮긴 뒤,
 데이터 저장·실제 지도·접근성 등을 더했습니다. 대부분의 데이터(헬스장, 상품, 게시글 등)는 아직 **목업**입니다.
 
@@ -33,6 +35,7 @@ flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 
 | `test/a11y_test.dart` | 버튼 이름, 터치 영역 24×24, 글자 150%/200%, 글자색 대비 |
 
 GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹 빌드를 자동으로 실행합니다 (`.github/workflows/ci.yml`).
+`master`에 들어온 변경은 테스트를 통과하면 **https://seungho-sohn.github.io/fit_link/** 에 자동으로 배포됩니다.
 
 ## 주요 기능과 현재 상태
 

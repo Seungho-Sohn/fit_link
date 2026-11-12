@@ -1,11 +1,11 @@
 {
-    "name": "fit_link",
-    "short_name": "fit_link",
+    "name": "FIT LINK",
+    "short_name": "FIT LINK",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0A0A0B",
+    "theme_color": "#15140F",
+    "description": "FIT LINK — 운동 기록·헬스장 지도·식단·포인트를 한 곳에서 (데모)",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
