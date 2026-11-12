@@ -18,7 +18,7 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 ```
 
 - Requires Flutter 3.27+ / Dart 3.6+ (`flutter_map`); development and CI use Flutter 3.47.9.
-- CI (`.github/workflows/ci.yml`) runs `flutter analyze`, `flutter test` and `flutter build web` on every push to `master` and every PR — keep all three green.
+- CI (`.github/workflows/ci.yml`) runs `flutter analyze`, `flutter test` and `flutter build web` on every push to `master` and every PR — keep all three green. Pushes to `master` that pass are deployed to GitHub Pages (https://seungho-sohn.github.io/fit_link/), built with `--base-href /fit_link/` (in Git Bash locally, prefix `MSYS_NO_PATHCONV=1` or the path gets mangled).
 - Tests: `test/app_state_test.dart` unit-tests `AppState` logic via `AppState.fresh()` (a non-singleton instance; needs `TestWidgetsFlutterBinding.ensureInitialized()` because `toast()` touches a `GlobalKey`). `test/widget_test.dart` pumps every `AppPage`/`MarketView`/`DelivView` and fails on any exception (layout overflow, missing font). New pages/views are covered automatically since it iterates the enums' `values`.
 
 ## Map & location
