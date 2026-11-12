@@ -1,70 +1,104 @@
-# FIT LINK — Flutter 이식본
+# FIT LINK
 
-`FIT_LINK_prototype.html`(단일 HTML 프로토타입)을 Flutter/Dart 앱으로 옮긴 프로젝트입니다.
-화면 구성·문구·목업 데이터·인터랙션(포인트 적립, 장바구니, 휴식 타이머, 1RM 계산 등)을 HTML과 동일하게 재현했습니다.
+피트니스 종합 앱 **FIT LINK**의 Flutter 앱입니다. 단일 HTML 프로토타입(`FIT_LINK_prototype.html`)의 화면·문구·인터랙션을 옮긴 뒤,
+데이터 저장·실제 지도·접근성 등을 더했습니다. 대부분의 데이터(헬스장, 상품, 게시글 등)는 아직 **목업**입니다.
 
-> ※ **이 코드는 Flutter SDK가 없는 환경에서 작성되어 실제 컴파일·실행 검증을 하지 못했습니다.** 괄호 균형, const 오용, 커스텀 위젯 인자 검증 등 정적 점검만 마쳤습니다. 첫 실행 시 `flutter analyze` 결과를 알려주시면 바로 수정하겠습니다.
-
-## 실행 방법
+## 실행
 
 ```bash
-# 1) 압축을 푼 폴더에서 플랫폼 폴더(android/ios/web 등) 생성 — lib/·pubspec.yaml은 그대로 유지됩니다
-flutter create . --project-name fit_link --org com.fitlink
-
-# 2) 패키지 설치 후 실행
 flutter pub get
-flutter analyze
-flutter run            # 에뮬레이터/실기기
-flutter run -d chrome  # 웹으로 빠르게 확인
+flutter run -d chrome   # 웹으로 빠르게 확인
+flutter run             # 연결된 Android/iOS 기기·에뮬레이터
 ```
 
-- 요구 버전: Flutter 3.24 이상 (Dart 3.5+) — `PopScope.onPopInvokedWithResult`, `switch` 표현식 사용
-- 의존 패키지: `google_fonts` 하나뿐 (Inter · Cormorant Garamond · Bodoni Moda · Noto Serif KR을 런타임에 내려받음)
+- 요구 버전: **Flutter 3.27 이상 (Dart 3.6+)**. 개발·CI는 Flutter 3.47.9.
+- API 키나 별도 서버 없이 실행됩니다.
+- 웹(`flutter run -d chrome`)은 실행할 때마다 새 크롬 프로필로 열려서, 저장된 데이터는 **F5 새로고침**으로는 유지되지만 다시 실행하면 초기화됩니다.
+
+## 테스트
+
+```bash
+flutter analyze
+flutter test                                # 전체
+flutter test test/app_state_test.dart       # 파일 하나
+flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 테스트만
+```
+
+| 파일 | 내용 |
+|---|---|
+| `test/widget_test.dart` | 모든 화면을 띄워 오류·레이아웃 넘침이 없는지 (내장 글꼴만 사용) |
+| `test/app_state_test.dart` | 포인트·등급·미션·장바구니·배달 결제 계산 |
+| `test/persistence_test.dart` | 저장/복원, 깨진 저장본 처리, 날짜가 바뀔 때 출석·주간 보너스 |
+| `test/map_test.dart` | 거리 표시, 헬스장 매칭 → 지도 → 확정 흐름 |
+| `test/a11y_test.dart` | 버튼 이름, 터치 영역 24×24, 글자 150%/200%, 글자색 대비 |
+
+GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹 빌드를 자동으로 실행합니다 (`.github/workflows/ci.yml`).
+
+## 주요 기능과 현재 상태
+
+| 기능 | 상태 |
+|---|---|
+| 6개 탭(홈·커뮤니티·마켓·배달·칼로리·마이), 온보딩 | 프로토타입 화면 이식 완료 |
+| 포인트·출석·미션·장바구니·찜 | 기기에 저장 (`shared_preferences`) |
+| 헬스장 지도 | OpenStreetMap + 현재 위치, 카카오맵 길찾기 링크 (헬스장 목록은 목업) |
+| 기구·음식 사진 인식, AI 코치 | 목업 결과 (AI 연동 작업본은 로컬 `archive/ai-features` 브랜치 — Anthropic API 키 필요) |
+| 결제 | 목업 (토스페이먼츠 연동은 보류) |
+| 접근성 | 스크린리더 이름, 터치 영역, 글자 대비, 글자 크기 150%까지 대응 |
 
 ## 폴더 구조
 
 ```
 lib/
-├─ main.dart                 앱 진입점 · 셸(상단 워드마크 + 하단 6탭 + 온보딩 오버레이)
-├─ theme.dart                CSS :root 색상 변수 → C 클래스, 폰트 헬퍼 F
-├─ state/app_state.dart      전역 상태(포인트·장바구니·배달·찜·화면전환·토스트) — ChangeNotifier
-├─ data/mock_data.dart       HTML <script>의 모든 하드코딩 데이터
-├─ widgets/common.dart       공통 위젯(Box, GoldButton, Ring, LiveDot, WwHolo, Viewfinder …)
+├─ main.dart                 앱 진입점 · 셸(상단 워드마크 + 하단 6탭 + 온보딩 오버레이), 저장소 연결, 글자 배율 상한
+├─ theme.dart                색상 C · 글꼴 헬퍼 F (CSS :root 변수에서 옮김)
+├─ state/
+│  ├─ app_state.dart         전역 상태(포인트·장바구니·배달·찜·화면 전환·토스트) + 저장/복원
+│  ├─ routes.dart            화면 식별자 enum (AppPage · MarketView · DelivView)
+│  └─ persistence.dart       저장소 (SharedPreferences / 테스트용 메모리)
+├─ services/location.dart    현재 위치(실패 시 강남역), 거리 계산·표시
+├─ data/mock_data.dart       목업 데이터와 모델 클래스
+├─ widgets/
+│  ├─ common.dart            공통 위젯(Box, GoldButton, Ring, FlexGrid, TapArea, showGoldSheet …)
+│  └─ gym_map.dart           OpenStreetMap 지도 + 헬스장 핀
 └─ screens/
    ├─ onboarding.dart        3단계 온보딩
    ├─ home_screen.dart       홈 상단(목표·시그니처 스캔·혼잡도·메이트·챌린지·루틴)
-   ├─ home_sections.dart     홈 하단(뉴스·운동기록/휴식타이머·PR·눈바디·1RM/원판·PT예약·머슬맵·프로그램·워치)
+   ├─ home/                  홈 하단 섹션(뉴스·운동기록·PR·눈바디·1RM·PT예약·머슬맵·프로그램·워치)
    ├─ coach_screen.dart      AI 코치 채팅 + 실시간 코칭
    ├─ inbody_screen.dart     인바디 리포트
    ├─ gear_flow.dart         기구 사진 → 인식 → 결과 → 헬스장 매칭 → 지도 → 확정 (6단계)
-   ├─ community_screen.dart  피드(댓글·글쓰기 시트)·챌린지·그룹·랭킹
-   ├─ market_screen.dart     마켓 홈·타임특가·상세·스토어·장바구니 + B2B·견적폼·중고·운영대시보드
+   ├─ community_screen.dart  피드(댓글·글쓰기)·챌린지·그룹·랭킹
+   ├─ market_screen.dart     마켓 홈·타임특가·상세·스토어·장바구니
+   ├─ market_b2b.dart        헬스장 운영자 전용관·견적·중고 거래·운영 대시보드
    ├─ delivery_screen.dart   헬스 배달(정렬·찜·메뉴·장바구니·결제·배달추적)
-   ├─ calorie_screen.dart    음식 스캔 → 결과 → 오늘의 식단(수분 컵)
+   ├─ calorie_screen.dart    음식 스캔 → 결과 → 오늘의 식단
    └─ my_screen.dart         마이페이지 + WILD WEAR 포인트 허브
-assets/images/               HTML에 base64로 박혀 있던 이미지 3종을 파일로 추출
+assets/
+├─ images/                   프로토타입의 이미지 3종
+├─ fonts/pretendard/         한글 글꼴 (모든 영문 글꼴의 대체 글꼴)
+└─ google_fonts/             Inter · Cormorant Garamond · Bodoni Moda · Noto Serif KR(서브셋) — 실행 중 다운로드 없음
 ```
 
-## HTML → Flutter 대응
+## 개발 메모
+
+- **화면 전환**은 Navigator가 아니라 `AppState.I.go(AppPage.x)` / `goMarket(...)` / `goDeliv(...)`로 합니다. 화면을 추가하면 `routes.dart`의 enum과 `main.dart`의 `switch`를 함께 고칩니다.
+- **글꼴**은 모두 앱에 들어 있습니다. 새 굵기·글꼴을 쓰려면 `assets/google_fonts/`에 파일부터 추가해야 합니다 (없으면 실행 중 오류).
+- **지도 타일**: OpenStreetMap 공개 타일 서버는 소량 사용만 허용합니다. 실서비스 전에는 타일 제공 업체로 바꿔야 합니다 (`GymMap.tileUrl`).
+- **접근성 규칙**(버튼 이름, 터치 영역, 글자 대비, 고정 높이 금지)과 저장 구조 등 더 자세한 내용은 [`CLAUDE.md`](CLAUDE.md)에 있습니다.
+
+## HTML 프로토타입 → Flutter 대응
 
 | HTML/JS | Flutter |
 |---|---|
 | `switchTab()`, `goMarket()`, `goDeliv()`, `openCoach()` | `AppState.go()` / `goMarket()` / `goDeliv()` |
-| 전역 변수 `POINTS`, `cart`, `dcart`, `dfavs` | `AppState` 필드 + `notifyListeners()` |
+| 전역 변수 `POINTS`, `cart`, `dcart`, `dfavs` | `AppState` 필드 + `notifyListeners()` (기기에 저장) |
 | `toast()` | `ScaffoldMessenger` SnackBar |
 | CSS `conic-gradient` 링 | `Ring` (CustomPainter `drawArc`) |
 | `@keyframes pulse`, 스캔라인, 분석 로그 지연 | `AnimationController`, `AnimatedOpacity` |
 | WILD WEAR 홀로그램 로고(mask-image + 그라데이션) | `ShaderMask` + 마스크 PNG |
 | 인라인 SVG(실루엣·머슬맵·기구·접시) | CustomPainter로 좌표 그대로 재현 |
-| 하단 시트(PT 예약·댓글·글쓰기) | `showModalBottomSheet` |
+| 하단 시트(PT 예약·댓글·글쓰기) | `showModalBottomSheet` (`showGoldSheet`) |
 | `setInterval` 타이머 | `Timer.periodic` |
 
-## 원본과 달라진 점 / 어려웠던 부분
-
-1. **폰 목업 프레임 제거** — HTML의 검은 폰 테두리·노치는 브라우저 시연용이라 실제 앱에선 뺐고, 대신 태블릿·웹에서 폭을 430px로 제한합니다.
-2. **아이콘** — 탭바 SVG 아이콘은 Material 아이콘으로 대체했습니다.
-3. **한글 폰트** — Inter에는 한글 글리프가 없어 HTML과 마찬가지로 시스템 한글 폰트로 대체 표시됩니다. ※ **기기별로 글꼴 느낌이 HTML과 다를 수 있습니다.** 필요하면 Pretendard 등을 assets에 넣어 통일할 수 있습니다.
-4. **AI 코치 답변의 굵은 글씨** — HTML `<b>` 강조는 단순화를 위해 일반 텍스트로 넣었습니다.
-5. **사진 촬영·지도·워치 연동** — HTML도 실제 기능이 아닌 시연(목업)이므로 동일하게 목업으로 두었습니다. 실제 구현 시 `image_picker`, `google_maps_flutter`, `health` 패키지 등이 필요합니다.
-6. **상태 영속성** — 포인트·장바구니 등은 앱 실행 중에만 유지됩니다(HTML도 새로고침 시 초기화). 저장이 필요하면 `shared_preferences` 등을 붙이면 됩니다.
-7. ※ **세부 여백·글자 크기는 CSS px 값을 Flutter 논리 픽셀로 1:1 옮긴 것이라, 기기 해상도에 따라 HTML 화면과 약간 다르게 보일 수 있습니다.**
+프로토타입과 다른 점: 폰 목업 프레임은 빼고 태블릿·웹에서 폭을 430px로 제한, 탭바 아이콘은 Material 아이콘으로 대체,
+AI 코치 답변의 굵은 글씨는 일반 텍스트, 여백·글자 크기는 CSS px를 Flutter 논리 픽셀로 1:1 옮겼습니다.
