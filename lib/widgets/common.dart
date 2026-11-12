@@ -739,15 +739,23 @@ class _AnalyzeLogState extends State<AnalyzeLog> {
   }
 }
 
-/// 하단 시트 공통 틀
-Future<T?> showGoldSheet<T>(BuildContext context, {required String title, required Widget Function(BuildContext, StateSetter) body, Widget Function(BuildContext, StateSetter)? foot}) {
+/// 하단 시트 공통 틀.
+/// [disposables]: 시트 안에서 쓰는 컨트롤러 등. 시트가 완전히 닫혀 위젯이 사라질 때 dispose된다
+/// (닫힘 애니메이션 도중에는 아직 쓰이므로 pop 직후에 dispose하면 안 됨).
+Future<T?> showGoldSheet<T>(
+  BuildContext context, {
+  required String title,
+  required Widget Function(BuildContext, StateSetter) body,
+  Widget Function(BuildContext, StateSetter)? foot,
+  List<ChangeNotifier> disposables = const [],
+}) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
     backgroundColor: C.charcoal,
     barrierColor: const Color(0x9E000000),
     shape: const RoundedRectangleBorder(side: BorderSide(color: C.goldDim)),
-    builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+    builder: (ctx) => _DisposeWith(disposables, child: StatefulBuilder(builder: (ctx, setS) {
       return Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: ConstrainedBox(
@@ -771,8 +779,30 @@ Future<T?> showGoldSheet<T>(BuildContext context, {required String title, requir
           ]),
         ),
       );
-    }),
+    })),
   );
+}
+
+/// 자식이 트리에서 제거될 때 [items]를 dispose
+class _DisposeWith extends StatefulWidget {
+  final List<ChangeNotifier> items;
+  final Widget child;
+  const _DisposeWith(this.items, {required this.child});
+  @override
+  State<_DisposeWith> createState() => _DisposeWithState();
+}
+
+class _DisposeWithState extends State<_DisposeWith> {
+  @override
+  void dispose() {
+    for (final c in widget.items) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// 작은 테두리 태그

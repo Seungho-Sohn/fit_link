@@ -138,6 +138,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     showGoldSheet(
       context,
       title: '댓글',
+      disposables: [input],
       body: (ctx, setS) {
         final list = _comments[p] ?? [];
         if (list.isEmpty) {
@@ -207,6 +208,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     showGoldSheet(
       context,
       title: '인증 · 글쓰기',
+      disposables: [ta],
       body: (ctx, setS) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 7, runSpacing: 7, children: [
           for (final t in ['운동 인증', '식단 인증', '꿀팁', '질문']) SelChip(t, on: tag == t, onTap: () => setS(() => tag = t)),
