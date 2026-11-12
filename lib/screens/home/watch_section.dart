@@ -68,13 +68,8 @@ class _WatchSectionState extends State<WatchSection> {
             ),
           ]),
           const SizedBox(height: 13),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 9,
-            crossAxisSpacing: 9,
-            childAspectRatio: 2.3,
+          FlexGrid(
+            columns: 2, ratio: 2.3, hSpacing: 9, vSpacing: 9,
             children: [
               vital('❤️ 실시간 심박', '$hr', ' bpm', isHr: true),
               vital('🔥 소모 칼로리', '384', ' kcal'),

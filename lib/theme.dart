@@ -14,7 +14,7 @@ class C {
   static const goldDim = Color(0xFF8A6F35);
   static const ivory = Color(0xFFF1E9D6);
   static const textDim = Color(0xFFA79A7C);
-  static const textFaint = Color(0xFF6E6550);
+  static const textFaint = Color(0xFF968A6F); // 가장 어두운 배경(panel2)에서도 WCAG AA 4.5:1 (원래 0xFF6E6550 은 2.8~3.4:1)
   static const good = Color(0xFFB9C79A);
   static const carb = Color(0xFFD8B25A);
   static const protein = Color(0xFFC98F5A);

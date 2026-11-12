@@ -48,6 +48,9 @@ void _registerFontLicenses() {
   });
 }
 
+/// 앱이 반영하는 최대 글자 배율
+const maxTextScale = 1.5;
+
 class FitLinkApp extends StatelessWidget {
   const FitLinkApp({super.key});
 
@@ -58,6 +61,8 @@ class FitLinkApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       scaffoldMessengerKey: AppState.I.messengerKey,
+      // 기기 글자 크기 설정은 150%까지 반영 (더 크면 고정 크기 카드·그리드가 깨짐 — test/a11y_test.dart)
+      builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: maxTextScale, child: child!),
       home: const Shell(),
     );
   }

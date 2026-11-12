@@ -128,13 +128,8 @@ class _GearFlowState extends State<GearFlow> {
               ]),
             ),
             const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.8,
-              mainAxisSpacing: 1,
-              crossAxisSpacing: 1,
+            FlexGrid(
+              columns: 2, ratio: 2.8, hSpacing: 1, vSpacing: 1,
               children: [
                 _cell('제조사', 'Hammer Strength'),
                 _cell('모델 매칭', '정확 일치', gold: true),
@@ -251,10 +246,14 @@ class _GearFlowState extends State<GearFlow> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(border: Border.all(color: C.hairline)),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text('${m.score}', style: F.gnum(size: 14)),
-                Text('MATCH', style: F.inter(size: 7, color: C.textFaint, ls: .1)),
-              ]),
+              padding: const EdgeInsets.all(3),
+              child: FittedBox(
+                fit: BoxFit.scaleDown, // 고정 크기 배지: 큰 글자 설정에서는 배지 안에 맞춰 줄임
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('${m.score}', style: F.gnum(size: 14)),
+                  Text('MATCH', style: F.inter(size: 7, color: C.textFaint, ls: .1)),
+                ]),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(

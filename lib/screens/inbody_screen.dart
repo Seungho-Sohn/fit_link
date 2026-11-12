@@ -109,13 +109,8 @@ class InbodyScreen extends StatelessWidget {
         ]),
         const HintCard('하체 근육이 표준 하단이에요.', '상·하체 균형을 위해 스쿼트·레그프레스 볼륨을 늘려보세요. (AI 코치도 같은 진단이에요)', top: 13),
         const SectHead('핵심 지표', top: 20),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 9,
-          mainAxisSpacing: 9,
-          childAspectRatio: 2.3,
+        FlexGrid(
+          columns: 2, ratio: 2.3, hSpacing: 9, vSpacing: 9,
           children: [
             _kv('BMI', '22.1', ' 정상'),
             _kv('체지방률', '14.2', ' %'),

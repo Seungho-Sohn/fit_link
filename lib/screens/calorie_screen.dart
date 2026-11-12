@@ -220,8 +220,11 @@ class _CalorieScreenState extends State<CalorieScreen> {
             Row(children: [
               for (int i = 0; i < 8; i++)
                 Expanded(
-                  child: GestureDetector(
+                  child: TapArea(
                     onTap: () => setState(() => water = (water == i + 1) ? i : i + 1),
+                    label: '물 ${i + 1}컵째',
+                    selected: i < water,
+                    minSize: 0,
                     child: Container(
                       height: 30,
                       margin: EdgeInsets.only(right: i < 7 ? 7 : 0),

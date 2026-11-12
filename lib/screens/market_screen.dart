@@ -155,9 +155,9 @@ class _MarketScreenState extends State<MarketScreen> {
                 ),
               ]),
               const SizedBox(height: 13),
-              SizedBox(
-                height: 170,
-                child: ListView(scrollDirection: Axis.horizontal, children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   for (final d in deals) _dealCard(productById(d.productId), d.off),
                 ]),
               ),
@@ -209,7 +209,8 @@ class _MarketScreenState extends State<MarketScreen> {
               ]),
             ),
             const SizedBox(height: 9),
-            SizedBox(height: 29, child: Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: F.inter(size: 10.5, h: 1.35))),
+            // 두 줄 높이를 항상 확보해 카드 높이를 맞춘다 (글자 배율 반영)
+            SizedBox(height: MediaQuery.textScalerOf(context).scale(29), child: Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: F.inter(size: 10.5, h: 1.35))),
             const SizedBox(height: 4),
             Text(won(p.price), style: F.inter(size: 9.5, color: C.textFaint).copyWith(decoration: TextDecoration.lineThrough)),
             Text(won(now), style: F.gnum(size: 15)),
@@ -253,7 +254,8 @@ class _MarketScreenState extends State<MarketScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: list.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 14, mainAxisSpacing: 14, mainAxisExtent: 222),
+        // 이미지 104 + 글자 영역 118 (글자 배율만큼 늘림)
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 14, mainAxisSpacing: 14, mainAxisExtent: 104 + MediaQuery.textScalerOf(context).scale(118)),
         itemBuilder: (_, i) => _productCard(list[i]),
       );
 

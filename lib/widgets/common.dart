@@ -183,9 +183,19 @@ class StepTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        GestureDetector(onTap: onBack, child: Text(eyebrow.toUpperCase(), style: F.inter(size: 10, color: C.gold, ls: .28, w: FontWeight.w500))),
+        if (onBack != null)
+          // 뒤로 가기 링크: 터치 영역 32px — 글자(14px) 위아래 9px 여백이 원래 제목 간격(9px)과 같아 배치가 거의 그대로다
+          TapArea(
+            onTap: onBack,
+            minSize: 32,
+            label: '뒤로 가기, ${eyebrow.replaceFirst('←', '').trim()}',
+            alignment: Alignment.centerLeft,
+            child: Text(eyebrow.toUpperCase(), style: F.inter(size: 10, color: C.gold, ls: .28, w: FontWeight.w500)),
+          )
+        else
+          Text(eyebrow.toUpperCase(), style: F.inter(size: 10, color: C.gold, ls: .28, w: FontWeight.w500)),
         if (title != null) ...[
-          const SizedBox(height: 9),
+          SizedBox(height: onBack != null ? 0 : 9),
           Text(title!, style: F.serif(size: titleSize, h: 1.2)),
         ],
         if (desc != null) ...[
@@ -281,7 +291,11 @@ class Ring extends StatelessWidget {
       height: size,
       child: CustomPaint(
         painter: _RingPainter(segments, stroke, track, border),
-        child: Center(child: child),
+        // 링 크기는 고정이라, 글자를 크게 설정하면 안의 숫자만 링에 맞춰 줄인다
+        child: Padding(
+          padding: EdgeInsets.all(stroke + 4),
+          child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: child)),
+        ),
       ),
     );
   }
@@ -766,7 +780,7 @@ Future<T?> showGoldSheet<T>(
               decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
               child: Row(children: [
                 Expanded(child: Text(title, style: F.kr(size: 15))),
-                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close, color: C.textDim, size: 18)),
+                IconButton(onPressed: () => Navigator.pop(ctx), tooltip: '닫기', icon: const Icon(Icons.close, color: C.textDim, size: 18)),
               ]),
             ),
             Flexible(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(18, 16, 18, 16), child: body(ctx, setS))),
@@ -867,3 +881,69 @@ Widget qtyCtrl(int q, VoidCallback minus, VoidCallback plus, {bool big = false})
         GestureDetector(onTap: plus, child: SizedBox(width: big ? 34 : 28, height: big ? 34 : 30, child: Center(child: Text('+', style: F.inter(size: big ? 16 : 15, color: C.goldBright))))),
       ]),
     );
+
+/// 열 수가 고정된 격자. 기본 글자 크기에서는 [ratio](칸 가로/세로) 높이를 그대로 쓰고,
+/// 글자를 크게 설정해 내용이 길어지면 그 줄의 칸들이 함께 늘어난다.
+/// (GridView의 childAspectRatio는 높이가 고정이라 큰 글자에서 넘친다)
+class FlexGrid extends StatelessWidget {
+  final int columns;
+  final double ratio, hSpacing, vSpacing;
+  final List<Widget> children;
+  const FlexGrid({super.key, required this.columns, required this.ratio, this.hSpacing = 0, this.vSpacing = 0, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final cellW = (c.maxWidth - hSpacing * (columns - 1)) / columns;
+      final minH = cellW / ratio;
+      return Column(children: [
+        for (int r = 0; r * columns < children.length; r++) ...[
+          if (r > 0) SizedBox(height: vSpacing),
+          IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              for (int k = 0; k < columns; k++) ...[
+                if (k > 0) SizedBox(width: hSpacing),
+                Expanded(
+                  child: r * columns + k < children.length
+                      ? ConstrainedBox(constraints: BoxConstraints(minHeight: minH), child: children[r * columns + k])
+                      : const SizedBox(),
+                ),
+              ],
+            ]),
+          ),
+        ],
+      ]);
+    });
+  }
+}
+
+/// 누를 수 있는 작은 요소의 터치 영역을 [minSize] 이상으로 넓히고(보이는 모양은 그대로),
+/// 스크린리더에는 [label] 버튼으로 읽히게 한다. [selected]는 찜·좋아요 같은 켜짐 상태.
+class TapArea extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final String? label;
+  final bool? selected;
+  final double minSize;
+  final AlignmentGeometry alignment;
+  const TapArea({super.key, required this.child, this.onTap, this.label, this.selected, this.minSize = 44, this.alignment = Alignment.center});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      selected: selected,
+      excludeSemantics: label != null,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: minSize, minHeight: minSize),
+          child: Align(alignment: alignment, widthFactor: 1, heightFactor: 1, child: child),
+        ),
+      ),
+    );
+  }
+}
+

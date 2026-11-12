@@ -37,6 +37,9 @@ class GymMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 핀 = 이름표 + 다이아몬드. 이름표는 글자 배율만큼 커지므로 마커 크기도 맞춰 키운다.
+    final ts = MediaQuery.textScalerOf(context);
+    final pinH = 28 + ts.scale(16), pinW = ts.scale(150);
     return Container(
       height: height,
       decoration: BoxDecoration(border: Border.all(color: C.hairlineSoft)),
@@ -61,12 +64,12 @@ class GymMap extends StatelessWidget {
             MarkerLayer(
               alignment: Alignment.topCenter, // 핀 끝이 좌표를 가리키도록 마커 전체를 좌표 위에
               markers: [
-                Marker(point: me, width: 90, height: 44, child: _Pin(meIsReal ? '내 위치' : '강남역 (기본)', me: true)),
+                Marker(point: me, width: ts.scale(90), height: pinH, child: _Pin(meIsReal ? '내 위치' : '강남역 (기본)', me: true)),
                 for (final p in pins)
                   Marker(
                     point: p.pos,
-                    width: 150,
-                    height: 44,
+                    width: pinW,
+                    height: pinH,
                     child: GestureDetector(onTap: () => onSelect(p.id), child: _Pin(p.label, selected: p.id == selectedId)),
                   ),
               ],

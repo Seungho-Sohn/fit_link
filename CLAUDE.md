@@ -26,6 +26,13 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - `lib/services/location.dart`: `currentLocation()` (geolocator) falls back to `gangnamStation` on any failure/denial, and `distanceLabel()` formats distances. Gym distances are always computed from coordinates on `Gym.pos` (mock gyms sit around Gangnam), never stored as strings.
 - `GearFlow` steps 4–6 use the mock `_matches` list joined to `gyms` by name; it takes `locate` and `mapTiles` params so tests avoid the location plugin and tile network (`test/map_test.dart`). "길찾기" opens a public Kakao Map link via `url_launcher`.
 
+## Accessibility (enforced by `test/a11y_test.dart`)
+
+- Every tappable element needs a screen-reader label and a hit area ≥ 24×24 (WCAG 2.2 AA). For small text links/icons use `TapArea` (`lib/widgets/common.dart`): it enlarges only the hit area, adds `button`/`label`/`selected` semantics. `StepTitle` back links use 32px so the layout barely moves; use ≥36 for other standalone links.
+- Text scale is clamped to `maxTextScale` (1.5) in `FitLinkApp.builder`; nothing may overflow up to that. Don't give text-bearing boxes fixed heights — use `FlexGrid` instead of `GridView.count(childAspectRatio:)`, scale fixed extents with `MediaQuery.textScalerOf(context).scale(...)`, and wrap text inside fixed-size graphics (rings, badges) in `FittedBox(fit: BoxFit.scaleDown)` (`Ring` already does).
+- Text colors must keep ≥ 4.5:1 contrast on charcoal/panel/panel2/onyx (checked numerically in the test). `goldDim` and `hairline*` are for borders/decoration, not text.
+- The test walks every `AppPage`/`MarketView`/`DelivView` plus the gear (1–6) and calorie (1–4) step flows; extend `everyScreen`/`stepFlows` when adding screens.
+
 ## Fonts (all bundled — no runtime download)
 
 - `main()` sets `GoogleFonts.config.allowRuntimeFetching = false`. `google_fonts` resolves each requested weight from `assets/google_fonts/<Family>-<Weight>.ttf` (e.g. `Inter-SemiBold.ttf`); files are the exact ones the package would download (sha256 = hash in the package source). **Using a family or weight/style not present there throws at runtime** — add the file first. Only normal (non-italic) styles are bundled; `NotoSerifKR` only has Regular and SemiBold.

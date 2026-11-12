@@ -115,13 +115,8 @@ class _B2BViewState extends State<B2BView> {
             ]),
           ),
         const SectHead('운영자 전용 서비스', more: '헬스장 창업·운영', top: 22),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.15,
+        FlexGrid(
+          columns: 2, ratio: 1.15, hSpacing: 10, vSpacing: 10,
           children: [
             svc('🔄', '중고 기구 거래', '안 쓰는 기구 판매 & 검수된 중고 매물 보기', '매물 보기 ›', MarketView.used),
             svc('📊', '운영 대시보드', '회원·매출·기구 A/S를 한눈에 관리', '대시보드 ›', MarketView.dash),
@@ -274,13 +269,8 @@ class _B2BViewState extends State<B2BView> {
         GoldButton('회원 관리 열기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => _s.toast('회원 관리 화면은 개발 버전에서 연결돼요')),
       ],
       children: [
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.75,
+        FlexGrid(
+          columns: 2, ratio: 1.75, hSpacing: 10, vSpacing: 10,
           children: [
             kpi('이번 달 매출', '3,240', ' 만원', '▲ 12% vs 전월', true),
             kpi('활성 회원', '412', ' 명', '▲ 23명 순증', true),

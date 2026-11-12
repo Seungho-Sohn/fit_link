@@ -79,8 +79,11 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               Text('헬스인 전용 클린식 · 총알배송', style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300)),
             ]),
           ),
-          GestureDetector(
+          TapArea(
             onTap: () => setState(() => favView = !favView),
+            label: '찜한 매장만 보기',
+            selected: favView,
+            minSize: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(border: Border.all(color: favView ? C.goldDim : C.hairlineSoft)),
@@ -143,11 +146,23 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           child: Stack(children: [
             EmojiTile(s.em, size: 74, font: 33, badge: s.fast ? '⚡총알배송' : null, badgeColor: C.live),
             Positioned(
-              top: 3,
-              right: 3,
-              child: GestureDetector(
+              top: 0,
+              right: 0,
+              // 보이는 하트는 22px 그대로, 누르는 영역은 36px
+              child: TapArea(
                 onTap: () => _s.toggleFav(s.id),
-                child: Container(width: 22, height: 22, alignment: Alignment.center, color: const Color(0x8C0A0A0B), child: Text(fav ? '♥' : '♡', style: F.inter(size: 12, color: fav ? C.live : C.textFaint))),
+                label: fav ? '${s.name} 찜 해제' : '${s.name} 찜하기',
+                selected: fav,
+                minSize: 36,
+                alignment: Alignment.topRight,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  margin: const EdgeInsets.only(top: 3, right: 3),
+                  alignment: Alignment.center,
+                  color: const Color(0x8C0A0A0B),
+                  child: Text(fav ? '♥' : '♡', style: F.inter(size: 12, color: fav ? C.live : C.textFaint)),
+                ),
               ),
             ),
           ]),
@@ -216,8 +231,10 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                 Text('${s.tags} · ${s.dist}km', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
               ]),
             ),
-            GestureDetector(
+            TapArea(
               onTap: () => _s.toggleFav(s.id),
+              label: fav ? '찜 해제' : '찜하기',
+              selected: fav,
               child: Container(
                 width: 38,
                 height: 38,

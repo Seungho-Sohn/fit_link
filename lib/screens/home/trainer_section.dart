@@ -54,13 +54,8 @@ class TrainerSection extends StatelessWidget {
         const SizedBox(height: 14),
         Text('시간 선택', style: F.inter(size: 10, color: C.textDim, ls: .05)),
         const SizedBox(height: 10),
-        GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 2.6,
+        FlexGrid(
+          columns: 3, ratio: 2.6, hSpacing: 8, vSpacing: 8,
           children: [
             for (final tm in bkTimes)
               Builder(builder: (_) {

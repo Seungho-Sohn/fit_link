@@ -113,23 +113,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
               child: Text(p.img, style: const TextStyle(fontSize: 40)),
             ),
           Row(children: [
-            _act(p.liked ? Icons.favorite : Icons.favorite_border, '${p.likes}', p.liked ? C.live : C.textDim, () {
+            _act(p.liked ? Icons.favorite : Icons.favorite_border, '${p.likes}', p.liked ? C.live : C.textDim, label: '좋아요 ${p.likes}개', selected: p.liked, () {
               setState(() {
                 p.liked = !p.liked;
                 p.likes += p.liked ? 1 : -1;
               });
             }),
-            _act(Icons.chat_bubble_outline, '${p.comments}', C.textDim, () => _openComments(p)),
-            _act(Icons.ios_share, '공유', C.textDim, () => _s.toast('공유 링크를 복사했어요')),
+            _act(Icons.chat_bubble_outline, '${p.comments}', C.textDim, label: '댓글 ${p.comments}개', () => _openComments(p)),
+            _act(Icons.ios_share, '공유', C.textDim, label: '공유', () => _s.toast('공유 링크를 복사했어요')),
           ]),
         ]),
       );
 
-  Widget _act(IconData ic, String t, Color c, VoidCallback f) => GestureDetector(
+  Widget _act(IconData ic, String t, Color c, VoidCallback f, {required String label, bool? selected}) => TapArea(
         onTap: f,
+        label: label,
+        selected: selected,
+        minSize: 36,
+        alignment: Alignment.centerLeft,
         child: Padding(
           padding: const EdgeInsets.only(right: 18),
-          child: Row(children: [Icon(ic, size: 14, color: c), const SizedBox(width: 6), Text(t, style: F.inter(size: 11, color: c))]),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(ic, size: 14, color: c), const SizedBox(width: 6), Text(t, style: F.inter(size: 11, color: c))]),
         ),
       );
 

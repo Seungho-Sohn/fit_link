@@ -89,7 +89,7 @@ class _CoachScreenState extends State<CoachScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
         child: Row(children: [
-          GestureDetector(onTap: () => _s.go(AppPage.home), child: Text('← 홈', style: F.inter(size: 13, color: C.gold))),
+          TapArea(onTap: () => _s.go(AppPage.home), label: '뒤로 가기, 홈', minSize: 36, alignment: Alignment.centerLeft, child: Text('← 홈', style: F.inter(size: 13, color: C.gold))),
           const SizedBox(width: 13),
           Container(
             width: 36,
@@ -207,13 +207,8 @@ class _CoachScreenState extends State<CoachScreen> {
         const SizedBox(height: 3),
         Text('8월 4일 – 8월 10일 · 목표: ${_s.goal}', style: F.inter(size: 9.5, color: C.textFaint)),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 9,
-          mainAxisSpacing: 9,
-          childAspectRatio: 2.4,
+        FlexGrid(
+          columns: 2, ratio: 2.4, hSpacing: 9, vSpacing: 9,
           children: [rg('운동 일수', '4 / 5', ' 회'), rg('총 볼륨', '42,800', ' +8%'), rg('신규 PR', '2', ' 개'), rg('평균 심박', '138', ' bpm')],
         ),
         const SizedBox(height: 12),
@@ -294,13 +289,13 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
         child: Row(children: [
-          GestureDetector(onTap: () => _s.go(AppPage.coach), child: Text('← 코치', style: F.inter(size: 13, color: C.gold))),
+          TapArea(onTap: () => _s.go(AppPage.coach), label: '뒤로 가기, AI 코치', minSize: 36, alignment: Alignment.centerLeft, child: Text('← 코치', style: F.inter(size: 13, color: C.gold))),
           const Spacer(),
           const LiveDot(size: 6),
           const SizedBox(width: 6),
           Text('운동 중 · 실시간 코칭', style: F.inter(size: 10, color: C.live, ls: .1)),
           const Spacer(),
-          GestureDetector(onTap: () => _s.go(AppPage.coach), child: Text('종료', style: F.inter(size: 11, color: C.textDim))),
+          TapArea(onTap: () => _s.go(AppPage.coach), label: '실시간 코칭 종료', minSize: 36, child: Text('종료', style: F.inter(size: 11, color: C.textDim))),
         ]),
       ),
       Expanded(
