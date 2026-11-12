@@ -20,3 +20,21 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    # google_fonts가 네트워크 대신 쓰는 내장 글꼴 (파일명 규칙: Family-Weight.ttf)
+    # NotoSerifKR은 KS X 1001 한글 2,350자 + 앱 문구에 쓰인 글자로 서브셋
+    - assets/google_fonts/
+  # 한글 글꼴 통일용 (SIL OFL 1.1 — assets/fonts/pretendard/OFL.txt)
+  # theme.dart에서 모든 라틴 글꼴의 fontFamilyFallback으로 지정
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/pretendard/Pretendard-Light.otf
+          weight: 300
+        - asset: assets/fonts/pretendard/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/pretendard/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/pretendard/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/pretendard/Pretendard-Bold.otf
+          weight: 700

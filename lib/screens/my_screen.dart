@@ -52,11 +52,13 @@ class MyScreen extends StatelessWidget {
               child: Text('F', style: F.serif(size: 18, color: C.goldBright)),
             ),
             const SizedBox(width: 14),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('회원님', style: F.inter(size: 14.5, w: FontWeight.w500)),
-              const SizedBox(height: 3),
-              Text('FIT LINK 멤버십 · ${_s.tier.en} Tier · 🔥 12일 연속', style: F.serif(size: 12, w: FontWeight.w400, color: C.textDim)),
-            ]),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('회원님', style: F.inter(size: 14.5, w: FontWeight.w500)),
+                const SizedBox(height: 3),
+                Text('FIT LINK 멤버십 · ${_s.tier.en} Tier · 🔥 12일 연속', style: F.serif(size: 12, w: FontWeight.w400, color: C.textDim)),
+              ]),
+            ),
           ]),
         ),
         const SectHead('내 배지', more: '전체 8개', top: 18),

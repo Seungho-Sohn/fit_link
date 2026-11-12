@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'screens/onboarding.dart';
@@ -15,8 +17,27 @@ import 'screens/my_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // 글꼴은 전부 assets/google_fonts/ 에 내장 — 실행 중 네트워크 다운로드 금지
+  GoogleFonts.config.allowRuntimeFetching = false;
+  _registerFontLicenses();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   runApp(const FitLinkApp());
+}
+
+/// 내장 글꼴(SIL OFL)의 라이선스를 앱의 오픈소스 라이선스 화면에 등록
+void _registerFontLicenses() {
+  const files = {
+    'Inter': 'assets/google_fonts/OFL-Inter.txt',
+    'Cormorant Garamond': 'assets/google_fonts/OFL-CormorantGaramond.txt',
+    'Bodoni Moda': 'assets/google_fonts/OFL-BodoniModa.txt',
+    'Noto Serif KR': 'assets/google_fonts/OFL-NotoSerifKR.txt',
+    'Pretendard': 'assets/fonts/pretendard/OFL.txt',
+  };
+  LicenseRegistry.addLicense(() async* {
+    for (final e in files.entries) {
+      yield LicenseEntryWithLineBreaks([e.key], await rootBundle.loadString(e.value));
+    }
+  });
 }
 
 class FitLinkApp extends StatelessWidget {
