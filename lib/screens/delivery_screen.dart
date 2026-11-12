@@ -340,7 +340,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: F.inter(size: 9.5, color: C.textFaint, ls: .05)), const SizedBox(height: 6), child]),
         );
-    Widget opts(List<List<String>> items, int sel, ValueChanged<int> f) => Row(children: [
+    Widget opts(List<({String label, String? sub})> items, int sel, ValueChanged<int> f) => Row(children: [
           for (int i = 0; i < items.length; i++)
             Expanded(
               child: GestureDetector(
@@ -350,8 +350,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                   decoration: BoxDecoration(border: Border.all(color: sel == i ? C.gold : C.hairlineSoft), gradient: sel == i ? softGold(.13) : null),
                   child: Column(children: [
-                    Text(items[i][0], style: F.inter(size: 10.5, color: sel == i ? C.ivory : C.textDim)),
-                    if (items[i].length > 1) Text(items[i][1], style: F.inter(size: 8, color: C.textFaint)),
+                    Text(items[i].label, style: F.inter(size: 10.5, color: sel == i ? C.ivory : C.textDim)),
+                    if (items[i].sub != null) Text(items[i].sub!, style: F.inter(size: 8, color: C.textFaint)),
                   ]),
                 ),
               ),
@@ -362,8 +362,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
       footer: [GoldButton('${won(c.total)} 결제하기', upper: false, onTap: _s.placeDOrder)],
       children: [
         sec('배달 주소', Text.rich(TextSpan(children: [TextSpan(text: '서울 강남구 테헤란로 · 집 ', style: F.inter(size: 12.5)), TextSpan(text: '(현관 비밀번호 1234)', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300))]))),
-        sec('배달 방식', opts(const [['알뜰배달', '묶음 · 0원'], ['한집배달', '직배송 · 2,000원']], delivMode, (i) => delivMode = i)),
-        sec('결제 수단', opts(const [['FIT페이'], ['신용카드'], ['카카오페이']], payMode, (i) => payMode = i)),
+        sec('배달 방식', opts(const [(label: '알뜰배달', sub: '묶음 · 0원'), (label: '한집배달', sub: '직배송 · 2,000원')], delivMode, (i) => delivMode = i)),
+        sec('결제 수단', opts(const [(label: 'FIT페이', sub: null), (label: '신용카드', sub: null), (label: '카카오페이', sub: null)], payMode, (i) => payMode = i)),
         sec(
           '요청 사항',
           TextField(
@@ -470,8 +470,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           ]),
         ),
         DetailList([
-          const ['주문번호', 'FL-D-20260810-0027'],
-          ['결제금액', won(_s.lastDelivTotal)],
+          ('주문번호', 'FL-D-20260810-0027'),
+          ('결제금액', won(_s.lastDelivTotal)),
         ]),
       ],
     );

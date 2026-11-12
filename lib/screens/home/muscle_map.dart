@@ -3,20 +3,22 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 
 /* ================= 근육 밸런스 (머슬맵) ================= */
+enum _Volume { enough, normal, low }
+
 class MuscleMap extends StatelessWidget {
   const MuscleMap({super.key});
   @override
   Widget build(BuildContext context) {
     const items = [
-      ['가슴', 1.0, '16세트', '충분', 'hi'],
-      ['등', .88, '14세트', '충분', 'hi'],
-      ['팔', .75, '12세트', '충분', 'hi'],
-      ['어깨', .56, '9세트', '보통', 'mid'],
-      ['복근', .44, '7세트', '보통', 'mid'],
-      ['하체', .25, '4세트', '부족', 'low'],
+      (part: '가슴', ratio: 1.0, sets: '16세트', label: '충분', level: _Volume.enough),
+      (part: '등', ratio: .88, sets: '14세트', label: '충분', level: _Volume.enough),
+      (part: '팔', ratio: .75, sets: '12세트', label: '충분', level: _Volume.enough),
+      (part: '어깨', ratio: .56, sets: '9세트', label: '보통', level: _Volume.normal),
+      (part: '복근', ratio: .44, sets: '7세트', label: '보통', level: _Volume.normal),
+      (part: '하체', ratio: .25, sets: '4세트', label: '부족', level: _Volume.low),
     ];
-    Color barC(String k) => k == 'hi' ? C.goldBright : (k == 'mid' ? C.goldDim : C.cHigh);
-    Color stC(String k) => k == 'hi' ? C.goldBright : (k == 'mid' ? C.textDim : C.cHigh);
+    Color barC(_Volume v) => switch (v) { _Volume.enough => C.goldBright, _Volume.normal => C.goldDim, _Volume.low => C.cHigh };
+    Color stC(_Volume v) => switch (v) { _Volume.enough => C.goldBright, _Volume.normal => C.textDim, _Volume.low => C.cHigh };
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const ProgHead('🗺️ 근육 밸런스', 'Muscle Map', '이번 주 부위별 볼륨이에요. 덜 자극한 부위를 채워 균형 있게 키워요.'),
       Box(
@@ -30,12 +32,12 @@ class MuscleMap extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(children: [
-                    SizedBox(width: 30, child: Text(it[0] as String, style: F.inter(size: 11))),
+                    SizedBox(width: 30, child: Text(it.part, style: F.inter(size: 11))),
                     const SizedBox(width: 8),
-                    Expanded(child: Bar(it[1] as double, height: 6, color: barC(it[4] as String))),
+                    Expanded(child: Bar(it.ratio, height: 6, color: barC(it.level))),
                     const SizedBox(width: 8),
-                    SizedBox(width: 38, child: Text(it[2] as String, textAlign: TextAlign.right, style: F.inter(size: 9.5, color: C.textDim))),
-                    SizedBox(width: 30, child: Text(it[3] as String, textAlign: TextAlign.right, style: F.inter(size: 8.5, color: stC(it[4] as String)))),
+                    SizedBox(width: 38, child: Text(it.sets, textAlign: TextAlign.right, style: F.inter(size: 9.5, color: C.textDim))),
+                    SizedBox(width: 30, child: Text(it.label, textAlign: TextAlign.right, style: F.inter(size: 8.5, color: stC(it.level)))),
                   ]),
                 ),
             ]),
@@ -45,13 +47,13 @@ class MuscleMap extends StatelessWidget {
       const SizedBox(height: 11),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         for (final l in const [
-          ['충분', C.goldBright],
-          ['보통', C.goldDim],
-          ['부족', Color(0xFF4A443A)]
+          (label: '충분', color: C.goldBright),
+          (label: '보통', color: C.goldDim),
+          (label: '부족', color: Color(0xFF4A443A)),
         ]) ...[
-          Container(width: 8, height: 8, color: l[1] as Color),
+          Container(width: 8, height: 8, color: l.color),
           const SizedBox(width: 4),
-          Text(l[0] as String, style: F.inter(size: 8.5, color: C.textFaint)),
+          Text(l.label, style: F.inter(size: 8.5, color: C.textFaint)),
           const SizedBox(width: 12),
         ],
       ]),

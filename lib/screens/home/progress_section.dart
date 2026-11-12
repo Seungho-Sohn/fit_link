@@ -8,7 +8,13 @@ class WeekBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const d = [
-      ['월', .55, true], ['화', .80, true], ['수', .12, false], ['목', .68, true], ['금', .90, true], ['토', .60, true], ['일', .08, false]
+      (day: '월', ratio: .55, done: true),
+      (day: '화', ratio: .80, done: true),
+      (day: '수', ratio: .12, done: false),
+      (day: '목', ratio: .68, done: true),
+      (day: '금', ratio: .90, done: true),
+      (day: '토', ratio: .60, done: true),
+      (day: '일', ratio: .08, done: false),
     ];
     return Padding(
       padding: const EdgeInsets.only(top: 22),
@@ -30,18 +36,18 @@ class WeekBars extends StatelessWidget {
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: FractionallySizedBox(
-                          heightFactor: d[i][1] as double,
+                          heightFactor: d[i].ratio,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: (d[i][2] as bool) ? null : C.goldA(.15),
-                              gradient: (d[i][2] as bool) ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.goldBright, C.goldDim]) : null,
+                              color: d[i].done ? null : C.goldA(.15),
+                              gradient: d[i].done ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.goldBright, C.goldDim]) : null,
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(d[i][0] as String, style: F.inter(size: 8.5, color: i == 5 ? C.goldBright : C.textFaint)),
+                    Text(d[i].day, style: F.inter(size: 8.5, color: i == 5 ? C.goldBright : C.textFaint)),
                   ]),
                 ),
               ),

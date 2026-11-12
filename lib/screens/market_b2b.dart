@@ -190,9 +190,9 @@ class _B2BViewState extends State<B2BView> {
         children: const [
           ConfirmHero('견적 요청이 접수됐어요', '사업자 인증 확인 후, 전담 매니저가\n영업일 1일 내 도매 견적과 함께 연락드립니다.'),
           DetailList([
-            ['접수번호', 'WW-B2B-20260811-014'],
-            ['담당', 'WILD WEAR B2B팀'],
-            ['예상 회신', '영업일 1일 이내'],
+            ('접수번호', 'WW-B2B-20260811-014'),
+            ('담당', 'WILD WEAR B2B팀'),
+            ('예상 회신', '영업일 1일 이내'),
           ]),
           HintCard('사업자 인증이 완료되면', '전용관 도매가·리스/할부 견적을 앱에서 바로 확인할 수 있어요.', top: 16),
         ],
@@ -263,7 +263,10 @@ class _B2BViewState extends State<B2BView> {
             Tag(st, color: c, border: c.op(.42), size: 9),
           ]),
         );
-    const bars = [['3월', .52], ['4월', .61], ['5월', .58], ['6월', .72], ['7월', .80], ['8월', .92]];
+    const bars = [
+      (month: '3월', ratio: .52), (month: '4월', ratio: .61), (month: '5월', ratio: .58),
+      (month: '6월', ratio: .72), (month: '7월', ratio: .80), (month: '8월', ratio: .92),
+    ];
     return ScreenFrame(
       header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '운영 대시보드', titleSize: 22, desc: '스틸핏 강남점 · 2026년 8월'),
       footer: [
@@ -295,11 +298,11 @@ class _B2BViewState extends State<B2BView> {
                   padding: const EdgeInsets.symmetric(horizontal: 3.5),
                   child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
                     Container(
-                      height: 96 * (bars[i][1] as double),
+                      height: 96 * bars[i].ratio,
                       decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: i == bars.length - 1 ? const [C.goldBright, C.gold] : const [C.goldBright, C.goldDim])),
                     ),
                     const SizedBox(height: 4),
-                    Text(bars[i][0] as String, style: F.inter(size: 8, color: C.textFaint)),
+                    Text(bars[i].month, style: F.inter(size: 8, color: C.textFaint)),
                   ]),
                 ),
               ),

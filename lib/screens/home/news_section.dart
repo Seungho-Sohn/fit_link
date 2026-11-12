@@ -36,17 +36,17 @@ class NewsSection extends StatelessWidget {
               height: 120,
               decoration: const BoxDecoration(color: C.panel, border: Border(bottom: BorderSide(color: C.hairlineSoft))),
               child: Stack(children: [
-                Center(child: Text(feat[1], style: const TextStyle(fontSize: 44))),
-                Positioned(top: 0, left: 0, child: Container(color: C.gold, padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4), child: Text(feat[0], style: F.inter(size: 8.5, w: FontWeight.w700, color: C.ink, ls: .08)))),
+                Center(child: Text(feat.emoji, style: const TextStyle(fontSize: 44))),
+                Positioned(top: 0, left: 0, child: Container(color: C.gold, padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4), child: Text(feat.category, style: F.inter(size: 8.5, w: FontWeight.w700, color: C.ink, ls: .08)))),
                 Positioned(top: 9, right: 11, child: Text('TODAY', style: F.inter(size: 9, color: C.textDim, ls: .05))),
               ]),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(feat[2], style: F.inter(size: 14.5, w: FontWeight.w500, h: 1.4)),
+                Text(feat.title, style: F.inter(size: 14.5, w: FontWeight.w500, h: 1.4)),
                 const SizedBox(height: 8),
-                Text(feat[3], style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300, h: 1.6)),
+                Text(feat.body, style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300, h: 1.6)),
                 const SizedBox(height: 11),
                 Text('자세히 보기 ›', style: F.inter(size: 10, color: C.goldBright, ls: .06)),
               ]),
@@ -59,19 +59,19 @@ class NewsSection extends StatelessWidget {
     ]);
   }
 
-  Widget _pastRow(DateTime d, List<String> n, String Function(DateTime) fmt) => GestureDetector(
+  Widget _pastRow(DateTime d, NewsItem n, String Function(DateTime) fmt) => GestureDetector(
         onTap: () => _s.toast('지난 소식도 다시 볼 수 있어요'),
         child: Divided(
           top: true,
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
           child: Row(children: [
-            EmojiTile(n[1], size: 38, font: 18),
+            EmojiTile(n.emoji, size: 38, font: 18),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(n[0], style: F.inter(size: 8.5, color: C.gold, ls: .1)),
+                Text(n.category, style: F.inter(size: 8.5, color: C.gold, ls: .1)),
                 const SizedBox(height: 3),
-                Text(n[2], style: F.inter(size: 11.5, h: 1.4)),
+                Text(n.title, style: F.inter(size: 11.5, h: 1.4)),
               ]),
             ),
             Text(fmt(d), style: F.inter(size: 9, color: C.textFaint)),

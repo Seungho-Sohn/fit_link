@@ -158,7 +158,7 @@ class _MarketScreenState extends State<MarketScreen> {
               SizedBox(
                 height: 170,
                 child: ListView(scrollDirection: Axis.horizontal, children: [
-                  for (final d in deals) _dealCard(productById(d[0] as String), d[1] as int),
+                  for (final d in deals) _dealCard(productById(d.productId), d.off),
                 ]),
               ),
             ]),
@@ -490,9 +490,9 @@ class _MarketScreenState extends State<MarketScreen> {
         children: [
           const ConfirmHero('결제 완료', '여러 판매자의 상품이 한 번에 주문되었습니다.\n배송 현황은 마이페이지에서 확인할 수 있어요.'),
           DetailList([
-            const ['주문번호', 'FL-20260807-0412'],
-            ['결제금액', won(_s.lastOrderTotal)],
-            const ['배송지', '서울 강남구 · 기본배송지'],
+            ('주문번호', 'FL-20260807-0412'),
+            ('결제금액', won(_s.lastOrderTotal)),
+            ('배송지', '서울 강남구 · 기본배송지'),
           ]),
         ],
       );

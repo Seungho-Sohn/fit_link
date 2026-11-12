@@ -51,16 +51,17 @@ class InbodyScreen extends StatelessWidget {
         ),
         const SectHead('체성분 분석', more: '표준 대비', top: 20),
         for (final r in const [
-          ['체중', .72, .78, '72.3', 'kg'],
-          ['골격근량', .88, .66, '34.6', 'kg'],
-          ['체지방량', .52, .60, '10.3', 'kg'],
-          ['체수분', .80, .70, '45.2', 'L'],
-          ['단백질', .84, .68, '12.4', 'kg'],
+          // fill: 막대 길이, std: 표준선 위치 (0~1)
+          (name: '체중', fill: .72, std: .78, value: '72.3', unit: 'kg'),
+          (name: '골격근량', fill: .88, std: .66, value: '34.6', unit: 'kg'),
+          (name: '체지방량', fill: .52, std: .60, value: '10.3', unit: 'kg'),
+          (name: '체수분', fill: .80, std: .70, value: '45.2', unit: 'L'),
+          (name: '단백질', fill: .84, std: .68, value: '12.4', unit: 'kg'),
         ])
           Divided(
             padding: const EdgeInsets.symmetric(vertical: 11),
             child: Row(children: [
-              SizedBox(width: 66, child: Text(r[0] as String, style: F.inter(size: 11, color: C.textDim))),
+              SizedBox(width: 66, child: Text(r.name, style: F.inter(size: 11, color: C.textDim))),
               const SizedBox(width: 11),
               Expanded(
                 child: LayoutBuilder(builder: (_, c) {
@@ -75,11 +76,11 @@ class InbodyScreen extends StatelessWidget {
                           height: 9,
                           decoration: BoxDecoration(color: C.panel, border: Border.all(color: C.hairlineSoft)),
                           alignment: Alignment.centerLeft,
-                          child: FractionallySizedBox(widthFactor: r[1] as double, child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C.goldDim, C.goldBright])))),
+                          child: FractionallySizedBox(widthFactor: r.fill, child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C.goldDim, C.goldBright])))),
                         ),
                       ),
                       // 표준선
-                      Positioned(left: c.maxWidth * (r[2] as double), top: 0, bottom: 0, child: Container(width: 1, color: C.textFaint)),
+                      Positioned(left: c.maxWidth * r.std, top: 0, bottom: 0, child: Container(width: 1, color: C.textFaint)),
                     ]),
                   );
                 }),
@@ -88,7 +89,7 @@ class InbodyScreen extends StatelessWidget {
               SizedBox(
                 width: 74,
                 child: Text.rich(
-                  TextSpan(children: [TextSpan(text: r[3] as String, style: F.serif(size: 14, w: FontWeight.w600)), TextSpan(text: r[4] as String, style: F.inter(size: 8.5, color: C.textFaint))]),
+                  TextSpan(children: [TextSpan(text: r.value, style: F.serif(size: 14, w: FontWeight.w600)), TextSpan(text: r.unit, style: F.inter(size: 8.5, color: C.textFaint))]),
                   textAlign: TextAlign.right,
                 ),
               ),

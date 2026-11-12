@@ -43,9 +43,9 @@ class TrainerSection extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
                   decoration: BoxDecoration(border: Border.all(color: i == day ? C.gold : C.hairlineSoft), gradient: i == day ? softGold(.14) : null),
                   child: Column(children: [
-                    Text(bkDays[i][0], style: F.inter(size: 9, color: i == day ? C.goldBright : C.textDim)),
+                    Text(bkDays[i].label, style: F.inter(size: 9, color: i == day ? C.goldBright : C.textDim)),
                     const SizedBox(height: 3),
-                    Text(bkDays[i][1], style: F.serif(size: 14, w: FontWeight.w600)),
+                    Text(bkDays[i].date, style: F.serif(size: 14, w: FontWeight.w600)),
                   ]),
                 ),
               ),
@@ -80,7 +80,7 @@ class TrainerSection extends StatelessWidget {
         ),
       ]),
       foot: (ctx, setS) => GoldButton(
-        slot != null ? '${bkDays[day][1]}일 $slot · 예약 확정' : '시간을 선택해주세요',
+        slot != null ? '${bkDays[day].date}일 $slot · 예약 확정' : '시간을 선택해주세요',
         upper: false,
         onTap: () {
           if (slot == null) {
@@ -88,7 +88,7 @@ class TrainerSection extends StatelessWidget {
             return;
           }
           Navigator.pop(ctx);
-          _s.toast('${t.nm} 트레이너 ${bkDays[day][1]}일 $slot 예약 완료 🎉');
+          _s.toast('${t.nm} 트레이너 ${bkDays[day].date}일 $slot 예약 완료 🎉');
         },
       ),
     );

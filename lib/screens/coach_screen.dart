@@ -68,9 +68,9 @@ class _CoachScreenState extends State<CoachScreen> {
       Future.delayed(const Duration(milliseconds: 400), () => add('report', ''));
       return;
     }
-    final it = coachQ.firstWhere((x) => x['k'] == k);
-    add('me', it['q']!);
-    Future.delayed(const Duration(milliseconds: 350), () => add('bot', it['a']!));
+    final it = coachQ.firstWhere((x) => x.key == k);
+    add('me', it.question);
+    Future.delayed(const Duration(milliseconds: 350), () => add('bot', it.answer));
   }
 
   void send() {
@@ -127,7 +127,7 @@ class _CoachScreenState extends State<CoachScreen> {
           child: Row(children: [
             _chip('🎯 실시간 코칭', () => _s.go(AppPage.live), solid: true),
             _chip('📊 주간 리포트', () => ask('report')),
-            for (final q in coachQ) _chip(q['q']!, () => ask(q['k']!)),
+            for (final q in coachQ) _chip(q.question, () => ask(q.key)),
           ]),
         ),
       ),
@@ -336,10 +336,10 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
               },
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Text('❤️', style: TextStyle(fontSize: 18)),
-                Text('${st['bpm']}', style: F.serif(size: 44, w: FontWeight.w600, color: C.cHigh, h: 1)),
+                Text('${st.bpm}', style: F.serif(size: 44, w: FontWeight.w600, color: C.cHigh, h: 1)),
                 Text('BPM', style: F.inter(size: 9, color: C.textFaint, ls: .1)),
                 const SizedBox(height: 5),
-                Text(st['zone'] as String, style: F.inter(size: 9.5, color: C.cHigh)),
+                Text(st.zone, style: F.inter(size: 9.5, color: C.cHigh)),
               ]),
             ),
           ),
@@ -351,7 +351,7 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Text('🎯', style: TextStyle(fontSize: 19)),
               const SizedBox(width: 12),
-              Expanded(child: Text(cueOverride ?? st['cue'] as String, style: F.inter(size: 12, w: FontWeight.w300, h: 1.55))),
+              Expanded(child: Text(cueOverride ?? st.cue, style: F.inter(size: 12, w: FontWeight.w300, h: 1.55))),
             ]),
           ),
           if (resting) ...[

@@ -82,9 +82,9 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(children: [
-                            SizedBox(width: 20, child: Text(it[0], textAlign: TextAlign.center, style: const TextStyle(fontSize: 15))),
+                            SizedBox(width: 20, child: Text(it.icon, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15))),
                             const SizedBox(width: 11),
-                            Text(it[1], style: F.inter(size: 12)),
+                            Text(it.text, style: F.inter(size: 12)),
                           ]),
                         ),
                     ]),

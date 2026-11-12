@@ -5,6 +5,10 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'home/sections.dart';
 
+
+/// 헬스장 추천 기준: 한산한 곳 / 북적이는 곳
+enum _CrowdPref { quiet, busy }
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -12,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String pref = 'low'; // 'low' 한산 / 'high' 북적
+  _CrowdPref pref = _CrowdPref.quiet;
   final Set<int> mateSent = {};
 
   AppState get s => AppState.I;
@@ -205,17 +209,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ----- 오늘 가볼만한 헬스장 (면적 대비 밀집도) ----- */
   List<Widget> _gymCrowd() {
-    final list = [...gyms]..sort((a, b) => pref == 'low' ? b.spp.compareTo(a.spp) : a.spp.compareTo(b.spp));
-    final reason = pref == 'low' ? '지금 가장 여유로워요 · 1인당 공간 넉넉' : '지금 가장 붐벼요 · 활기·자극 최고';
+    final list = [...gyms]..sort((a, b) => pref == _CrowdPref.quiet ? b.spp.compareTo(a.spp) : a.spp.compareTo(b.spp));
+    final reason = pref == _CrowdPref.quiet ? '지금 가장 여유로워요 · 1인당 공간 넉넉' : '지금 가장 붐벼요 · 활기·자극 최고';
 
-    Widget prefBtn(String key, String e, String l, String d) {
+    Widget prefBtn(_CrowdPref key, String e, String l, String d) {
       final on = pref == key;
       return Expanded(
         child: GestureDetector(
           onTap: () => setState(() => pref = key),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            margin: EdgeInsets.only(right: key == 'low' ? 8 : 0),
+            margin: EdgeInsets.only(right: key == _CrowdPref.quiet ? 8 : 0),
             padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
             decoration: BoxDecoration(border: Border.all(color: on ? C.gold : C.hairlineSoft), gradient: on ? softGold(.14) : null),
             child: Column(children: [
@@ -246,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
         TextSpan(text: '로 계산했어요. 원하는 분위기를 골라보세요.'),
       ])),
       const SizedBox(height: 11),
-      Row(children: [prefBtn('low', '🧘', '한산한 곳', '여유롭게 · 대기 없이'), prefBtn('high', '🔥', '북적이는 곳', '활기차게 · 자극 받으며')]),
+      Row(children: [prefBtn(_CrowdPref.quiet, '🧘', '한산한 곳', '여유롭게 · 대기 없이'), prefBtn(_CrowdPref.busy, '🔥', '북적이는 곳', '활기차게 · 자극 받으며')]),
       const SizedBox(height: 14),
       for (int i = 0; i < list.length; i++) _gymCard(list[i], i == 0, reason),
     ];
@@ -254,8 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _gymCard(Gym g, bool pick, String reason) {
     final spp = g.spp;
-    final lv = spp >= 3.0 ? ['여유', C.cLow] : (spp >= 1.5 ? ['보통', C.cMid] : ['혼잡', C.cHigh]);
-    final col = lv[1] as Color;
+    final (label, col) = spp >= 3.0 ? ('여유', C.cLow) : (spp >= 1.5 ? ('보통', C.cMid) : ('혼잡', C.cHigh));
     return Box(
       onTap: () => s.go(AppPage.gear),
       margin: const EdgeInsets.only(bottom: 10),
@@ -284,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
               TextSpan(text: '명', style: F.inter(size: 11, color: C.textDim)),
             ])),
             const SizedBox(height: 4),
-            Tag(lv[0] as String, color: col, border: col.op(.45), size: 9),
+            Tag(label, color: col, border: col.op(.45), size: 9),
           ]),
         ]),
         const SizedBox(height: 13),
@@ -301,9 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /* ----- 운동 메이트 ----- */
   List<Widget> _mates() {
     const mates = [
-      ['J', '지훈', '28 · 남', '스틸핏 강남 · 주로 저녁 7시', '근육량 증가', '3대 400+', '주 5회', '94%', 'on'],
-      ['S', '서연', '26 · 여', '스틸핏 강남 · 주로 오전 10시', '체지방 감량', '유산소', '주 4회', '88%', 'on'],
-      ['M', '민재', '31 · 남', '코어짐24 역삼 · 주로 저녁 8시', '체형 유지', '파워리프팅', '주 3회', '82%', ''],
+      (av: 'J', name: '지훈', info: '28 · 남', gym: '스틸핏 강남 · 주로 저녁 7시', goal: '근육량 증가', style: '3대 400+', freq: '주 5회', match: '94%', online: true),
+      (av: 'S', name: '서연', info: '26 · 여', gym: '스틸핏 강남 · 주로 오전 10시', goal: '체지방 감량', style: '유산소', freq: '주 4회', match: '88%', online: true),
+      (av: 'M', name: '민재', info: '31 · 남', gym: '코어짐24 역삼 · 주로 저녁 8시', goal: '체형 유지', style: '파워리프팅', freq: '주 3회', match: '82%', online: false),
     ];
     return [
       const ProgHead('🤝 운동 메이트', 'Workout Mate', '같은 헬스장 · 비슷한 목표 · 운동 시간이 맞는 메이트를 찾았어요.'),
@@ -318,9 +321,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: C.goldDim), gradient: RadialGradient(center: const Alignment(-.4, -.5), colors: [C.goldA(.18), C.panel])),
-                child: Text(mates[i][0], style: F.gnum(size: 19, color: mates[i][8] == 'on' ? C.goldBright : C.textDim)),
+                child: Text(mates[i].av, style: F.gnum(size: 19, color: mates[i].online ? C.goldBright : C.textDim)),
               ),
-              if (mates[i][8] == 'on')
+              if (mates[i].online)
                 Positioned(
                   right: 1,
                   bottom: 1,
@@ -331,21 +334,21 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text.rich(TextSpan(children: [
-                  TextSpan(text: mates[i][1], style: F.inter(size: 13, w: FontWeight.w500)),
-                  TextSpan(text: '  ${mates[i][2]}', style: F.inter(size: 10, color: C.textFaint, w: FontWeight.w300)),
+                  TextSpan(text: mates[i].name, style: F.inter(size: 13, w: FontWeight.w500)),
+                  TextSpan(text: '  ${mates[i].info}', style: F.inter(size: 10, color: C.textFaint, w: FontWeight.w300)),
                 ])),
                 const SizedBox(height: 3),
-                Text(mates[i][3], style: F.inter(size: 10, color: C.textDim, w: FontWeight.w300)),
+                Text(mates[i].gym, style: F.inter(size: 10, color: C.textDim, w: FontWeight.w300)),
                 const SizedBox(height: 8),
                 Wrap(spacing: 5, children: [
-                  Tag(mates[i][4], color: C.goldBright, border: C.goldDim, size: 8.5),
-                  Tag(mates[i][5], size: 8.5),
-                  Tag(mates[i][6], size: 8.5),
+                  Tag(mates[i].goal, color: C.goldBright, border: C.goldDim, size: 8.5),
+                  Tag(mates[i].style, size: 8.5),
+                  Tag(mates[i].freq, size: 8.5),
                 ]),
               ]),
             ),
             Column(children: [
-              Text(mates[i][7], style: F.gnum(size: 18)),
+              Text(mates[i].match, style: F.gnum(size: 18)),
               Text('MATCH', style: F.inter(size: 7, color: C.textFaint, ls: .1)),
               const SizedBox(height: 9),
               LineButton(mateSent.contains(i) ? '신청됨 ✓' : '메이트 신청', size: 9.5, done: mateSent.contains(i), onTap: () {

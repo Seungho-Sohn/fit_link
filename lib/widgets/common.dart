@@ -554,7 +554,7 @@ class ConfirmHero extends StatelessWidget {
 
 /// 키-값 상세 행 목록
 class DetailList extends StatelessWidget {
-  final List<List<String>> rows;
+  final List<(String, String)> rows;
   const DetailList(this.rows, {super.key});
 
   @override
@@ -562,13 +562,13 @@ class DetailList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Column(children: [
-        for (final r in rows)
+        for (final (k, v) in rows)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
             child: Row(children: [
-              Expanded(child: Text(r[0], style: F.inter(size: 12.5, color: C.textDim, w: FontWeight.w300))),
-              Text(r[1], style: F.inter(size: 12.5, color: C.goldBright, w: FontWeight.w500)),
+              Expanded(child: Text(k, style: F.inter(size: 12.5, color: C.textDim, w: FontWeight.w300))),
+              Text(v, style: F.inter(size: 12.5, color: C.goldBright, w: FontWeight.w500)),
             ]),
           ),
       ]),
