@@ -37,7 +37,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text(s.eye.toUpperCase(), style: F.serif(size: 13, color: C.gold, ls: .24, w: FontWeight.w600))),
-          GestureDetector(onTap: () => AppState.I.finishOnboard(sel[0]), child: Text('건너뛰기', style: F.inter(size: 11, color: C.textFaint))),
+          TapArea(onTap: () => AppState.I.finishOnboard(sel[0]), label: '온보딩 건너뛰기', minSize: 36, child: Text('건너뛰기', style: F.inter(size: 11, color: C.textFaint))),
         ]),
         const SizedBox(height: 12),
         Text(s.h, style: F.kr(size: 27, h: 1.3)),
@@ -82,9 +82,9 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(children: [
-                            SizedBox(width: 20, child: Text(it[0], textAlign: TextAlign.center, style: const TextStyle(fontSize: 15))),
+                            SizedBox(width: 20, child: Text(it.icon, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15))),
                             const SizedBox(width: 11),
-                            Text(it[1], style: F.inter(size: 12)),
+                            Text(it.text, style: F.inter(size: 12)),
                           ]),
                         ),
                     ]),

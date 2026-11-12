@@ -1,4 +1,5 @@
 // HTML <script> 안의 하드코딩 데이터를 그대로 옮긴 목업 데이터
+import 'package:latlong2/latlong.dart';
 
 String won(num n) {
   final s = n.round().toString();
@@ -25,7 +26,7 @@ class ObOption {
 
 class ObPreview {
   final String title;
-  final List<List<String>> items;
+  final List<({String icon, String text})> items;
   const ObPreview(this.title, this.items);
 }
 
@@ -45,9 +46,9 @@ const obSteps = [
     opts: [ObOption('💪', '근육량 증가', '벌크업 · 근력 향상'), ObOption('🔥', '체지방 감량', '다이어트 · 커팅'), ObOption('⚖️', '체형 유지', '컨디션 · 건강관리')],
     social: ['회원의 58%가 근육량 증가를 선택했어요', '최근 감량 목표 회원 +23% 증가 중', '꾸준한 유지가 가장 오래 가는 목표예요'],
     preview: [
-      ObPreview('근육량 증가 맞춤 설정', [['🍽', '고단백 식단 · 체중 1kg당 2g'], ['🗓', 'PPL 분할 루틴 자동 구성'], ['🔥', '벌크업 칼로리 +300kcal']]),
-      ObPreview('체지방 감량 맞춤 설정', [['🥗', '고단백·저탄수 커팅 식단'], ['🏃', '근력 + 유산소 병행 루틴'], ['🔥', '커팅 칼로리 −400kcal']]),
-      ObPreview('체형 유지 맞춤 설정', [['🍚', '균형 잡힌 유지 식단'], ['🗓', '상·하체 2분할 루틴'], ['⚖️', '컨디션·회복 중심 관리']]),
+      ObPreview('근육량 증가 맞춤 설정', [(icon: '🍽', text: '고단백 식단 · 체중 1kg당 2g'), (icon: '🗓', text: 'PPL 분할 루틴 자동 구성'), (icon: '🔥', text: '벌크업 칼로리 +300kcal')]),
+      ObPreview('체지방 감량 맞춤 설정', [(icon: '🥗', text: '고단백·저탄수 커팅 식단'), (icon: '🏃', text: '근력 + 유산소 병행 루틴'), (icon: '🔥', text: '커팅 칼로리 −400kcal')]),
+      ObPreview('체형 유지 맞춤 설정', [(icon: '🍚', text: '균형 잡힌 유지 식단'), (icon: '🗓', text: '상·하체 2분할 루틴'), (icon: '⚖️', text: '컨디션·회복 중심 관리')]),
     ],
   ),
   ObStep(
@@ -56,9 +57,9 @@ const obSteps = [
     p: '현실적인 목표가 지속률을 높여요.',
     opts: [ObOption('🌱', '주 1–2회', '이제 시작해요'), ObOption('🏃', '주 3–4회', '꾸준히 하는 편'), ObOption('🔥', '주 5회 이상', '거의 매일')],
     preview: [
-      ObPreview('주 1–2회 플랜', [['🌱', '전신(무분할) 루틴'], ['⏱', '40분 압축 프로그램'], ['🔔', '부담 없는 리마인더']]),
-      ObPreview('주 3–4회 플랜', [['🗓', '상·하체 또는 3분할'], ['🔁', '부위별 회복일 자동 배치'], ['📈', '주간 볼륨 밸런싱']]),
-      ObPreview('주 5회+ 플랜', [['🔥', '5분할 부위 집중'], ['📈', '고빈도 볼륨 관리'], ['🛌', '회복도 기반 강도 조절']]),
+      ObPreview('주 1–2회 플랜', [(icon: '🌱', text: '전신(무분할) 루틴'), (icon: '⏱', text: '40분 압축 프로그램'), (icon: '🔔', text: '부담 없는 리마인더')]),
+      ObPreview('주 3–4회 플랜', [(icon: '🗓', text: '상·하체 또는 3분할'), (icon: '🔁', text: '부위별 회복일 자동 배치'), (icon: '📈', text: '주간 볼륨 밸런싱')]),
+      ObPreview('주 5회+ 플랜', [(icon: '🔥', text: '5분할 부위 집중'), (icon: '📈', text: '고빈도 볼륨 관리'), (icon: '🛌', text: '회복도 기반 강도 조절')]),
     ],
   ),
   ObStep(
@@ -67,28 +68,39 @@ const obSteps = [
     p: '관심 부위 위주로 추천해 드릴게요.',
     opts: [ObOption('🏋️', '웨이트 트레이닝', '헬스장 머신·프리웨이트'), ObOption('🧘', '홈트·맨몸', '집에서 가볍게'), ObOption('🏃', '유산소·러닝', '체력·심폐')],
     preview: [
-      ObPreview('웨이트 트레이닝 맞춤', [['🏋️', '머신·프리웨이트 루틴'], ['📍', '기구 보유 헬스장 추천'], ['📷', '기구 스캔 매칭']]),
-      ObPreview('홈트·맨몸 맞춤', [['🧘', '집에서 하는 맨몸 루틴'], ['🪑', '최소 장비 대체 운동'], ['⏱', '시간대별 홈트 코스']]),
-      ObPreview('유산소·러닝 맞춤', [['🏃', '심폐 지구력 프로그램'], ['⌚', '심박 존 트레이닝'], ['🗺', '러닝 코스 추천']]),
+      ObPreview('웨이트 트레이닝 맞춤', [(icon: '🏋️', text: '머신·프리웨이트 루틴'), (icon: '📍', text: '기구 보유 헬스장 추천'), (icon: '📷', text: '기구 스캔 매칭')]),
+      ObPreview('홈트·맨몸 맞춤', [(icon: '🧘', text: '집에서 하는 맨몸 루틴'), (icon: '🪑', text: '최소 장비 대체 운동'), (icon: '⏱', text: '시간대별 홈트 코스')]),
+      ObPreview('유산소·러닝 맞춤', [(icon: '🏃', text: '심폐 지구력 프로그램'), (icon: '⌚', text: '심박 존 트레이닝'), (icon: '🗺', text: '러닝 코스 추천')]),
     ],
   ),
 ];
 
 /* ===== AI 코치 ===== */
+class CoachQuestion {
+  final String key, question, answer;
+  const CoachQuestion(this.key, this.question, this.answer);
+}
+
 const coachQ = [
-  {'k': 'today', 'q': '오늘 뭐 운동할까?', 'a': '이번 주 근육 밸런스를 보니 하체가 4세트로 부족해요. 오늘은 하체 집중을 추천해요 — 스쿼트 4×8, 레그프레스 4×12, 루마니안 데드리프트 3×10. 마침 스틸핏 강남이 지금 37명으로 한산하니 바로 가기 좋아요 💪'},
-  {'k': 'legs', 'q': '하체 어떻게 채워?', 'a': '주간 권장 대비 절반 수준이에요. 이번 주에 하체 세션을 한 번 더 넣어 12~16세트로 올려보세요. 스쿼트·레그프레스·레그컬 위주면 충분해요.'},
-  {'k': 'gym', 'q': '지금 헬스장 가도 돼?', 'a': '가까운 스틸핏 강남이 37명 · 1인당 4.1평으로 여유예요. 한산한 곳을 선호하시니 지금이 딱이에요. 대기 없이 스쿼트랙 바로 쓸 수 있어요.'},
-  {'k': 'protein', 'q': '단백질 얼마나 먹어?', 'a': '체중 72.3kg 기준 근성장엔 하루 약 116~145g(1.6~2.0g/kg)을 권장해요. 오늘 칼로리 기록엔 아직 여유가 있으니 저녁에 닭가슴살이나 프로틴으로 채워주세요.'},
-  {'k': 'pr', 'q': '1RM 더 올리려면?', 'a': '데드리프트 185kg로 최근 신기록을 세웠어요 🎉. 다음 4주는 90%(약 166kg) 3×3 위주로 신경계 자극을 늘리고, 주간 볼륨을 5%씩 점진적으로 올려보세요.'},
+  CoachQuestion('today', '오늘 뭐 운동할까?', '이번 주 근육 밸런스를 보니 하체가 4세트로 부족해요. 오늘은 하체 집중을 추천해요 — 스쿼트 4×8, 레그프레스 4×12, 루마니안 데드리프트 3×10. 마침 스틸핏 강남이 지금 37명으로 한산하니 바로 가기 좋아요 💪'),
+  CoachQuestion('legs', '하체 어떻게 채워?', '주간 권장 대비 절반 수준이에요. 이번 주에 하체 세션을 한 번 더 넣어 12~16세트로 올려보세요. 스쿼트·레그프레스·레그컬 위주면 충분해요.'),
+  CoachQuestion('gym', '지금 헬스장 가도 돼?', '가까운 스틸핏 강남이 37명 · 1인당 4.1평으로 여유예요. 한산한 곳을 선호하시니 지금이 딱이에요. 대기 없이 스쿼트랙 바로 쓸 수 있어요.'),
+  CoachQuestion('protein', '단백질 얼마나 먹어?', '체중 72.3kg 기준 근성장엔 하루 약 116~145g(1.6~2.0g/kg)을 권장해요. 오늘 칼로리 기록엔 아직 여유가 있으니 저녁에 닭가슴살이나 프로틴으로 채워주세요.'),
+  CoachQuestion('pr', '1RM 더 올리려면?', '데드리프트 185kg로 최근 신기록을 세웠어요 🎉. 다음 4주는 90%(약 166kg) 3×3 위주로 신경계 자극을 늘리고, 주간 볼륨을 5%씩 점진적으로 올려보세요.'),
 ];
 
+class LiveStep {
+  final int bpm;
+  final String zone, cue;
+  const LiveStep(this.bpm, this.zone, this.cue);
+}
+
 const liveSteps = [
-  {'bpm': 118, 'zone': 'Zone 3 · 유산소', 'cue': '첫 세트예요. 발은 어깨너비, 코어 단단히 잡고 천천히 앉았다 일어나세요.'},
-  {'bpm': 132, 'zone': 'Zone 3 · 유산소', 'cue': '좋아요! 무릎이 발끝 방향으로 잘 나가고 있어요. 호흡 리듬 유지하세요.'},
-  {'bpm': 145, 'zone': 'Zone 4 · 무산소', 'cue': '심박이 Zone 4로 올라왔어요. 세트 간 90초 휴식으로 회복하며 가세요.'},
-  {'bpm': 151, 'zone': 'Zone 4 · 무산소', 'cue': '후반부예요. 마지막 2회는 천천히 내려가며 자극을 끝까지 유지하세요.'},
-  {'bpm': 158, 'zone': 'Zone 5 · 최대', 'cue': '마지막 세트! 폼 무너지지 않게, 3회만 남기고 힘내세요 💪'},
+  LiveStep(118, 'Zone 3 · 유산소', '첫 세트예요. 발은 어깨너비, 코어 단단히 잡고 천천히 앉았다 일어나세요.'),
+  LiveStep(132, 'Zone 3 · 유산소', '좋아요! 무릎이 발끝 방향으로 잘 나가고 있어요. 호흡 리듬 유지하세요.'),
+  LiveStep(145, 'Zone 4 · 무산소', '심박이 Zone 4로 올라왔어요. 세트 간 90초 휴식으로 회복하며 가세요.'),
+  LiveStep(151, 'Zone 4 · 무산소', '후반부예요. 마지막 2회는 천천히 내려가며 자극을 끝까지 유지하세요.'),
+  LiveStep(158, 'Zone 5 · 최대', '마지막 세트! 폼 무너지지 않게, 3회만 남기고 힘내세요 💪'),
 ];
 
 /* ===== 커뮤니티 ===== */
@@ -99,6 +111,11 @@ class Post {
   Post(this.av, this.name, this.tier, this.time, this.tag, this.txt, this.img, this.likes, this.comments, this.liked);
 }
 
+class Comment {
+  final String av, name, text, time;
+  const Comment(this.av, this.name, this.text, this.time);
+}
+
 List<Post> seedPosts() => [
       Post('K', '김철봉', 'Gold', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
       Post('S', '수진트레이닝', 'PT', '40분 전', '꿀팁', '초보자분들 데드리프트 허리 안 아프게 하는 법 3가지 정리해봤어요. 궁금하면 댓글 남겨주세요!', '', 118, 23, true),
@@ -106,17 +123,17 @@ List<Post> seedPosts() => [
       Post('H', '헬린이탈출', 'Bronze', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
     ];
 
-Map<Post, List<List<String>>> seedComments(List<Post> posts) => {
+Map<Post, List<Comment>> seedComments(List<Post> posts) => {
       posts[0]: [
-        ['J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'],
-        ['H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전']
+        Comment('J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'),
+        Comment('H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전')
       ],
       posts[1]: [
-        ['K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전']
+        Comment('K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전')
       ],
       posts[2]: [],
       posts[3]: [
-        ['S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전']
+        Comment('S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전')
       ],
     };
 
@@ -152,12 +169,12 @@ List<Challenge> seedChallenges() => [
     ];
 
 const rankList = [
-  ['🥇', '철봉의신', '운동 7일 · 1,240pt', '1240', 'top1'],
-  ['🥈', '수진트레이닝', '운동 7일 · 1,180pt', '1180', ''],
-  ['🥉', '벤치프레서', '운동 6일 · 1,020pt', '1020', ''],
-  ['4', '아침운동러', '운동 6일 · 940pt', '940', ''],
-  ['5', '단백질요정', '운동 5일 · 820pt', '820', ''],
-  ['6', '헬창라이프', '운동 5일 · 720pt', '720', ''],
+  (rank: '🥇', name: '철봉의신', meta: '운동 7일 · 1,240pt', score: '1240', top: true),
+  (rank: '🥈', name: '수진트레이닝', meta: '운동 7일 · 1,180pt', score: '1180', top: false),
+  (rank: '🥉', name: '벤치프레서', meta: '운동 6일 · 1,020pt', score: '1020', top: false),
+  (rank: '4', name: '아침운동러', meta: '운동 6일 · 940pt', score: '940', top: false),
+  (rank: '5', name: '단백질요정', meta: '운동 5일 · 820pt', score: '820', top: false),
+  (rank: '6', name: '헬창라이프', meta: '운동 5일 · 720pt', score: '720', top: false),
 ];
 
 /* ===== 마켓 ===== */
@@ -205,30 +222,36 @@ const products = [
 
 Product productById(String id) => products.firstWhere((p) => p.id == id);
 
-const reviews = <String, List<List<String>>>{
+class Review {
+  final String author, stars, text;
+  const Review(this.author, this.stars, this.text);
+}
+
+const reviews = <String, List<Review>>{
   'p1': [
-    ['김O훈', '★★★★★', '손목 아팠는데 이거 쓰고 데드리프트 무게 늘었어요. 재질도 튼튼합니다.'],
-    ['이O연', '★★★★☆', '그립감 좋아요. 다만 처음엔 좀 뻣뻣해서 길들이는 시간이 필요해요.']
+    Review('김O훈', '★★★★★', '손목 아팠는데 이거 쓰고 데드리프트 무게 늘었어요. 재질도 튼튼합니다.'),
+    Review('이O연', '★★★★☆', '그립감 좋아요. 다만 처음엔 좀 뻣뻣해서 길들이는 시간이 필요해요.')
   ],
   'p6': [
-    ['박O성', '★★★★★', '벌크업 시즌마다 재구매합니다. 초코맛 물에도 잘 녹아요.'],
-    ['정O우', '★★★★★', '정품관이라 믿고 삽니다. 배송도 빨라요.'],
-    ['최O진', '★★★★☆', '가성비 좋은데 스쿱이 가끔 안 들어있을 때가 있네요.']
+    Review('박O성', '★★★★★', '벌크업 시즌마다 재구매합니다. 초코맛 물에도 잘 녹아요.'),
+    Review('정O우', '★★★★★', '정품관이라 믿고 삽니다. 배송도 빨라요.'),
+    Review('최O진', '★★★★☆', '가성비 좋은데 스쿱이 가끔 안 들어있을 때가 있네요.')
   ],
   'p12': [
-    ['한O규', '★★★★★', '앱에서 바로 발급돼서 편했어요. 기구 매칭으로 찾은 곳이라 딱 맞았습니다.'],
-    ['서O민', '★★★★☆', '시설 좋아요. 피크타임엔 좀 붐빕니다.']
+    Review('한O규', '★★★★★', '앱에서 바로 발급돼서 편했어요. 기구 매칭으로 찾은 곳이라 딱 맞았습니다.'),
+    Review('서O민', '★★★★☆', '시설 좋아요. 피크타임엔 좀 붐빕니다.')
   ],
 };
 const defaultReviews = [
-  ['구매자', '★★★★★', '만족스러운 상품이에요. 추천합니다.'],
-  ['구매자', '★★★★☆', '배송 빠르고 품질 좋습니다.']
+  Review('구매자', '★★★★★', '만족스러운 상품이에요. 추천합니다.'),
+  Review('구매자', '★★★★☆', '배송 빠르고 품질 좋습니다.')
 ];
 
 const marketCats = ['전체', '운동장비', '운동복', '보충제·건기식', '헬스케어기기', 'PT·이용권'];
 
+/// 타임특가: 상품 id · 할인율(%)
 const deals = [
-  ['p6', 40], ['p1', 30], ['p11', 35], ['p10', 45], ['p9', 25], ['p5', 20],
+  (productId: 'p6', off: 40), (productId: 'p1', off: 30), (productId: 'p11', off: 35), (productId: 'p10', off: 45), (productId: 'p9', off: 25), (productId: 'p5', off: 20),
 ];
 
 /* ===== B2B ===== */
@@ -268,24 +291,30 @@ const usedItems = [
 const usedCats = ['전체', '파워랙·프레임', '셀렉토라이즈드', '유산소', '프리웨이트'];
 
 /* ===== 뉴스 ===== */
+class NewsItem {
+  final String category, emoji, title, body;
+  const NewsItem(this.category, this.emoji, this.title, this.body);
+}
+
 const news = [
-  ['연구', '🧬', '"주 2회 근력운동, 사망 위험 최대 20%↓"', '대규모 코호트 분석에서 유산소와 별개로 근력운동 자체가 사망률을 유의하게 낮췄습니다.'],
-  ['영양', '🥩', '운동 후 단백질, 30분 안에 vs 하루 총량?', '"단백질 타이밍보다 하루 총 섭취량이 더 중요"라는 게 최근 연구들의 정설로 모이고 있어요.'],
-  ['트렌드', '🔥', '2026 헬스 키워드는 "하이브리드 트레이닝"', '근력과 유산소를 한 세션에 섞는 방식이 시간 대비 효율로 주목받고 있습니다.'],
-  ['운동팁', '🦵', '스쿼트 무릎 통증, 발 각도만 바꿔도 준다', '발끝을 약 15~30도 바깥으로 벌리면 무릎 부담이 줄어든다는 코칭 가이드가 확산 중.'],
-  ['연구', '😴', '"수면 6시간 미만이면 근성장 최대 40%↓"', '수면 부족이 근단백 합성과 회복을 방해한다는 결과. 잘 자는 것도 훈련의 일부예요.'],
-  ['영양', '⚗️', '크레아틴, 근육 넘어 인지기능에도 효과 연구', '전통적 운동 보조제인 크레아틴이 집중력·기억 등에 도움될 수 있다는 연구가 이어집니다.'],
-  ['트렌드', '💪', '여성 웨이트 인구 급증… 3대 운동 관심 최고', '국내외 헬스장에서 여성 근력운동 참여가 빠르게 늘며 관련 콘텐츠 수요도 커지고 있어요.'],
-  ['운동팁', '🏋️', '"주동근보다 자세" 초보 3대 운동 체크리스트', '무게를 올리기 전 가동범위와 코어 고정을 먼저 잡으라는 전문가 조언이 정리됐습니다.'],
-  ['연구', '❤️', '가벼운 걷기도 심혈관 위험 낮춘다', '하루 7천 보 안팎부터 사망·심질환 위험이 뚜렷하게 감소한다는 메타분석 결과.'],
-  ['영양', '🥗', '"고단백 다이어트, 근손실 줄이며 감량"', '체중 감량기에 단백질을 넉넉히 먹으면 근육 손실을 줄일 수 있다는 점이 재확인됐어요.'],
+  NewsItem('연구', '🧬', '"주 2회 근력운동, 사망 위험 최대 20%↓"', '대규모 코호트 분석에서 유산소와 별개로 근력운동 자체가 사망률을 유의하게 낮췄습니다.'),
+  NewsItem('영양', '🥩', '운동 후 단백질, 30분 안에 vs 하루 총량?', '"단백질 타이밍보다 하루 총 섭취량이 더 중요"라는 게 최근 연구들의 정설로 모이고 있어요.'),
+  NewsItem('트렌드', '🔥', '2026 헬스 키워드는 "하이브리드 트레이닝"', '근력과 유산소를 한 세션에 섞는 방식이 시간 대비 효율로 주목받고 있습니다.'),
+  NewsItem('운동팁', '🦵', '스쿼트 무릎 통증, 발 각도만 바꿔도 준다', '발끝을 약 15~30도 바깥으로 벌리면 무릎 부담이 줄어든다는 코칭 가이드가 확산 중.'),
+  NewsItem('연구', '😴', '"수면 6시간 미만이면 근성장 최대 40%↓"', '수면 부족이 근단백 합성과 회복을 방해한다는 결과. 잘 자는 것도 훈련의 일부예요.'),
+  NewsItem('영양', '⚗️', '크레아틴, 근육 넘어 인지기능에도 효과 연구', '전통적 운동 보조제인 크레아틴이 집중력·기억 등에 도움될 수 있다는 연구가 이어집니다.'),
+  NewsItem('트렌드', '💪', '여성 웨이트 인구 급증… 3대 운동 관심 최고', '국내외 헬스장에서 여성 근력운동 참여가 빠르게 늘며 관련 콘텐츠 수요도 커지고 있어요.'),
+  NewsItem('운동팁', '🏋️', '"주동근보다 자세" 초보 3대 운동 체크리스트', '무게를 올리기 전 가동범위와 코어 고정을 먼저 잡으라는 전문가 조언이 정리됐습니다.'),
+  NewsItem('연구', '❤️', '가벼운 걷기도 심혈관 위험 낮춘다', '하루 7천 보 안팎부터 사망·심질환 위험이 뚜렷하게 감소한다는 메타분석 결과.'),
+  NewsItem('영양', '🥗', '"고단백 다이어트, 근손실 줄이며 감량"', '체중 감량기에 단백질을 넉넉히 먹으면 근육 손실을 줄일 수 있다는 점이 재확인됐어요.'),
 ];
 
 /* ===== 헬스장 혼잡도 ===== */
 class Gym {
-  final String name, dist;
+  final String name;
   final int now, area;
-  const Gym(this.name, this.dist, this.now, this.area);
+  final LatLng pos;
+  const Gym(this.name, this.now, this.area, this.pos);
   double get spp => area / now; // 1인당 평수
   int get dens {
     final d = (130 / spp).round();
@@ -293,13 +322,16 @@ class Gym {
   }
 }
 
+/// 목업 헬스장 (좌표는 강남 일대 실제 지역 기준의 가상 위치)
 const gyms = [
-  Gym('스틸핏 강남점', '450m · 도보 6분', 37, 150),
-  Gym('코어짐24 역삼', '820m · 도보 11분', 90, 120),
-  Gym('바디스퀘어 논현', '1.0km · 도보 14분', 62, 200),
-  Gym('아이언짐 삼성', '1.6km · 도보 21분', 128, 140),
-  Gym('머슬팩토리 선릉', '1.3km · 도보 17분', 200, 320),
+  Gym('스틸핏 강남점', 37, 150, LatLng(37.4997, 127.0300)),
+  Gym('코어짐24 역삼', 90, 120, LatLng(37.5009, 127.0368)),
+  Gym('바디스퀘어 논현', 62, 200, LatLng(37.5085, 127.0236)),
+  Gym('아이언짐 삼성', 128, 140, LatLng(37.5088, 127.0631)),
+  Gym('머슬팩토리 선릉', 200, 320, LatLng(37.5045, 127.0490)),
 ];
+
+Gym gymByName(String name) => gyms.firstWhere((g) => g.name == name);
 
 /* ===== PT 트레이너 ===== */
 class Trainer {
@@ -317,7 +349,10 @@ const trainers = [
   Trainer('👨', '정태우', ['파워리프팅', '3대 중량'], '아이언웍스 선릉', 5.0, 94, '60,000'),
   Trainer('👩', '김하늘', ['재활', '코어'], '헬스킹 논현', 4.7, 131, '45,000'),
 ];
-const bkDays = [['오늘', '10'], ['목', '11'], ['금', '12'], ['토', '13'], ['일', '14'], ['월', '15']];
+const bkDays = [
+  (label: '오늘', date: '10'), (label: '목', date: '11'), (label: '금', date: '12'),
+  (label: '토', date: '13'), (label: '일', date: '14'), (label: '월', date: '15'),
+];
 const bkTimes = ['07:00', '09:00', '11:00', '14:00', '18:00', '20:00'];
 
 /* ===== 배달 ===== */
@@ -374,11 +409,51 @@ class PtDeal {
   PtDeal(this.em, this.name, this.was, this.pts, this.left);
 }
 
-/// 주간 미션: [이름, 현재, 목표]
-List<List<Object>> seedMissions() => [
-      ['출석 3일', 3, 3],
-      ['운동 인증 2회', 1, 2],
-      ['배달 주문 1회', 0, 1],
-      ['리뷰 작성 1개', 1, 1],
-      ['3대 기록 갱신', 0, 1],
+/// 주간 미션
+class Mission {
+  final String name;
+  int progress;
+  final int goal;
+  Mission(this.name, this.progress, this.goal);
+  bool get isDone => progress >= goal;
+}
+
+List<Mission> seedMissions() => [
+      Mission('출석 3일', 3, 3),
+      Mission('운동 인증 2회', 1, 2),
+      Mission('배달 주문 1회', 0, 1),
+      Mission('리뷰 작성 1개', 1, 1),
+      Mission('3대 기록 갱신', 0, 1),
     ];
+
+/// 포인트 적립(+)·사용(−) 내역
+class PointLog {
+  final String reason;
+  final int amount; // 적립은 양수, 사용은 음수
+  final String when; // 목업 내역의 표시용 날짜 ('8월 9일')
+  final DateTime? time; // 앱에서 생긴 내역의 실제 시각
+
+  const PointLog(this.reason, this.amount, this.when) : time = null;
+  const PointLog.timed(this.reason, this.amount, DateTime this.time) : when = '';
+
+  bool get isSpend => amount < 0;
+
+  /// '+2,000' / '-3,900'
+  String get signed => '${isSpend ? '-' : '+'}${comma(amount.abs())}';
+
+  /// 내역에 표시할 시각: 1분 이내 '방금', 같은 날 '오늘', 그 외 'M월 D일'
+  String label(DateTime now) {
+    final t = time;
+    if (t == null) return when;
+    if (now.difference(t).inMinutes < 1) return '방금';
+    if (t.year == now.year && t.month == now.month && t.day == now.day) return '오늘';
+    return '${t.month}월 ${t.day}일';
+  }
+
+  Map<String, Object?> toJson() => {'reason': reason, 'amount': amount, if (time == null) 'when': when, if (time != null) 'time': time!.toIso8601String()};
+
+  factory PointLog.fromJson(Map<String, dynamic> j) {
+    final t = j['time'] as String?;
+    return t != null ? PointLog.timed(j['reason'] as String, j['amount'] as int, DateTime.parse(t)) : PointLog(j['reason'] as String, j['amount'] as int, j['when'] as String);
+  }
+}

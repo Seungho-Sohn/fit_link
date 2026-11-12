@@ -8,7 +8,7 @@ AppState get _s => AppState.I;
 
 // 앱 실행 중 유지되는 커뮤니티 데이터
 final List<Post> _posts = seedPosts();
-final Map<Post, List<List<String>>> _comments = seedComments(_posts);
+final Map<Post, List<Comment>> _comments = seedComments(_posts);
 final List<Group> _groups = seedGroups();
 final List<Challenge> _challenges = seedChallenges();
 
@@ -20,7 +20,7 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   String view = 'feed';
-  static const tabs = [['feed', '피드'], ['chal', '챌린지'], ['group', '그룹'], ['rank', '랭킹']];
+  static const tabs = [(id: 'feed', label: '피드'), (id: 'chal', label: '챌린지'), (id: 'group', label: '그룹'), (id: 'rank', label: '랭킹')];
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +41,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
         child: Row(children: [
           for (final t in tabs)
             GestureDetector(
-              onTap: () => setState(() => view = t[0]),
+              onTap: () => setState(() => view = t.id),
               child: Container(
                 margin: const EdgeInsets.only(right: 22),
                 padding: const EdgeInsets.symmetric(vertical: 11),
-                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: view == t[0] ? C.gold : Colors.transparent, width: 1.5))),
-                child: Text(t[1], style: F.inter(size: 12, color: view == t[0] ? C.goldBright : C.textFaint, ls: .03)),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: view == t.id ? C.gold : Colors.transparent, width: 1.5))),
+                child: Text(t.label, style: F.inter(size: 12, color: view == t.id ? C.goldBright : C.textFaint, ls: .03)),
               ),
             ),
         ]),
@@ -113,23 +113,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
               child: Text(p.img, style: const TextStyle(fontSize: 40)),
             ),
           Row(children: [
-            _act(p.liked ? Icons.favorite : Icons.favorite_border, '${p.likes}', p.liked ? C.live : C.textDim, () {
+            _act(p.liked ? Icons.favorite : Icons.favorite_border, '${p.likes}', p.liked ? C.live : C.textDim, label: '좋아요 ${p.likes}개', selected: p.liked, () {
               setState(() {
                 p.liked = !p.liked;
                 p.likes += p.liked ? 1 : -1;
               });
             }),
-            _act(Icons.chat_bubble_outline, '${p.comments}', C.textDim, () => _openComments(p)),
-            _act(Icons.ios_share, '공유', C.textDim, () => _s.toast('공유 링크를 복사했어요')),
+            _act(Icons.chat_bubble_outline, '${p.comments}', C.textDim, label: '댓글 ${p.comments}개', () => _openComments(p)),
+            _act(Icons.ios_share, '공유', C.textDim, label: '공유', () => _s.toast('공유 링크를 복사했어요')),
           ]),
         ]),
       );
 
-  Widget _act(IconData ic, String t, Color c, VoidCallback f) => GestureDetector(
+  Widget _act(IconData ic, String t, Color c, VoidCallback f, {required String label, bool? selected}) => TapArea(
         onTap: f,
+        label: label,
+        selected: selected,
+        minSize: 36,
+        alignment: Alignment.centerLeft,
         child: Padding(
           padding: const EdgeInsets.only(right: 18),
-          child: Row(children: [Icon(ic, size: 14, color: c), const SizedBox(width: 6), Text(t, style: F.inter(size: 11, color: c))]),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(ic, size: 14, color: c), const SizedBox(width: 6), Text(t, style: F.inter(size: 11, color: c))]),
         ),
       );
 
@@ -138,6 +142,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     showGoldSheet(
       context,
       title: '댓글',
+      disposables: [input],
       body: (ctx, setS) {
         final list = _comments[p] ?? [];
         if (list.isEmpty) {
@@ -147,16 +152,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
           for (final c in list)
             Divided(
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Avatar(c[0], size: 30, border: C.goldDim, serif: true),
+                Avatar(c.av, size: 30, border: C.goldDim, serif: true),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text.rich(TextSpan(children: [
-                      TextSpan(text: c[1], style: F.inter(size: 11, w: FontWeight.w500)),
-                      TextSpan(text: '  ${c[3]}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
+                      TextSpan(text: c.name, style: F.inter(size: 11, w: FontWeight.w500)),
+                      TextSpan(text: '  ${c.time}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
                     ])),
                     const SizedBox(height: 4),
-                    Text(c[2], style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
+                    Text(c.text, style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
                   ]),
                 ),
               ]),
@@ -167,7 +172,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         void post() {
           final v = input.text.trim();
           if (v.isEmpty) return;
-          (_comments[p] ??= []).add(['F', '회원님', v, '방금']);
+          (_comments[p] ??= []).add(Comment('F', '회원님', v, '방금'));
           p.comments++;
           input.clear();
           setS(() {});
@@ -207,7 +212,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
     showGoldSheet(
       context,
       title: '인증 · 글쓰기',
-      body: (ctx, setS) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      disposables: [ta],
+      body:(ctx, setS) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 7, runSpacing: 7, children: [
           for (final t in ['운동 인증', '식단 인증', '꿀팁', '질문']) SelChip(t, on: tag == t, onTap: () => setS(() => tag = t)),
         ]),
@@ -361,7 +367,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         for (final r in rankList)
           Divided(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            child: _rankRow(r[0], r[1].substring(0, 1), r[1], r[2], r[3], gold: r[4] == 'top1'),
+            child: _rankRow(r.rank, r.name.substring(0, 1), r.name, r.meta, r.score, gold: r.top),
           ),
       ];
 

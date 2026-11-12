@@ -3,7 +3,6 @@ import '../data/mock_data.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import 'market_screen.dart' show searchBar, qtyCtrl;
 
 AppState get _s => AppState.I;
 
@@ -19,7 +18,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   bool favView = false;
   int delivMode = 0, payMode = 0;
 
-  static const sorts = [['reco', '추천순'], ['rating', '별점순'], ['dist', '거리순'], ['tip', '배달비순'], ['time', '빠른배달순']];
+  static const sorts = [(key: 'reco', label: '추천순'), (key: 'rating', label: '별점순'), (key: 'dist', label: '거리순'), (key: 'tip', label: '배달비순'), (key: 'time', label: '빠른배달순')];
 
   @override
   void dispose() {
@@ -32,11 +31,11 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     return KeyedSubtree(
       key: ValueKey(_s.delivView),
       child: switch (_s.delivView) {
-        'store' => _store(),
-        'cart' => _cart(),
-        'pay' => _pay(),
-        'done' => _done(),
-        _ => _home(),
+        DelivView.home => _home(),
+        DelivView.store => _store(),
+        DelivView.cart => _cart(),
+        DelivView.pay => _pay(),
+        DelivView.done => _done(),
       },
     );
   }
@@ -80,8 +79,11 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               Text('헬스인 전용 클린식 · 총알배송', style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300)),
             ]),
           ),
-          GestureDetector(
+          TapArea(
             onTap: () => setState(() => favView = !favView),
+            label: '찜한 매장만 보기',
+            selected: favView,
+            minSize: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(border: Border.all(color: favView ? C.goldDim : C.hairlineSoft)),
@@ -95,7 +97,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           searchBar(search, '매장 · 메뉴 검색 (예: 닭가슴살)', () => setState(() {})),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(children: [for (final s in sorts) SelChip(s[1], on: sort == s[0], onTap: () => setState(() => sort = s[0]))]),
+            child: Row(children: [for (final s in sorts) SelChip(s.label, on: sort == s.key, onTap: () => setState(() => sort = s.key))]),
           ),
           const SizedBox(height: 14),
           Box(
@@ -144,11 +146,23 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           child: Stack(children: [
             EmojiTile(s.em, size: 74, font: 33, badge: s.fast ? '⚡총알배송' : null, badgeColor: C.live),
             Positioned(
-              top: 3,
-              right: 3,
-              child: GestureDetector(
+              top: 0,
+              right: 0,
+              // 보이는 하트는 22px 그대로, 누르는 영역은 36px
+              child: TapArea(
                 onTap: () => _s.toggleFav(s.id),
-                child: Container(width: 22, height: 22, alignment: Alignment.center, color: const Color(0x8C0A0A0B), child: Text(fav ? '♥' : '♡', style: F.inter(size: 12, color: fav ? C.live : C.textFaint))),
+                label: fav ? '${s.name} 찜 해제' : '${s.name} 찜하기',
+                selected: fav,
+                minSize: 36,
+                alignment: Alignment.topRight,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  margin: const EdgeInsets.only(top: 3, right: 3),
+                  alignment: Alignment.center,
+                  color: const Color(0x8C0A0A0B),
+                  child: Text(fav ? '♥' : '♡', style: F.inter(size: 12, color: fav ? C.live : C.textFaint)),
+                ),
               ),
             ),
           ]),
@@ -200,8 +214,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           ),
         );
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 배달 목록', onBack: () => _s.goDeliv('home')),
-      footer: _s.dCount > 0 ? [GoldButton('장바구니 보기 · ${_s.dCount}개 · ${won(_s.dTotal)}', upper: false, onTap: () => _s.goDeliv('cart'))] : null,
+      header: StepTitle(eyebrow: '← 배달 목록', onBack: () => _s.goDeliv(DelivView.home)),
+      footer: _s.dCount > 0 ? [GoldButton('장바구니 보기 · ${_s.dCount}개 · ${won(_s.dTotal)}', upper: false, onTap: () => _s.goDeliv(DelivView.cart))] : null,
       children: [
         Divided(
           padding: const EdgeInsets.only(bottom: 16),
@@ -217,8 +231,10 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                 Text('${s.tags} · ${s.dist}km', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
               ]),
             ),
-            GestureDetector(
+            TapArea(
               onTap: () => _s.toggleFav(s.id),
+              label: fav ? '찜 해제' : '찜하기',
+              selected: fav,
               child: Container(
                 width: 38,
                 height: 38,
@@ -294,8 +310,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   Widget _cart() {
     final empty = _s.dcart.isEmpty;
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 메뉴', onBack: () => _s.goDeliv('store'), title: '장바구니', titleSize: 22),
-      footer: empty ? null : [GoldButton('결제하기', upper: false, onTap: () => _s.goDeliv('pay'))],
+      header: StepTitle(eyebrow: '← 메뉴', onBack: () => _s.goDeliv(DelivView.store), title: '장바구니', titleSize: 22),
+      footer: empty ? null : [GoldButton('결제하기', upper: false, onTap: () => _s.goDeliv(DelivView.pay))],
       children: empty
           ? [Padding(padding: const EdgeInsets.symmetric(vertical: 50), child: Text('장바구니가 비어 있어요.\n메뉴를 담아보세요.', textAlign: TextAlign.center, style: F.inter(size: 12, color: C.textFaint, h: 1.7)))]
           : [
@@ -341,7 +357,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: F.inter(size: 9.5, color: C.textFaint, ls: .05)), const SizedBox(height: 6), child]),
         );
-    Widget opts(List<List<String>> items, int sel, ValueChanged<int> f) => Row(children: [
+    Widget opts(List<({String label, String? sub})> items, int sel, ValueChanged<int> f) => Row(children: [
           for (int i = 0; i < items.length; i++)
             Expanded(
               child: GestureDetector(
@@ -351,20 +367,20 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                   decoration: BoxDecoration(border: Border.all(color: sel == i ? C.gold : C.hairlineSoft), gradient: sel == i ? softGold(.13) : null),
                   child: Column(children: [
-                    Text(items[i][0], style: F.inter(size: 10.5, color: sel == i ? C.ivory : C.textDim)),
-                    if (items[i].length > 1) Text(items[i][1], style: F.inter(size: 8, color: C.textFaint)),
+                    Text(items[i].label, style: F.inter(size: 10.5, color: sel == i ? C.ivory : C.textDim)),
+                    if (items[i].sub != null) Text(items[i].sub!, style: F.inter(size: 8, color: C.textFaint)),
                   ]),
                 ),
               ),
             ),
         ]);
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 장바구니', onBack: () => _s.goDeliv('cart'), title: '주문 · 결제', titleSize: 22),
-      footer: [GoldButton('${won(c[3])} 결제하기', upper: false, onTap: _s.placeDOrder)],
+      header: StepTitle(eyebrow: '← 장바구니', onBack: () => _s.goDeliv(DelivView.cart), title: '주문 · 결제', titleSize: 22),
+      footer: [GoldButton('${won(c.total)} 결제하기', upper: false, onTap: _s.placeDOrder)],
       children: [
         sec('배달 주소', Text.rich(TextSpan(children: [TextSpan(text: '서울 강남구 테헤란로 · 집 ', style: F.inter(size: 12.5)), TextSpan(text: '(현관 비밀번호 1234)', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300))]))),
-        sec('배달 방식', opts(const [['알뜰배달', '묶음 · 0원'], ['한집배달', '직배송 · 2,000원']], delivMode, (i) => delivMode = i)),
-        sec('결제 수단', opts(const [['FIT페이'], ['신용카드'], ['카카오페이']], payMode, (i) => payMode = i)),
+        sec('배달 방식', opts(const [(label: '알뜰배달', sub: '묶음 · 0원'), (label: '한집배달', sub: '직배송 · 2,000원')], delivMode, (i) => delivMode = i)),
+        sec('결제 수단', opts(const [(label: 'FIT페이', sub: null), (label: '신용카드', sub: null), (label: '카카오페이', sub: null)], payMode, (i) => payMode = i)),
         sec(
           '요청 사항',
           TextField(
@@ -404,12 +420,12 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           ]),
         ),
         const SizedBox(height: 7),
-        _row('상품금액', won(c[0])),
+        _row('상품금액', won(c.subtotal)),
         _row('배달팁', '0원'),
-        _row('FIT 클럽 할인', '−${won(c[1])}', vc: C.cLow),
-        if (c[2] > 0) _row('포인트 사용', '−${won(c[2])}', vc: C.cLow),
-        _row('총 결제금액', won(c[3]), total: true),
-        _row('결제 시 적립 (등급 ${_s.tier.rateStr}%)', '+${comma(c[4])}P', vc: C.goldBright),
+        _row('FIT 클럽 할인', '−${won(c.clubDiscount)}', vc: C.cLow),
+        if (c.pointsUsed > 0) _row('포인트 사용', '−${won(c.pointsUsed)}', vc: C.cLow),
+        _row('총 결제금액', won(c.total), total: true),
+        _row('결제 시 적립 (등급 ${_s.tier.rateStr}%)', '+${comma(c.pointsEarned)}P', vc: C.goldBright),
       ],
     );
   }
@@ -419,7 +435,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     const steps = ['주문접수', '조리완료', '픽업', '배달중', '도착'];
     return ScreenFrame(
       header: const StepTitle(eyebrow: '주문 완료'),
-      footer: [GoldButton('홈으로', upper: false, onTap: () => _s.go('home'))],
+      footer: [GoldButton('홈으로', upper: false, onTap: () => _s.go(AppPage.home))],
       children: [
         const ConfirmHero('주문이 접수됐어요', '프로틴키친에서 조리를 시작합니다.\n실시간 배달 현황을 확인해보세요.'),
         Box(
@@ -471,8 +487,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           ]),
         ),
         DetailList([
-          const ['주문번호', 'FL-D-20260810-0027'],
-          ['결제금액', won(_s.lastDelivTotal)],
+          ('주문번호', 'FL-D-20260810-0027'),
+          ('결제금액', won(_s.lastDelivTotal)),
         ]),
       ],
     );

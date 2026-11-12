@@ -14,7 +14,7 @@ class C {
   static const goldDim = Color(0xFF8A6F35);
   static const ivory = Color(0xFFF1E9D6);
   static const textDim = Color(0xFFA79A7C);
-  static const textFaint = Color(0xFF6E6550);
+  static const textFaint = Color(0xFF968A6F); // 가장 어두운 배경(panel2)에서도 WCAG AA 4.5:1 (원래 0xFF6E6550 은 2.8~3.4:1)
   static const good = Color(0xFFB9C79A);
   static const carb = Color(0xFFD8B25A);
   static const protein = Color(0xFFC98F5A);
@@ -33,16 +33,23 @@ extension ColorOp on Color {
   Color op(double o) => withAlpha((o * 255).round());
 }
 
-/// 폰트 헬퍼 (Google Fonts 런타임 다운로드)
+/// 한글 대체 글꼴. Inter·Cormorant·Bodoni에는 한글 글리프가 없어서,
+/// 지정하지 않으면 기기마다 다른 시스템 글꼴로 보인다. 앱에 내장한 Pretendard로 통일.
+const kKoreanFallback = ['Pretendard'];
+
+/// 폰트 헬퍼 (라틴 글꼴은 Google Fonts 런타임 다운로드, 한글은 내장 Pretendard)
 class F {
   static TextStyle inter({double size = 12, FontWeight w = FontWeight.w400, Color color = C.ivory, double ls = 0, double? h}) =>
-      GoogleFonts.inter(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size, height: h);
+      GoogleFonts.inter(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size, height: h)
+          .copyWith(fontFamilyFallback: kKoreanFallback);
 
   static TextStyle serif({double size = 16, FontWeight w = FontWeight.w500, Color color = C.ivory, double ls = 0, FontStyle? style, double? h}) =>
-      GoogleFonts.cormorantGaramond(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size, fontStyle: style, height: h);
+      GoogleFonts.cormorantGaramond(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size, fontStyle: style, height: h)
+          .copyWith(fontFamilyFallback: kKoreanFallback);
 
   static TextStyle bodoni({double size = 16, FontWeight w = FontWeight.w500, Color color = C.ivory, double ls = 0}) =>
-      GoogleFonts.bodoniModa(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size);
+      GoogleFonts.bodoniModa(fontSize: size, fontWeight: w, color: color, letterSpacing: ls * size)
+          .copyWith(fontFamilyFallback: kKoreanFallback);
 
   static TextStyle kr({double size = 14, FontWeight w = FontWeight.w600, Color color = C.ivory, double? h}) =>
       GoogleFonts.notoSerifKr(fontSize: size, fontWeight: w, color: color, height: h);
@@ -56,7 +63,7 @@ ThemeData buildTheme() {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: C.charcoal,
     colorScheme: const ColorScheme.dark(primary: C.gold, secondary: C.goldBright, surface: C.charcoal),
-    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(bodyColor: C.ivory, displayColor: C.ivory),
+    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(bodyColor: C.ivory, displayColor: C.ivory, fontFamilyFallback: kKoreanFallback),
     splashFactory: NoSplash.splashFactory,
     highlightColor: Colors.transparent,
   );

@@ -180,7 +180,7 @@ class _CalorieScreenState extends State<CalorieScreen> {
 
     return ScreenFrame(
       header: const StepTitle(eyebrow: '04 · Today', title: '오늘의 식단', desc: '기록된 식사를 목표 칼로리와 비교해 보여줍니다.'),
-      footer: [GoldButton('다른 음식 촬영하기', onTap: () => go(1)), GoldButton('단백질·건기식 마켓 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go('market'))],
+      footer: [GoldButton('다른 음식 촬영하기', onTap: () => go(1)), GoldButton('단백질·건기식 마켓 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.market))],
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 6, bottom: 18),
@@ -220,8 +220,11 @@ class _CalorieScreenState extends State<CalorieScreen> {
             Row(children: [
               for (int i = 0; i < 8; i++)
                 Expanded(
-                  child: GestureDetector(
+                  child: TapArea(
                     onTap: () => setState(() => water = (water == i + 1) ? i : i + 1),
+                    label: '물 ${i + 1}컵째',
+                    selected: i < water,
+                    minSize: 0,
                     child: Container(
                       height: 30,
                       margin: EdgeInsets.only(right: i < 7 ? 7 : 0),

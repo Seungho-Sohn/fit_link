@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../theme.dart';
+import 'persistence.dart';
+import 'routes.dart';
+
+export 'routes.dart';
 
 /// HTML의 전역 JS 변수(POINTS, cart, dcart, dfavs …)와 화면 전환 함수
 /// (switchTab / goMarket / goDeliv / openCoach …)를 한 곳에 모은 상태 객체.
@@ -8,7 +13,14 @@ class AppState extends ChangeNotifier {
   AppState._();
   static final AppState I = AppState._();
 
+  /// 단위 테스트용: 싱글턴과 분리된 초기 상태 인스턴스
+  @visibleForTesting
+  factory AppState.fresh() => AppState._();
+
   final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// 현재 시각. 테스트에서 날짜를 바꿔 끼울 수 있게 함수로 둔다.
+  DateTime Function() now = DateTime.now;
 
   /* ---------- 온보딩 · 프로필 ---------- */
   bool onboarded = false;
@@ -18,35 +30,19 @@ class AppState extends ChangeNotifier {
     const g = ['근육량 증가', '체지방 감량', '체형 유지'];
     if (goalIdx != null) goal = g[goalIdx];
     onboarded = true;
-    page = 'home';
+    page = AppPage.home;
     notifyListeners();
   }
 
   /* ---------- 화면 전환 ---------- */
-  /// 'home' 'comm' 'market' 'delivery' 'cal' 'my' (하단 탭)
-  /// 'coach' 'live' 'inbody' 'gear' 'points' (홈/마이에서 띄우는 하위 화면)
-  String page = 'home';
+  AppPage page = AppPage.home;
   int pageSeq = 0; // 같은 화면으로 다시 들어올 때 상태 초기화용 키
 
-  String get navTab {
-    switch (page) {
-      case 'coach':
-      case 'live':
-      case 'inbody':
-      case 'gear':
-        return 'home';
-      case 'points':
-        return 'my';
-      default:
-        return page;
-    }
-  }
-
-  void go(String p) {
+  void go(AppPage p) {
     page = p;
     pageSeq++;
-    if (p == 'market') marketView = 'home';
-    if (p == 'delivery') delivView = 'home';
+    if (p == AppPage.market) marketView = MarketView.home;
+    if (p == AppPage.delivery) delivView = DelivView.home;
     notifyListeners();
   }
 
@@ -69,13 +65,15 @@ class AppState extends ChangeNotifier {
   /* ---------- 포인트 ---------- */
   int points = 3200;
   int earned = 4200;
-  bool attended = false;
-  bool stampClaimed = false;
-  final List<List<String>> ptHistory = [
-    ['상품 리뷰 작성', '+100', '8월 9일'],
-    ['배달 주문 적립 (2%)', '+154', '8월 8일'],
-    ['출석 체크', '+10', '8월 8일'],
-    ['챌린지 완주 보너스', '+2,000', '8월 5일'],
+  String? _attendedOn; // 마지막 출석일 'yyyy-mm-dd'
+  String? _stampWeek; // 주간 보너스를 받은 주의 월요일 'yyyy-mm-dd'
+  bool get attended => _attendedOn == dayKey(now());
+  bool get stampClaimed => _stampWeek == weekKey(now());
+  final List<PointLog> ptHistory = [
+    const PointLog('상품 리뷰 작성', 100, '8월 9일'),
+    const PointLog('배달 주문 적립 (2%)', 154, '8월 8일'),
+    const PointLog('출석 체크', 10, '8월 8일'),
+    const PointLog('챌린지 완주 보너스', 2000, '8월 5일'),
   ];
   final missions = seedMissions();
   final ptDeals = [
@@ -99,14 +97,15 @@ class AppState extends ChangeNotifier {
   void earnPoints(int n, String reason) {
     points += n;
     earned += n;
-    ptHistory.insert(0, [reason, '+${comma(n)}', '방금']);
+    ptHistory.insert(0, PointLog.timed(reason, n, now()));
     notifyListeners();
     toast('+${n}P 적립 · $reason');
   }
 
   void spendPoints(int n, String reason) {
-    points = points - n < 0 ? 0 : points - n;
-    ptHistory.insert(0, [reason, '-${comma(n)}', '방금']);
+    final used = n > points ? points : n; // 잔액 이상은 차감할 수 없으므로 실제 차감액만 기록
+    points -= used;
+    ptHistory.insert(0, PointLog.timed(reason, -used, now()));
     notifyListeners();
   }
 
@@ -115,15 +114,16 @@ class AppState extends ChangeNotifier {
       toast('오늘은 이미 출석했어요');
       return;
     }
-    attended = true;
+    _attendedOn = dayKey(now());
     earnPoints(10, '출석 체크');
   }
 
-  bool get missionsAllDone => missions.every((m) => (m[1] as int) >= (m[2] as int));
+  int get missionsDone => missions.where((m) => m.isDone).length;
+  bool get missionsAllDone => missions.every((m) => m.isDone);
 
   void claimStamp() {
     if (!missionsAllDone || stampClaimed) return;
-    stampClaimed = true;
+    _stampWeek = weekKey(now());
     earnPoints(500, '주간 미션 보너스');
   }
 
@@ -138,28 +138,28 @@ class AppState extends ChangeNotifier {
   }
 
   /* ---------- 마켓 ---------- */
-  String marketView = 'home'; // home detail store cart done b2b b2bform b2bdone used dash
+  MarketView marketView = MarketView.home;
   String? curProductId;
   String? curStoreSeller;
   final Map<String, int> cart = {}; // productId → qty
   int lastOrderTotal = 0;
   String myOrders = '배달 2건 · 마켓 1건';
 
-  void goMarket(String v) {
+  void goMarket(MarketView v) {
     marketView = v;
     notifyListeners();
   }
 
   void openProduct(String id) {
     curProductId = id;
-    page = 'market';
-    marketView = 'detail';
+    page = AppPage.market;
+    marketView = MarketView.detail;
     notifyListeners();
   }
 
   void openSellerStore(String seller) {
     curStoreSeller = seller;
-    marketView = 'store';
+    marketView = MarketView.store;
     notifyListeners();
   }
 
@@ -181,27 +181,27 @@ class AppState extends ChangeNotifier {
     lastOrderTotal = cartTotal;
     myOrders = '$cartCount건';
     cart.clear();
-    marketView = 'done';
+    marketView = MarketView.done;
     notifyListeners();
   }
 
   /* ---------- 배달 ---------- */
-  String delivView = 'home'; // home store cart pay done
+  DelivView delivView = DelivView.home;
   String curShopId = 's2';
   final Map<String, int> dcart = {}; // menuId → qty (순서 유지)
   final Set<String> dfavs = {'s2'};
   bool dUsePts = false;
   int lastDelivTotal = 0;
 
-  void goDeliv(String v) {
+  void goDeliv(DelivView v) {
     delivView = v;
     notifyListeners();
   }
 
   void openShop(String id) {
     curShopId = id;
-    page = 'delivery';
-    delivView = 'store';
+    page = AppPage.delivery;
+    delivView = DelivView.store;
     notifyListeners();
   }
 
@@ -239,21 +239,26 @@ class AppState extends ChangeNotifier {
     dcart
       ..clear()
       ..addEntries(ids.map((e) => MapEntry(e, 1)));
-    page = 'delivery';
-    delivView = 'cart';
+    page = AppPage.delivery;
+    delivView = DelivView.cart;
     notifyListeners();
     toast(fromMy ? '장바구니에 다시 담았어요' : '지난 주문을 담았어요');
   }
 
-  /// 결제 금액 계산: [상품, 클럽할인, 포인트사용, 최종, 적립]
-  List<int> payCalc() {
+  /// 배달 결제 금액 계산
+  PayBreakdown payCalc() {
     final base = dTotal;
     final club = base < 1000 ? base : 1000;
     final after = base - club;
     final pts = dUsePts ? (points < after ? points : after) : 0;
-    final t = after - pts;
-    final earn = (t * tier.rate / 100).round();
-    return [base, club, pts, t, earn];
+    final total = after - pts;
+    return PayBreakdown(
+      subtotal: base,
+      clubDiscount: club,
+      pointsUsed: pts,
+      total: total,
+      pointsEarned: (total * tier.rate / 100).round(),
+    );
   }
 
   void toggleDPts() {
@@ -263,12 +268,113 @@ class AppState extends ChangeNotifier {
 
   void placeDOrder() {
     final c = payCalc();
-    lastDelivTotal = c[3];
-    if (c[2] > 0) spendPoints(c[2], '배달 포인트 결제');
+    lastDelivTotal = c.total;
+    if (c.pointsUsed > 0) spendPoints(c.pointsUsed, '배달 포인트 결제');
     dcart.clear();
     dUsePts = false;
-    delivView = 'done';
+    delivView = DelivView.done;
     notifyListeners();
-    Future.delayed(const Duration(milliseconds: 700), () => earnPoints(c[4], '배달 주문 적립'));
+    Future.delayed(const Duration(milliseconds: 700), () => earnPoints(c.pointsEarned, '배달 주문 적립'));
   }
+
+  /* ---------- 저장 · 복원 ---------- */
+  // 저장 대상: 사용자가 쌓은 데이터(온보딩·포인트·미션·장바구니·찜).
+  // 화면 위치, 결제 화면 옵션, 직전 주문 금액 같은 일시적인 값은 저장하지 않는다.
+  static const _schema = 1;
+  StateStore? _store;
+  String? _lastSaved;
+
+  /// [store]에서 상태를 복원하고, 이후 상태가 바뀔 때마다 자동 저장한다.
+  /// 저장본이 깨져 있으면 무시하고 초기 상태로 시작한다.
+  void attachStore(StateStore store) {
+    _store = store;
+    final raw = store.read();
+    if (raw != null) {
+      try {
+        _restore(jsonDecode(raw) as Map<String, dynamic>);
+      } catch (e) {
+        debugPrint('저장된 상태를 읽지 못해 초기 상태로 시작합니다: $e');
+      }
+    }
+    _lastSaved = jsonEncode(toJson());
+    addListener(_save);
+  }
+
+  void _save() {
+    final store = _store;
+    if (store == null) return;
+    final data = jsonEncode(toJson());
+    if (data == _lastSaved) return; // 화면 이동 등 저장 대상이 그대로면 건너뜀
+    _lastSaved = data;
+    store.write(data).catchError((Object e) => debugPrint('상태 저장 실패: $e'));
+  }
+
+  Map<String, Object?> toJson() => {
+        'schema': _schema,
+        'onboarded': onboarded,
+        'goal': goal,
+        'points': points,
+        'earned': earned,
+        'attendedOn': _attendedOn,
+        'stampWeek': _stampWeek,
+        'ptHistory': [for (final h in ptHistory) h.toJson()],
+        'missions': {for (final m in missions) m.name: m.progress},
+        'dealsLeft': {for (final d in ptDeals) d.name: d.left},
+        'cart': cart,
+        'myOrders': myOrders,
+        'dcart': dcart,
+        'dfavs': dfavs.toList(),
+      };
+
+  /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
+  void _restore(Map<String, dynamic> j) {
+    if (j['schema'] != _schema) throw FormatException('알 수 없는 저장 형식: ${j['schema']}');
+    final history = [for (final h in j['ptHistory'] as List) PointLog.fromJson(h as Map<String, dynamic>)];
+    final missionProgress = (j['missions'] as Map).cast<String, int>();
+    final dealsLeft = (j['dealsLeft'] as Map).cast<String, int>();
+    // 목업 데이터에서 사라진 상품·메뉴는 버린다
+    final savedCart = (j['cart'] as Map).cast<String, int>()..removeWhere((id, _) => !products.any((p) => p.id == id));
+    final savedDcart = (j['dcart'] as Map).cast<String, int>()..removeWhere((id, _) => !dmenu.any((m) => m.id == id));
+    final favs = (j['dfavs'] as List).cast<String>();
+
+    onboarded = j['onboarded'] as bool;
+    goal = j['goal'] as String;
+    points = j['points'] as int;
+    earned = j['earned'] as int;
+    _attendedOn = j['attendedOn'] as String?;
+    _stampWeek = j['stampWeek'] as String?;
+    ptHistory
+      ..clear()
+      ..addAll(history);
+    for (final m in missions) {
+      m.progress = missionProgress[m.name] ?? m.progress;
+    }
+    for (final d in ptDeals) {
+      d.left = dealsLeft[d.name] ?? d.left;
+    }
+    cart
+      ..clear()
+      ..addAll(savedCart);
+    myOrders = j['myOrders'] as String;
+    dcart
+      ..clear()
+      ..addAll(savedDcart);
+    dfavs
+      ..clear()
+      ..addAll(favs);
+  }
+}
+
+String _two(int n) => n.toString().padLeft(2, '0');
+
+/// 날짜 키 'yyyy-mm-dd'
+String dayKey(DateTime t) => '${t.year}-${_two(t.month)}-${_two(t.day)}';
+
+/// 주 키: 그 주 월요일의 [dayKey]
+String weekKey(DateTime t) => dayKey(DateTime(t.year, t.month, t.day - (t.weekday - 1)));
+
+/// 배달 결제 금액 내역 (원)
+class PayBreakdown {
+  final int subtotal, clubDiscount, pointsUsed, total, pointsEarned;
+  const PayBreakdown({required this.subtotal, required this.clubDiscount, required this.pointsUsed, required this.total, required this.pointsEarned});
 }

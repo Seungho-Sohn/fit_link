@@ -22,10 +22,10 @@ class _Msg {
 /// 인바디 화면 등 외부에서 코치에게 질문을 넣을 때 사용
 void coachAsk(String q, String a) {
   _coachLog.add(_Msg('me', q));
-  _s.go('coach');
+  _s.go(AppPage.coach);
   Future.delayed(const Duration(milliseconds: 450), () {
     _coachLog.add(_Msg('bot', a));
-    if (_s.page == 'coach') _s.go('coach'); // 다른 화면으로 이동했다면 강제로 끌고 오지 않음
+    if (_s.page == AppPage.coach) _s.go(AppPage.coach); // 다른 화면으로 이동했다면 강제로 끌고 오지 않음
   });
 }
 
@@ -68,9 +68,9 @@ class _CoachScreenState extends State<CoachScreen> {
       Future.delayed(const Duration(milliseconds: 400), () => add('report', ''));
       return;
     }
-    final it = coachQ.firstWhere((x) => x['k'] == k);
-    add('me', it['q']!);
-    Future.delayed(const Duration(milliseconds: 350), () => add('bot', it['a']!));
+    final it = coachQ.firstWhere((x) => x.key == k);
+    add('me', it.question);
+    Future.delayed(const Duration(milliseconds: 350), () => add('bot', it.answer));
   }
 
   void send() {
@@ -89,7 +89,7 @@ class _CoachScreenState extends State<CoachScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
         child: Row(children: [
-          GestureDetector(onTap: () => _s.go('home'), child: Text('← 홈', style: F.inter(size: 13, color: C.gold))),
+          TapArea(onTap: () => _s.go(AppPage.home), label: '뒤로 가기, 홈', minSize: 36, alignment: Alignment.centerLeft, child: Text('← 홈', style: F.inter(size: 13, color: C.gold))),
           const SizedBox(width: 13),
           Container(
             width: 36,
@@ -125,9 +125,9 @@ class _CoachScreenState extends State<CoachScreen> {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Row(children: [
-            _chip('🎯 실시간 코칭', () => _s.go('live'), solid: true),
+            _chip('🎯 실시간 코칭', () => _s.go(AppPage.live), solid: true),
             _chip('📊 주간 리포트', () => ask('report')),
-            for (final q in coachQ) _chip(q['q']!, () => ask(q['k']!)),
+            for (final q in coachQ) _chip(q.question, () => ask(q.key)),
           ]),
         ),
       ),
@@ -207,13 +207,8 @@ class _CoachScreenState extends State<CoachScreen> {
         const SizedBox(height: 3),
         Text('8월 4일 – 8월 10일 · 목표: ${_s.goal}', style: F.inter(size: 9.5, color: C.textFaint)),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 9,
-          mainAxisSpacing: 9,
-          childAspectRatio: 2.4,
+        FlexGrid(
+          columns: 2, ratio: 2.4, hSpacing: 9, vSpacing: 9,
           children: [rg('운동 일수', '4 / 5', ' 회'), rg('총 볼륨', '42,800', ' +8%'), rg('신규 PR', '2', ' 개'), rg('평균 심박', '138', ' bpm')],
         ),
         const SizedBox(height: 12),
@@ -250,7 +245,7 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
 
   void action() {
     if (done) {
-      _s.go('coach');
+      _s.go(AppPage.coach);
       return;
     }
     if (resting) {
@@ -294,13 +289,13 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.hairlineSoft))),
         child: Row(children: [
-          GestureDetector(onTap: () => _s.go('coach'), child: Text('← 코치', style: F.inter(size: 13, color: C.gold))),
+          TapArea(onTap: () => _s.go(AppPage.coach), label: '뒤로 가기, AI 코치', minSize: 36, alignment: Alignment.centerLeft, child: Text('← 코치', style: F.inter(size: 13, color: C.gold))),
           const Spacer(),
           const LiveDot(size: 6),
           const SizedBox(width: 6),
           Text('운동 중 · 실시간 코칭', style: F.inter(size: 10, color: C.live, ls: .1)),
           const Spacer(),
-          GestureDetector(onTap: () => _s.go('coach'), child: Text('종료', style: F.inter(size: 11, color: C.textDim))),
+          TapArea(onTap: () => _s.go(AppPage.coach), label: '실시간 코칭 종료', minSize: 36, child: Text('종료', style: F.inter(size: 11, color: C.textDim))),
         ]),
       ),
       Expanded(
@@ -336,10 +331,10 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
               },
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Text('❤️', style: TextStyle(fontSize: 18)),
-                Text('${st['bpm']}', style: F.serif(size: 44, w: FontWeight.w600, color: C.cHigh, h: 1)),
+                Text('${st.bpm}', style: F.serif(size: 44, w: FontWeight.w600, color: C.cHigh, h: 1)),
                 Text('BPM', style: F.inter(size: 9, color: C.textFaint, ls: .1)),
                 const SizedBox(height: 5),
-                Text(st['zone'] as String, style: F.inter(size: 9.5, color: C.cHigh)),
+                Text(st.zone, style: F.inter(size: 9.5, color: C.cHigh)),
               ]),
             ),
           ),
@@ -351,7 +346,7 @@ class _LiveCoachScreenState extends State<LiveCoachScreen> with SingleTickerProv
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Text('🎯', style: TextStyle(fontSize: 19)),
               const SizedBox(width: 12),
-              Expanded(child: Text(cueOverride ?? st['cue'] as String, style: F.inter(size: 12, w: FontWeight.w300, h: 1.55))),
+              Expanded(child: Text(cueOverride ?? st.cue, style: F.inter(size: 12, w: FontWeight.w300, h: 1.55))),
             ]),
           ),
           if (resting) ...[

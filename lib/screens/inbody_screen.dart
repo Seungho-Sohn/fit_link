@@ -11,7 +11,7 @@ class InbodyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppState.I;
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 홈', onBack: () => s.go('home'), title: '인바디 리포트', titleSize: 24, desc: '2026년 8월 10일 측정 · 12주 전 대비'),
+      header: StepTitle(eyebrow: '← 홈', onBack: () => s.go(AppPage.home), title: '인바디 리포트', titleSize: 24, desc: '2026년 8월 10일 측정 · 12주 전 대비'),
       footer: [
         GoldButton('이 결과로 AI 코치 상담받기', upper: false, onTap: () {
           coachAsk('인바디 결과 상담해줘',
@@ -51,16 +51,17 @@ class InbodyScreen extends StatelessWidget {
         ),
         const SectHead('체성분 분석', more: '표준 대비', top: 20),
         for (final r in const [
-          ['체중', .72, .78, '72.3', 'kg'],
-          ['골격근량', .88, .66, '34.6', 'kg'],
-          ['체지방량', .52, .60, '10.3', 'kg'],
-          ['체수분', .80, .70, '45.2', 'L'],
-          ['단백질', .84, .68, '12.4', 'kg'],
+          // fill: 막대 길이, std: 표준선 위치 (0~1)
+          (name: '체중', fill: .72, std: .78, value: '72.3', unit: 'kg'),
+          (name: '골격근량', fill: .88, std: .66, value: '34.6', unit: 'kg'),
+          (name: '체지방량', fill: .52, std: .60, value: '10.3', unit: 'kg'),
+          (name: '체수분', fill: .80, std: .70, value: '45.2', unit: 'L'),
+          (name: '단백질', fill: .84, std: .68, value: '12.4', unit: 'kg'),
         ])
           Divided(
             padding: const EdgeInsets.symmetric(vertical: 11),
             child: Row(children: [
-              SizedBox(width: 66, child: Text(r[0] as String, style: F.inter(size: 11, color: C.textDim))),
+              SizedBox(width: 66, child: Text(r.name, style: F.inter(size: 11, color: C.textDim))),
               const SizedBox(width: 11),
               Expanded(
                 child: LayoutBuilder(builder: (_, c) {
@@ -75,11 +76,11 @@ class InbodyScreen extends StatelessWidget {
                           height: 9,
                           decoration: BoxDecoration(color: C.panel, border: Border.all(color: C.hairlineSoft)),
                           alignment: Alignment.centerLeft,
-                          child: FractionallySizedBox(widthFactor: r[1] as double, child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C.goldDim, C.goldBright])))),
+                          child: FractionallySizedBox(widthFactor: r.fill, child: Container(decoration: const BoxDecoration(gradient: LinearGradient(colors: [C.goldDim, C.goldBright])))),
                         ),
                       ),
                       // 표준선
-                      Positioned(left: c.maxWidth * (r[2] as double), top: 0, bottom: 0, child: Container(width: 1, color: C.textFaint)),
+                      Positioned(left: c.maxWidth * r.std, top: 0, bottom: 0, child: Container(width: 1, color: C.textFaint)),
                     ]),
                   );
                 }),
@@ -88,7 +89,7 @@ class InbodyScreen extends StatelessWidget {
               SizedBox(
                 width: 74,
                 child: Text.rich(
-                  TextSpan(children: [TextSpan(text: r[3] as String, style: F.serif(size: 14, w: FontWeight.w600)), TextSpan(text: r[4] as String, style: F.inter(size: 8.5, color: C.textFaint))]),
+                  TextSpan(children: [TextSpan(text: r.value, style: F.serif(size: 14, w: FontWeight.w600)), TextSpan(text: r.unit, style: F.inter(size: 8.5, color: C.textFaint))]),
                   textAlign: TextAlign.right,
                 ),
               ),
@@ -108,13 +109,8 @@ class InbodyScreen extends StatelessWidget {
         ]),
         const HintCard('하체 근육이 표준 하단이에요.', '상·하체 균형을 위해 스쿼트·레그프레스 볼륨을 늘려보세요. (AI 코치도 같은 진단이에요)', top: 13),
         const SectHead('핵심 지표', top: 20),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 9,
-          mainAxisSpacing: 9,
-          childAspectRatio: 2.3,
+        FlexGrid(
+          columns: 2, ratio: 2.3, hSpacing: 9, vSpacing: 9,
           children: [
             _kv('BMI', '22.1', ' 정상'),
             _kv('체지방률', '14.2', ' %'),
