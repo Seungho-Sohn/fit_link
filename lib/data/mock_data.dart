@@ -425,9 +425,30 @@ List<Mission> seedMissions() => [
 class PointLog {
   final String reason;
   final int amount; // 적립은 양수, 사용은 음수
-  final String when;
-  const PointLog(this.reason, this.amount, this.when);
+  final String when; // 목업 내역의 표시용 날짜 ('8월 9일')
+  final DateTime? time; // 앱에서 생긴 내역의 실제 시각
+
+  const PointLog(this.reason, this.amount, this.when) : time = null;
+  const PointLog.timed(this.reason, this.amount, DateTime this.time) : when = '';
+
   bool get isSpend => amount < 0;
+
   /// '+2,000' / '-3,900'
   String get signed => '${isSpend ? '-' : '+'}${comma(amount.abs())}';
+
+  /// 내역에 표시할 시각: 1분 이내 '방금', 같은 날 '오늘', 그 외 'M월 D일'
+  String label(DateTime now) {
+    final t = time;
+    if (t == null) return when;
+    if (now.difference(t).inMinutes < 1) return '방금';
+    if (t.year == now.year && t.month == now.month && t.day == now.day) return '오늘';
+    return '${t.month}월 ${t.day}일';
+  }
+
+  Map<String, Object?> toJson() => {'reason': reason, 'amount': amount, if (time == null) 'when': when, if (time != null) 'time': time!.toIso8601String()};
+
+  factory PointLog.fromJson(Map<String, dynamic> j) {
+    final t = j['time'] as String?;
+    return t != null ? PointLog.timed(j['reason'] as String, j['amount'] as int, DateTime.parse(t)) : PointLog(j['reason'] as String, j['amount'] as int, j['when'] as String);
+  }
 }

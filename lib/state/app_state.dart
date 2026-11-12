@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../theme.dart';
+import 'persistence.dart';
 import 'routes.dart';
 
 export 'routes.dart';
@@ -16,6 +18,9 @@ class AppState extends ChangeNotifier {
   factory AppState.fresh() => AppState._();
 
   final messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// 현재 시각. 테스트에서 날짜를 바꿔 끼울 수 있게 함수로 둔다.
+  DateTime Function() now = DateTime.now;
 
   /* ---------- 온보딩 · 프로필 ---------- */
   bool onboarded = false;
@@ -60,8 +65,10 @@ class AppState extends ChangeNotifier {
   /* ---------- 포인트 ---------- */
   int points = 3200;
   int earned = 4200;
-  bool attended = false;
-  bool stampClaimed = false;
+  String? _attendedOn; // 마지막 출석일 'yyyy-mm-dd'
+  String? _stampWeek; // 주간 보너스를 받은 주의 월요일 'yyyy-mm-dd'
+  bool get attended => _attendedOn == dayKey(now());
+  bool get stampClaimed => _stampWeek == weekKey(now());
   final List<PointLog> ptHistory = [
     const PointLog('상품 리뷰 작성', 100, '8월 9일'),
     const PointLog('배달 주문 적립 (2%)', 154, '8월 8일'),
@@ -90,14 +97,15 @@ class AppState extends ChangeNotifier {
   void earnPoints(int n, String reason) {
     points += n;
     earned += n;
-    ptHistory.insert(0, PointLog(reason, n, '방금'));
+    ptHistory.insert(0, PointLog.timed(reason, n, now()));
     notifyListeners();
     toast('+${n}P 적립 · $reason');
   }
 
   void spendPoints(int n, String reason) {
-    points = points - n < 0 ? 0 : points - n;
-    ptHistory.insert(0, PointLog(reason, -n, '방금'));
+    final used = n > points ? points : n; // 잔액 이상은 차감할 수 없으므로 실제 차감액만 기록
+    points -= used;
+    ptHistory.insert(0, PointLog.timed(reason, -used, now()));
     notifyListeners();
   }
 
@@ -106,7 +114,7 @@ class AppState extends ChangeNotifier {
       toast('오늘은 이미 출석했어요');
       return;
     }
-    attended = true;
+    _attendedOn = dayKey(now());
     earnPoints(10, '출석 체크');
   }
 
@@ -115,7 +123,7 @@ class AppState extends ChangeNotifier {
 
   void claimStamp() {
     if (!missionsAllDone || stampClaimed) return;
-    stampClaimed = true;
+    _stampWeek = weekKey(now());
     earnPoints(500, '주간 미션 보너스');
   }
 
@@ -268,7 +276,102 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     Future.delayed(const Duration(milliseconds: 700), () => earnPoints(c.pointsEarned, '배달 주문 적립'));
   }
+
+  /* ---------- 저장 · 복원 ---------- */
+  // 저장 대상: 사용자가 쌓은 데이터(온보딩·포인트·미션·장바구니·찜).
+  // 화면 위치, 결제 화면 옵션, 직전 주문 금액 같은 일시적인 값은 저장하지 않는다.
+  static const _schema = 1;
+  StateStore? _store;
+  String? _lastSaved;
+
+  /// [store]에서 상태를 복원하고, 이후 상태가 바뀔 때마다 자동 저장한다.
+  /// 저장본이 깨져 있으면 무시하고 초기 상태로 시작한다.
+  void attachStore(StateStore store) {
+    _store = store;
+    final raw = store.read();
+    if (raw != null) {
+      try {
+        _restore(jsonDecode(raw) as Map<String, dynamic>);
+      } catch (e) {
+        debugPrint('저장된 상태를 읽지 못해 초기 상태로 시작합니다: $e');
+      }
+    }
+    _lastSaved = jsonEncode(toJson());
+    addListener(_save);
+  }
+
+  void _save() {
+    final store = _store;
+    if (store == null) return;
+    final data = jsonEncode(toJson());
+    if (data == _lastSaved) return; // 화면 이동 등 저장 대상이 그대로면 건너뜀
+    _lastSaved = data;
+    store.write(data).catchError((Object e) => debugPrint('상태 저장 실패: $e'));
+  }
+
+  Map<String, Object?> toJson() => {
+        'schema': _schema,
+        'onboarded': onboarded,
+        'goal': goal,
+        'points': points,
+        'earned': earned,
+        'attendedOn': _attendedOn,
+        'stampWeek': _stampWeek,
+        'ptHistory': [for (final h in ptHistory) h.toJson()],
+        'missions': {for (final m in missions) m.name: m.progress},
+        'dealsLeft': {for (final d in ptDeals) d.name: d.left},
+        'cart': cart,
+        'myOrders': myOrders,
+        'dcart': dcart,
+        'dfavs': dfavs.toList(),
+      };
+
+  /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
+  void _restore(Map<String, dynamic> j) {
+    if (j['schema'] != _schema) throw FormatException('알 수 없는 저장 형식: ${j['schema']}');
+    final history = [for (final h in j['ptHistory'] as List) PointLog.fromJson(h as Map<String, dynamic>)];
+    final missionProgress = (j['missions'] as Map).cast<String, int>();
+    final dealsLeft = (j['dealsLeft'] as Map).cast<String, int>();
+    // 목업 데이터에서 사라진 상품·메뉴는 버린다
+    final savedCart = (j['cart'] as Map).cast<String, int>()..removeWhere((id, _) => !products.any((p) => p.id == id));
+    final savedDcart = (j['dcart'] as Map).cast<String, int>()..removeWhere((id, _) => !dmenu.any((m) => m.id == id));
+    final favs = (j['dfavs'] as List).cast<String>();
+
+    onboarded = j['onboarded'] as bool;
+    goal = j['goal'] as String;
+    points = j['points'] as int;
+    earned = j['earned'] as int;
+    _attendedOn = j['attendedOn'] as String?;
+    _stampWeek = j['stampWeek'] as String?;
+    ptHistory
+      ..clear()
+      ..addAll(history);
+    for (final m in missions) {
+      m.progress = missionProgress[m.name] ?? m.progress;
+    }
+    for (final d in ptDeals) {
+      d.left = dealsLeft[d.name] ?? d.left;
+    }
+    cart
+      ..clear()
+      ..addAll(savedCart);
+    myOrders = j['myOrders'] as String;
+    dcart
+      ..clear()
+      ..addAll(savedDcart);
+    dfavs
+      ..clear()
+      ..addAll(favs);
+  }
 }
+
+String _two(int n) => n.toString().padLeft(2, '0');
+
+/// 날짜 키 'yyyy-mm-dd'
+String dayKey(DateTime t) => '${t.year}-${_two(t.month)}-${_two(t.day)}';
+
+/// 주 키: 그 주 월요일의 [dayKey]
+String weekKey(DateTime t) => dayKey(DateTime(t.year, t.month, t.day - (t.weekday - 1)));
 
 /// 배달 결제 금액 내역 (원)
 class PayBreakdown {

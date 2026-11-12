@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'state/app_state.dart';
+import 'state/persistence.dart';
 import 'theme.dart';
 import 'screens/onboarding.dart';
 import 'screens/home_screen.dart';
@@ -15,12 +16,19 @@ import 'screens/delivery_screen.dart';
 import 'screens/calorie_screen.dart';
 import 'screens/my_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 글꼴은 전부 assets/google_fonts/ 에 내장 — 실행 중 네트워크 다운로드 금지
   GoogleFonts.config.allowRuntimeFetching = false;
   _registerFontLicenses();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  // 저장된 포인트·장바구니 등을 복원하고 이후 변경을 자동 저장.
+  // 저장소를 열 수 없어도 앱은 저장 없이 실행한다.
+  try {
+    AppState.I.attachStore(await PrefsStore.open());
+  } catch (e) {
+    debugPrint('저장소를 열지 못해 저장 없이 실행합니다: $e');
+  }
   runApp(const FitLinkApp());
 }
 

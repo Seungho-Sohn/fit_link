@@ -273,7 +273,7 @@ class PointsScreen extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(h.reason, style: F.inter(size: 11.5)),
                   const SizedBox(height: 3),
-                  Text(h.when, style: F.inter(size: 9, color: C.textFaint)),
+                  Text(h.label(_s.now()), style: F.inter(size: 9, color: C.textFaint)),
                 ]),
               ),
               Text('${h.signed}P', style: F.gnum(size: 14, color: h.isSpend ? C.cHigh : C.cLow)),
