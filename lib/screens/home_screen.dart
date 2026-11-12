@@ -3,7 +3,7 @@ import '../data/mock_data.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import 'home_sections.dart';
+import 'home/sections.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget arr() => Padding(padding: const EdgeInsets.only(top: 14), child: Text('→', style: F.inter(size: 13, color: C.goldDim)));
 
     return Box(
-      onTap: () => s.go('gear'),
+      onTap: () => s.go(AppPage.gear),
       margin: const EdgeInsets.only(top: 16),
       border: C.gold,
       gradient: softGold(),
@@ -151,13 +151,13 @@ class _HomeScreenState extends State<HomeScreen> {
           step('📍', '가장 가까운\n헬스장'),
         ]),
         const SizedBox(height: 16),
-        GoldButton('＋ 기구 촬영하고 찾기', upper: false, onTap: () => s.go('gear')),
+        GoldButton('＋ 기구 촬영하고 찾기', upper: false, onTap: () => s.go(AppPage.gear)),
       ]),
     );
   }
 
   Widget _coachLaunch() => Box(
-        onTap: () => s.go('coach'),
+        onTap: () => s.go(AppPage.coach),
         margin: const EdgeInsets.only(top: 12),
         border: C.goldDim,
         gradient: softGold(),
@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
   Widget _quickRow() {
-    Widget q(String ic, String l, String tab) => Expanded(
+    Widget q(String ic, String l, AppPage tab) => Expanded(
           child: Box(
             onTap: () => s.go(tab),
             margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -199,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
     return Padding(
       padding: const EdgeInsets.only(top: 14),
-      child: Row(children: [q('🍚', '음식 기록', 'cal'), q('🏆', '챌린지', 'comm'), q('🛍️', '마켓', 'market')]),
+      child: Row(children: [q('🍚', '음식 기록', AppPage.cal), q('🏆', '챌린지', AppPage.comm), q('🛍️', '마켓', AppPage.market)]),
     );
   }
 
@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final lv = spp >= 3.0 ? ['여유', C.cLow] : (spp >= 1.5 ? ['보통', C.cMid] : ['혼잡', C.cHigh]);
     final col = lv[1] as Color;
     return Box(
-      onTap: () => s.go('gear'),
+      onTap: () => s.go(AppPage.gear),
       margin: const EdgeInsets.only(bottom: 10),
       border: pick ? C.gold : C.hairlineSoft,
       gradient: pick ? softGold(.10) : null,

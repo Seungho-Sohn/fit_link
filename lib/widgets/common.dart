@@ -838,3 +838,32 @@ class Divided extends StatelessWidget {
     );
   }
 }
+
+/* ===== 검색창 / 수량 조절 (마켓·배달 공용) ===== */
+Widget searchBar(TextEditingController c, String hint, VoidCallback onChanged) => Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(color: C.panel, border: Border.all(color: C.hairline)),
+      child: Row(children: [
+        const Icon(Icons.search, size: 15, color: C.goldDim),
+        const SizedBox(width: 9),
+        Expanded(
+          child: TextField(
+            controller: c,
+            onChanged: (_) => onChanged(),
+            style: F.inter(size: 12, w: FontWeight.w300),
+            decoration: InputDecoration(border: InputBorder.none, hintText: hint, hintStyle: F.inter(size: 12, color: C.textFaint, w: FontWeight.w300), isDense: true, contentPadding: const EdgeInsets.symmetric(vertical: 12)),
+          ),
+        ),
+      ]),
+    );
+
+
+Widget qtyCtrl(int q, VoidCallback minus, VoidCallback plus, {bool big = false}) => Container(
+      decoration: BoxDecoration(border: Border.all(color: big ? C.hairline : C.hairlineSoft)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        GestureDetector(onTap: minus, child: SizedBox(width: big ? 34 : 28, height: big ? 34 : 30, child: Center(child: Text('−', style: F.inter(size: big ? 16 : 15, color: C.goldBright))))),
+        SizedBox(width: big ? 38 : 22, child: Text('$q', textAlign: TextAlign.center, style: big ? F.inter(size: 13) : F.serif(size: 12, w: FontWeight.w600))),
+        GestureDetector(onTap: plus, child: SizedBox(width: big ? 34 : 28, height: big ? 34 : 30, child: Center(child: Text('+', style: F.inter(size: big ? 16 : 15, color: C.goldBright))))),
+      ]),
+    );

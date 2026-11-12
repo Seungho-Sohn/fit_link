@@ -64,7 +64,7 @@ class MyScreen extends StatelessWidget {
         const SectHead('내 배지', more: '전체 8개', top: 18),
         Row(children: [badge('🥇', '첫 운동', true), badge('🔥', '7일 연속', true), badge('💪', '챌린지 완주', true), badge('🏆', '랭킹 TOP3', false)]),
         const SizedBox(height: 6),
-        menu('', _s.pointsStr, gold: true, onTap: () => _s.go('points'), kw: Text.rich(TextSpan(children: [
+        menu('', _s.pointsStr, gold: true, onTap: () => _s.go(AppPage.points), kw: Text.rich(TextSpan(children: [
           TextSpan(text: '🏆 ', style: F.inter(size: 13)),
           TextSpan(text: 'WILD WEAR', style: F.serif(size: 14, w: FontWeight.w600, ls: .03)),
           TextSpan(text: ' 포인트', style: F.inter(size: 13)),
@@ -91,7 +91,7 @@ class PointsScreen extends StatelessWidget {
     final ti = _s.tierIdx;
     final t = tiers[ti];
     final next = ti + 1 < tiers.length ? tiers[ti + 1] : null;
-    final done = _s.missions.where((m) => (m[1] as int) >= (m[2] as int)).length;
+    final done = _s.missionsDone;
     final all = _s.missionsAllDone;
 
     Widget earn(String em, String t, String d, Widget right) => Box(
@@ -113,7 +113,7 @@ class PointsScreen extends StatelessWidget {
     Widget eBtn(String l, VoidCallback f, {bool doneB = false}) => LineButton(l, done: doneB, size: 10, padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8), onTap: f);
 
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 마이', onBack: () => _s.go('my'), title: 'WILD WEAR 포인트', titleSize: 22),
+      header: StepTitle(eyebrow: '← 마이', onBack: () => _s.go(AppPage.my), title: 'WILD WEAR 포인트', titleSize: 22),
       children: [
         // 잔액 카드
         Box(
@@ -164,7 +164,7 @@ class PointsScreen extends StatelessWidget {
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: Builder(builder: (_) {
-                        final on = (_s.missions[i][1] as int) >= (_s.missions[i][2] as int);
+                        final on = _s.missions[i].isDone;
                         return Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
@@ -185,7 +185,7 @@ class PointsScreen extends StatelessWidget {
                 top: true,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Builder(builder: (_) {
-                  final ok = (m[1] as int) >= (m[2] as int);
+                  final ok = m.isDone;
                   return Row(children: [
                     Container(
                       width: 16,
@@ -195,8 +195,8 @@ class PointsScreen extends StatelessWidget {
                       child: Text(ok ? '✓' : '', style: F.inter(size: 9, color: C.ink)),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(child: Text(m[0] as String, style: F.inter(size: 11.5, color: ok ? C.ivory : C.textDim))),
-                    Text('${m[1]} / ${m[2]}', style: F.inter(size: 10, color: C.goldBright)),
+                    Expanded(child: Text(m.name, style: F.inter(size: 11.5, color: ok ? C.ivory : C.textDim))),
+                    Text('${m.progress} / ${m.goal}', style: F.inter(size: 10, color: C.goldBright)),
                   ]);
                 }),
               ),
@@ -246,7 +246,7 @@ class PointsScreen extends StatelessWidget {
         // 적립 방법
         const SectHead('포인트 적립하기', more: '적립률 등급별 차등', top: 20),
         earn('📅', '매일 출석 체크', '앱 접속만 해도 하루 10P', eBtn(_s.attended ? '출석 완료 ✓' : '출석 +10P', _s.attend, doneB: _s.attended)),
-        earn('💪', '운동 인증', '커뮤니티에 오운완 인증 시 +50P', eBtn('인증하러', () => _s.go('comm'))),
+        earn('💪', '운동 인증', '커뮤니티에 오운완 인증 시 +50P', eBtn('인증하러', () => _s.go(AppPage.comm))),
         earn('✍️', '리뷰 작성', '배달·상품 리뷰 작성 시 +100P', eBtn('리뷰쓰기', () => _s.earnPoints(100, '리뷰 작성'))),
         earn('🛒', '주문 적립', '배달·마켓 결제액의 등급별 적립률만큼', Text('자동 적립', style: F.inter(size: 10, color: C.goldBright))),
         earn('🎁', '친구 초대', '초대 코드로 가입 시 +500P', eBtn('초대하기', () => _s.toast('초대 링크를 복사했어요'))),
@@ -271,12 +271,12 @@ class PointsScreen extends StatelessWidget {
             child: Row(children: [
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(h[0], style: F.inter(size: 11.5)),
+                  Text(h.reason, style: F.inter(size: 11.5)),
                   const SizedBox(height: 3),
-                  Text(h[2], style: F.inter(size: 9, color: C.textFaint)),
+                  Text(h.when, style: F.inter(size: 9, color: C.textFaint)),
                 ]),
               ),
-              Text('${h[1]}P', style: F.gnum(size: 14, color: h[1].startsWith('-') ? C.cHigh : C.cLow)),
+              Text('${h.signed}P', style: F.gnum(size: 14, color: h.isSpend ? C.cHigh : C.cLow)),
             ]),
           ),
         const HintCard('어디서 쓰나요?', '배달·마켓 결제 시 1P = 1원처럼 사용할 수 있어요. WILD WEAR 공식 스토어에서는 포인트 전용 특가도 있어요.', top: 16),

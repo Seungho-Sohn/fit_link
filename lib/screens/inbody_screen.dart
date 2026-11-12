@@ -11,7 +11,7 @@ class InbodyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppState.I;
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 홈', onBack: () => s.go('home'), title: '인바디 리포트', titleSize: 24, desc: '2026년 8월 10일 측정 · 12주 전 대비'),
+      header: StepTitle(eyebrow: '← 홈', onBack: () => s.go(AppPage.home), title: '인바디 리포트', titleSize: 24, desc: '2026년 8월 10일 측정 · 12주 전 대비'),
       footer: [
         GoldButton('이 결과로 AI 코치 상담받기', upper: false, onTap: () {
           coachAsk('인바디 결과 상담해줘',

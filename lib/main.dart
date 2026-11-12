@@ -66,19 +66,15 @@ class Shell extends StatelessWidget {
       builder: (context, _) {
         return PopScope(
           // 안드로이드 뒤로가기: 하위 화면이면 홈/마켓 홈 등으로 복귀
-          canPop: s.page == 'home' && s.onboarded,
+          canPop: s.page == AppPage.home && s.onboarded,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            if (s.page == 'market' && s.marketView != 'home') {
-              s.goMarket('home');
-            } else if (s.page == 'delivery' && s.delivView != 'home') {
-              s.goDeliv('home');
-            } else if (s.page == 'points') {
-              s.go('my');
-            } else if (s.page == 'live') {
-              s.go('coach');
+            if (s.page == AppPage.market && s.marketView != MarketView.home) {
+              s.goMarket(MarketView.home);
+            } else if (s.page == AppPage.delivery && s.delivView != DelivView.home) {
+              s.goDeliv(DelivView.home);
             } else {
-              s.go('home');
+              s.go(s.page.parent);
             }
           },
           child: Scaffold(
@@ -94,7 +90,7 @@ class Shell extends StatelessWidget {
                       Column(children: [
                         const _Wordmark(),
                         Expanded(child: _page(s)),
-                        _TabBar(current: s.navTab),
+                        _TabBar(current: s.page.tab),
                       ]),
                       if (!s.onboarded) const Positioned.fill(child: OnboardingOverlay()),
                     ]),
@@ -109,31 +105,20 @@ class Shell extends StatelessWidget {
   }
 
   Widget _page(AppState s) {
-    final k = ValueKey('${s.page}-${s.pageSeq}');
-    switch (s.page) {
-      case 'coach':
-        return CoachScreen(key: k);
-      case 'live':
-        return LiveCoachScreen(key: k);
-      case 'inbody':
-        return InbodyScreen(key: k);
-      case 'gear':
-        return GearFlow(key: k);
-      case 'comm':
-        return CommunityScreen(key: k);
-      case 'market':
-        return MarketScreen(key: k);
-      case 'delivery':
-        return DeliveryScreen(key: k);
-      case 'cal':
-        return CalorieScreen(key: k);
-      case 'my':
-        return MyScreen(key: k);
-      case 'points':
-        return PointsScreen(key: k);
-      default:
-        return HomeScreen(key: k);
-    }
+    final k = ValueKey('${s.page.name}-${s.pageSeq}');
+    return switch (s.page) {
+      AppPage.home => HomeScreen(key: k),
+      AppPage.comm => CommunityScreen(key: k),
+      AppPage.market => MarketScreen(key: k),
+      AppPage.delivery => DeliveryScreen(key: k),
+      AppPage.cal => CalorieScreen(key: k),
+      AppPage.my => MyScreen(key: k),
+      AppPage.coach => CoachScreen(key: k),
+      AppPage.live => LiveCoachScreen(key: k),
+      AppPage.inbody => InbodyScreen(key: k),
+      AppPage.gear => GearFlow(key: k),
+      AppPage.points => PointsScreen(key: k),
+    };
   }
 }
 
@@ -153,16 +138,16 @@ class _Wordmark extends StatelessWidget {
 }
 
 class _TabBar extends StatelessWidget {
-  final String current;
+  final AppPage current;
   const _TabBar({required this.current});
 
   static const tabs = [
-    ['home', '홈', Icons.home_outlined],
-    ['comm', '커뮤니티', Icons.people_outline],
-    ['market', '마켓', Icons.shopping_cart_outlined],
-    ['delivery', '배달', Icons.delivery_dining_outlined],
-    ['cal', '칼로리', Icons.restaurant_outlined],
-    ['my', '마이', Icons.person_outline],
+    (page: AppPage.home, label: '홈', icon: Icons.home_outlined),
+    (page: AppPage.comm, label: '커뮤니티', icon: Icons.people_outline),
+    (page: AppPage.market, label: '마켓', icon: Icons.shopping_cart_outlined),
+    (page: AppPage.delivery, label: '배달', icon: Icons.delivery_dining_outlined),
+    (page: AppPage.cal, label: '칼로리', icon: Icons.restaurant_outlined),
+    (page: AppPage.my, label: '마이', icon: Icons.person_outline),
   ];
 
   @override
@@ -174,13 +159,13 @@ class _TabBar extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => AppState.I.go(t[0] as String),
+              onTap: () => AppState.I.go(t.page),
               child: Padding(
                 padding: const EdgeInsets.only(top: 11, bottom: 13),
                 child: Column(children: [
-                  Icon(t[2] as IconData, size: 19, color: current == t[0] ? C.goldBright : C.textFaint),
+                  Icon(t.icon, size: 19, color: current == t.page ? C.goldBright : C.textFaint),
                   const SizedBox(height: 5),
-                  Text(t[1] as String, style: F.inter(size: 8.5, color: current == t[0] ? C.goldBright : C.textFaint)),
+                  Text(t.label, style: F.inter(size: 8.5, color: current == t.page ? C.goldBright : C.textFaint)),
                 ]),
               ),
             ),

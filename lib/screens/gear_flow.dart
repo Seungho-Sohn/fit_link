@@ -116,7 +116,7 @@ class _GearFlowState extends State<GearFlow> {
           header: const StepTitle(eyebrow: '06 · Confirmed', title: '헬스장이 선택됐습니다'),
           footer: [
             GoldButton('길찾기 시작', onTap: () => go(5)),
-            GoldButton('이 운동에 필요한 장비, 마켓에서 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go('market')),
+            GoldButton('이 운동에 필요한 장비, 마켓에서 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.market)),
           ],
           children: const [
             ConfirmHero('스틸핏 강남점', '선택한 Hammer Strength 기구를 보유 중이며,\n현재 위치에서 도보 6분 거리입니다.'),
@@ -130,7 +130,7 @@ class _GearFlowState extends State<GearFlow> {
         );
       default:
         return ScreenFrame(
-          header: StepTitle(eyebrow: '← 홈', onBack: () => s.go('home'), title: '운동기구 사진을 올려주세요', desc: '기구 전체가 보이게 촬영하면 인식 정확도가 올라갑니다.'),
+          header: StepTitle(eyebrow: '← 홈', onBack: () => s.go(AppPage.home), title: '운동기구 사진을 올려주세요', desc: '기구 전체가 보이게 촬영하면 인식 정확도가 올라갑니다.'),
           footer: [GoldButton('사진으로 계속하기', onTap: () => go(2))],
           children: [
             DropZone('사진 선택 또는 촬영', onTap: () => go(2)),

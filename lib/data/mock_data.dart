@@ -99,6 +99,11 @@ class Post {
   Post(this.av, this.name, this.tier, this.time, this.tag, this.txt, this.img, this.likes, this.comments, this.liked);
 }
 
+class Comment {
+  final String av, name, text, time;
+  const Comment(this.av, this.name, this.text, this.time);
+}
+
 List<Post> seedPosts() => [
       Post('K', '김철봉', 'Gold', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
       Post('S', '수진트레이닝', 'PT', '40분 전', '꿀팁', '초보자분들 데드리프트 허리 안 아프게 하는 법 3가지 정리해봤어요. 궁금하면 댓글 남겨주세요!', '', 118, 23, true),
@@ -106,17 +111,17 @@ List<Post> seedPosts() => [
       Post('H', '헬린이탈출', 'Bronze', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
     ];
 
-Map<Post, List<List<String>>> seedComments(List<Post> posts) => {
+Map<Post, List<Comment>> seedComments(List<Post> posts) => {
       posts[0]: [
-        ['J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'],
-        ['H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전']
+        Comment('J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'),
+        Comment('H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전')
       ],
       posts[1]: [
-        ['K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전']
+        Comment('K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전')
       ],
       posts[2]: [],
       posts[3]: [
-        ['S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전']
+        Comment('S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전')
       ],
     };
 
@@ -205,24 +210,29 @@ const products = [
 
 Product productById(String id) => products.firstWhere((p) => p.id == id);
 
-const reviews = <String, List<List<String>>>{
+class Review {
+  final String author, stars, text;
+  const Review(this.author, this.stars, this.text);
+}
+
+const reviews = <String, List<Review>>{
   'p1': [
-    ['김O훈', '★★★★★', '손목 아팠는데 이거 쓰고 데드리프트 무게 늘었어요. 재질도 튼튼합니다.'],
-    ['이O연', '★★★★☆', '그립감 좋아요. 다만 처음엔 좀 뻣뻣해서 길들이는 시간이 필요해요.']
+    Review('김O훈', '★★★★★', '손목 아팠는데 이거 쓰고 데드리프트 무게 늘었어요. 재질도 튼튼합니다.'),
+    Review('이O연', '★★★★☆', '그립감 좋아요. 다만 처음엔 좀 뻣뻣해서 길들이는 시간이 필요해요.')
   ],
   'p6': [
-    ['박O성', '★★★★★', '벌크업 시즌마다 재구매합니다. 초코맛 물에도 잘 녹아요.'],
-    ['정O우', '★★★★★', '정품관이라 믿고 삽니다. 배송도 빨라요.'],
-    ['최O진', '★★★★☆', '가성비 좋은데 스쿱이 가끔 안 들어있을 때가 있네요.']
+    Review('박O성', '★★★★★', '벌크업 시즌마다 재구매합니다. 초코맛 물에도 잘 녹아요.'),
+    Review('정O우', '★★★★★', '정품관이라 믿고 삽니다. 배송도 빨라요.'),
+    Review('최O진', '★★★★☆', '가성비 좋은데 스쿱이 가끔 안 들어있을 때가 있네요.')
   ],
   'p12': [
-    ['한O규', '★★★★★', '앱에서 바로 발급돼서 편했어요. 기구 매칭으로 찾은 곳이라 딱 맞았습니다.'],
-    ['서O민', '★★★★☆', '시설 좋아요. 피크타임엔 좀 붐빕니다.']
+    Review('한O규', '★★★★★', '앱에서 바로 발급돼서 편했어요. 기구 매칭으로 찾은 곳이라 딱 맞았습니다.'),
+    Review('서O민', '★★★★☆', '시설 좋아요. 피크타임엔 좀 붐빕니다.')
   ],
 };
 const defaultReviews = [
-  ['구매자', '★★★★★', '만족스러운 상품이에요. 추천합니다.'],
-  ['구매자', '★★★★☆', '배송 빠르고 품질 좋습니다.']
+  Review('구매자', '★★★★★', '만족스러운 상품이에요. 추천합니다.'),
+  Review('구매자', '★★★★☆', '배송 빠르고 품질 좋습니다.')
 ];
 
 const marketCats = ['전체', '운동장비', '운동복', '보충제·건기식', '헬스케어기기', 'PT·이용권'];
@@ -374,11 +384,30 @@ class PtDeal {
   PtDeal(this.em, this.name, this.was, this.pts, this.left);
 }
 
-/// 주간 미션: [이름, 현재, 목표]
-List<List<Object>> seedMissions() => [
-      ['출석 3일', 3, 3],
-      ['운동 인증 2회', 1, 2],
-      ['배달 주문 1회', 0, 1],
-      ['리뷰 작성 1개', 1, 1],
-      ['3대 기록 갱신', 0, 1],
+/// 주간 미션
+class Mission {
+  final String name;
+  int progress;
+  final int goal;
+  Mission(this.name, this.progress, this.goal);
+  bool get isDone => progress >= goal;
+}
+
+List<Mission> seedMissions() => [
+      Mission('출석 3일', 3, 3),
+      Mission('운동 인증 2회', 1, 2),
+      Mission('배달 주문 1회', 0, 1),
+      Mission('리뷰 작성 1개', 1, 1),
+      Mission('3대 기록 갱신', 0, 1),
     ];
+
+/// 포인트 적립(+)·사용(−) 내역
+class PointLog {
+  final String reason;
+  final int amount; // 적립은 양수, 사용은 음수
+  final String when;
+  const PointLog(this.reason, this.amount, this.when);
+  bool get isSpend => amount < 0;
+  /// '+2,000' / '-3,900'
+  String get signed => '${isSpend ? '-' : '+'}${comma(amount.abs())}';
+}

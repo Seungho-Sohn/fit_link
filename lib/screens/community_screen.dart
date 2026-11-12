@@ -8,7 +8,7 @@ AppState get _s => AppState.I;
 
 // 앱 실행 중 유지되는 커뮤니티 데이터
 final List<Post> _posts = seedPosts();
-final Map<Post, List<List<String>>> _comments = seedComments(_posts);
+final Map<Post, List<Comment>> _comments = seedComments(_posts);
 final List<Group> _groups = seedGroups();
 final List<Challenge> _challenges = seedChallenges();
 
@@ -148,16 +148,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
           for (final c in list)
             Divided(
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Avatar(c[0], size: 30, border: C.goldDim, serif: true),
+                Avatar(c.av, size: 30, border: C.goldDim, serif: true),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text.rich(TextSpan(children: [
-                      TextSpan(text: c[1], style: F.inter(size: 11, w: FontWeight.w500)),
-                      TextSpan(text: '  ${c[3]}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
+                      TextSpan(text: c.name, style: F.inter(size: 11, w: FontWeight.w500)),
+                      TextSpan(text: '  ${c.time}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
                     ])),
                     const SizedBox(height: 4),
-                    Text(c[2], style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
+                    Text(c.text, style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
                   ]),
                 ),
               ]),
@@ -168,7 +168,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         void post() {
           final v = input.text.trim();
           if (v.isEmpty) return;
-          (_comments[p] ??= []).add(['F', '회원님', v, '방금']);
+          (_comments[p] ??= []).add(Comment('F', '회원님', v, '방금'));
           p.comments++;
           input.clear();
           setS(() {});
@@ -209,7 +209,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       context,
       title: '인증 · 글쓰기',
       disposables: [ta],
-      body: (ctx, setS) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body:(ctx, setS) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 7, runSpacing: 7, children: [
           for (final t in ['운동 인증', '식단 인증', '꿀팁', '질문']) SelChip(t, on: tag == t, onTap: () => setS(() => tag = t)),
         ]),
