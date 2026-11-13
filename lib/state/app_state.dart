@@ -38,6 +38,54 @@ class AppState extends ChangeNotifier {
   AppPage page = AppPage.home;
   int pageSeq = 0; // 같은 화면으로 다시 들어올 때 상태 초기화용 키
 
+  /* ---------- 주소(URL) 연동 ---------- */
+  // 화면 상태가 바뀌면 [notifyListeners]에서 주소를 갱신하고(→ GoRouter),
+  // 주소가 바뀌면(딥링크·브라우저 뒤로 가기) [applyLocation]으로 화면 상태를 맞춘다.
+
+  /// 주소를 바꾸는 함수. 앱에서는 GoRouter.go, 단위 테스트에서는 null(주소 연동 없음).
+  void Function(String location)? onLocationChanged;
+  String _reported = '/';
+
+  /// 지금 화면 상태에 해당하는 주소
+  String get location =>
+      locationOf(page: page, market: marketView, deliv: delivView, product: curProductId, seller: curStoreSeller, shop: curShopId);
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    final loc = location;
+    if (loc != _reported) {
+      _reported = loc;
+      onLocationChanged?.call(loc);
+    }
+  }
+
+  /// 주소를 화면 상태로 해석. 모르는 주소이거나 없는 상품·판매자·매장이면 null.
+  NavTarget? resolveLocation(Uri uri) {
+    final t = parseLocation(uri);
+    if (t == null) return null;
+    if (t.product != null && !products.any((p) => p.id == t.product)) return null;
+    if (t.seller != null && !sellers.containsKey(t.seller)) return null;
+    if (t.shop != null && !dshops.any((s) => s.id == t.shop)) return null;
+    return t;
+  }
+
+  /// 주소에 맞춰 화면 상태를 바꾼다. 해석할 수 없는 주소면 아무것도 하지 않고 false.
+  bool applyLocation(Uri uri) {
+    final t = resolveLocation(uri);
+    if (t == null) return false;
+    if (t.page != page) pageSeq++; // 주소로 다른 화면에 들어오면 새로 시작
+    page = t.page;
+    marketView = t.market ?? marketView;
+    delivView = t.deliv ?? delivView;
+    curProductId = t.product ?? curProductId;
+    curStoreSeller = t.seller ?? curStoreSeller;
+    curShopId = t.shop ?? curShopId;
+    _reported = location; // 주소에서 온 변경이므로 다시 보내지 않음
+    notifyListeners();
+    return true;
+  }
+
   void go(AppPage p) {
     page = p;
     pageSeq++;
@@ -139,8 +187,8 @@ class AppState extends ChangeNotifier {
 
   /* ---------- 마켓 ---------- */
   MarketView marketView = MarketView.home;
-  String? curProductId;
-  String? curStoreSeller;
+  String curProductId = 'p1';
+  String curStoreSeller = 'wildwear';
   final Map<String, int> cart = {}; // productId → qty
   int lastOrderTotal = 0;
   String myOrders = '배달 2건 · 마켓 1건';

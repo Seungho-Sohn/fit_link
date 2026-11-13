@@ -300,7 +300,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
   /* ================= 상품 상세 ================= */
   Widget _detail() {
-    final p = productById(_s.curProductId ?? 'p1');
+    final p = productById(_s.curProductId);
     final sl = sellers[p.seller]!;
     final revs = reviews[p.id] ?? defaultReviews;
     return ScreenFrame(
@@ -403,7 +403,7 @@ class _MarketScreenState extends State<MarketScreen> {
 
   /* ================= 판매자 스토어 ================= */
   Widget _store() {
-    final id = _s.curStoreSeller ?? 'wildwear';
+    final id = _s.curStoreSeller;
     final sl = sellers[id]!;
     final list = products.where((p) => p.seller == id).toList();
     return ScreenFrame(
