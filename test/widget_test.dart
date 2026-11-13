@@ -51,4 +51,21 @@ void main() {
     s.go(AppPage.home); // 주기 타이머가 있는 화면을 정리
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('포인트 화면의 미션 스탬프는 모두 같은 크기', (tester) async {
+    tester.view.physicalSize = const Size(430 * 3, 932 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const FitLinkApp());
+    AppState.I
+      ..finishOnboard(0)
+      ..go(AppPage.points);
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final sizes = [for (var i = 0; i < AppState.I.missions.length; i++) tester.getSize(find.byKey(ValueKey('mission-stamp-$i')))];
+    expect(sizes.toSet(), hasLength(1), reason: '$sizes');
+
+    AppState.I.go(AppPage.home);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
