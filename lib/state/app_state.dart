@@ -123,7 +123,41 @@ class AppState extends ChangeNotifier {
     const PointLog('출석 체크', 10, '8월 8일'),
     const PointLog('챌린지 완주 보너스', 2000, '8월 5일'),
   ];
-  final missions = seedMissions();
+  final List<Mission> _missions = seedMissions();
+  String? _missionWeek; // 미션 진행도가 속한 주 (그 주 월요일 'yyyy-mm-dd')
+
+  /// 이번 주 미션. 주가 바뀌었으면 진행도를 0으로 되돌린 뒤 돌려준다.
+  List<Mission> get missions {
+    _rollMissionWeek();
+    return _missions;
+  }
+
+  void _rollMissionWeek() {
+    final w = weekKey(now());
+    if (_missionWeek == w) return;
+    for (final m in _missions) {
+      m.progress = 0;
+    }
+    _missionWeek = w;
+  }
+
+  /// 미션 진행 +1 (목표에서 멈춤). 화면 갱신 알림은 부르는 쪽이 보낸다.
+  void _advance(MissionKind k) {
+    final m = missions.firstWhere((m) => m.kind == k);
+    if (m.progress < m.goal) m.progress++;
+  }
+
+  /// 리뷰 쓰기 (+100P, 리뷰 미션)
+  void writeReview() {
+    _advance(MissionKind.review);
+    earnPoints(100, '리뷰 작성');
+  }
+
+  /// 운동 기록에서 개인 신기록 (PR 미션)
+  void recordPersonalRecord() {
+    _advance(MissionKind.personalRecord);
+    notifyListeners();
+  }
   final ptDeals = [
     PtDeal('🎗️', 'WILD WEAR 리프팅 스트랩', 38000, 3900, 47),
     PtDeal('🥤', '프로틴 1개월 정기권', 68000, 2900, 100),
@@ -163,6 +197,7 @@ class AppState extends ChangeNotifier {
       return;
     }
     _attendedOn = dayKey(now());
+    _advance(MissionKind.attend);
     earnPoints(10, '출석 체크');
   }
 
@@ -321,8 +356,55 @@ class AppState extends ChangeNotifier {
     dcart.clear();
     dUsePts = false;
     delivView = DelivView.done;
+    _advance(MissionKind.delivery);
     notifyListeners();
     Future.delayed(const Duration(milliseconds: 700), () => earnPoints(c.pointsEarned, '배달 주문 적립'));
+  }
+
+  /* ---------- 커뮤니티 ---------- */
+  // 목업 글(seedPosts)은 앱에 들어 있고, 회원이 쓴 글 · 단 댓글 · 좋아요만 저장한다.
+  static const _maxMine = 100; // 저장 용량을 위해 글·댓글은 최근 100개까지
+
+  final List<Post> myPosts = []; // 최신 글이 앞
+  final Map<String, List<Comment>> myComments = {}; // 글 id → 회원이 단 댓글
+  final Map<String, bool> likeOverrides = {}; // 글 id → 원래와 다른 좋아요 상태
+
+  List<Post> get feed => [...myPosts, ...seedPosts];
+  bool isLiked(Post p) => likeOverrides[p.id] ?? p.liked;
+  int likeCount(Post p) => p.likes + (isLiked(p) == p.liked ? 0 : (isLiked(p) ? 1 : -1));
+  List<Comment> commentsOf(Post p) => [...?seedComments[p.id], ...?myComments[p.id]];
+  int commentCount(Post p) => p.comments + (myComments[p.id]?.length ?? 0);
+
+  void toggleLike(Post p) {
+    final v = !isLiked(p);
+    if (v == p.liked) {
+      likeOverrides.remove(p.id);
+    } else {
+      likeOverrides[p.id] = v;
+    }
+    notifyListeners();
+  }
+
+  void addComment(Post p, String text) {
+    final list = myComments[p.id] ??= [];
+    list.add(Comment('F', '회원님', text, '', at: now()));
+    if (list.length > _maxMine) list.removeAt(0);
+    notifyListeners();
+  }
+
+  /// 글쓰기. '운동 인증' 글은 주간 미션에 반영된다. (인증 글 +50P는 화면이 게시 직후 적립)
+  Post addPost(String tag, String text) {
+    final t = now();
+    final post = Post('mine-${t.microsecondsSinceEpoch}', 'F', '회원님', tier.en, '', tag, text, tag == '운동 인증' ? '🔥' : '', 0, 0, false, at: t);
+    myPosts.insert(0, post);
+    if (myPosts.length > _maxMine) {
+      final dropped = myPosts.removeLast();
+      myComments.remove(dropped.id);
+      likeOverrides.remove(dropped.id);
+    }
+    if (tag == '운동 인증') _advance(MissionKind.workoutPost);
+    notifyListeners();
+    return post;
   }
 
   /* ---------- 저장 · 복원 ---------- */
@@ -366,19 +448,31 @@ class AppState extends ChangeNotifier {
         'attendedOn': _attendedOn,
         'stampWeek': _stampWeek,
         'ptHistory': [for (final h in ptHistory) h.toJson()],
-        'missions': {for (final m in missions) m.name: m.progress},
+        'missions': {for (final m in missions) m.kind.name: m.progress},
+        'missionWeek': _missionWeek,
         'dealsLeft': {for (final d in ptDeals) d.name: d.left},
         'cart': cart,
         'myOrders': myOrders,
         'dcart': dcart,
         'dfavs': dfavs.toList(),
+        'posts': [for (final p in myPosts) p.toJson()],
+        'comments': {for (final e in myComments.entries) e.key: [for (final c in e.value) c.toJson()]},
+        'likes': likeOverrides,
       };
 
   /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
   void _restore(Map<String, dynamic> j) {
     if (j['schema'] != _schema) throw FormatException('알 수 없는 저장 형식: ${j['schema']}');
     final history = [for (final h in j['ptHistory'] as List) PointLog.fromJson(h as Map<String, dynamic>)];
-    final missionProgress = (j['missions'] as Map).cast<String, int>();
+    // 미션은 종류 이름으로 저장. 예전 저장본(한글 이름 키, missionWeek 없음)은 새 주로 보고 0부터 시작
+    final missionProgress = (j['missions'] as Map? ?? const {}).cast<String, int>();
+    final missionWeek = j['missionWeek'] as String?;
+    final posts = [for (final p in j['posts'] as List? ?? const []) Post.mine(p as Map<String, dynamic>)];
+    final comments = {
+      for (final e in (j['comments'] as Map? ?? const {}).entries)
+        e.key as String: [for (final c in e.value as List) Comment.mine(c as Map<String, dynamic>)],
+    };
+    final likes = (j['likes'] as Map? ?? const {}).cast<String, bool>();
     final dealsLeft = (j['dealsLeft'] as Map).cast<String, int>();
     // 목업 데이터에서 사라진 상품·메뉴는 버린다
     final savedCart = (j['cart'] as Map).cast<String, int>()..removeWhere((id, _) => !products.any((p) => p.id == id));
@@ -394,9 +488,20 @@ class AppState extends ChangeNotifier {
     ptHistory
       ..clear()
       ..addAll(history);
-    for (final m in missions) {
-      m.progress = missionProgress[m.name] ?? m.progress;
+    _missionWeek = missionWeek;
+    for (final m in _missions) {
+      m.progress = (missionProgress[m.kind.name] ?? 0).clamp(0, m.goal);
     }
+    myPosts
+      ..clear()
+      ..addAll(posts);
+    final ids = {for (final p in [...posts, ...seedPosts]) p.id}; // 없는 글에 달린 기록은 버림
+    myComments
+      ..clear()
+      ..addEntries(comments.entries.where((e) => ids.contains(e.key)));
+    likeOverrides
+      ..clear()
+      ..addEntries(likes.entries.where((e) => ids.contains(e.key)));
     for (final d in ptDeals) {
       d.left = dealsLeft[d.name] ?? d.left;
     }

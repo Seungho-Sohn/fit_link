@@ -104,38 +104,63 @@ const liveSteps = [
 ];
 
 /* ===== 커뮤니티 ===== */
+/// 커뮤니티 글. 목업 글은 [time] 문구('12분 전'), 회원이 쓴 글은 [at] 실제 시각을 쓴다.
+/// 좋아요·댓글 수의 변화는 [AppState]가 따로 기록한다 (글 자체는 바뀌지 않음).
 class Post {
-  final String av, name, tier, time, tag, txt, img;
-  int likes, comments;
-  bool liked;
-  Post(this.av, this.name, this.tier, this.time, this.tag, this.txt, this.img, this.likes, this.comments, this.liked);
+  final String id, av, name, tier, time, tag, txt, img;
+  final int likes, comments;
+  final bool liked;
+  final DateTime? at;
+  const Post(this.id, this.av, this.name, this.tier, this.time, this.tag, this.txt, this.img, this.likes, this.comments, this.liked, {this.at});
+
+  String timeLabel(DateTime now) => at == null ? time : agoLabel(at!, now);
+
+  Map<String, Object?> toJson() => {'id': id, 'tier': tier, 'tag': tag, 'txt': txt, 'img': img, 'at': at!.toIso8601String()};
+
+  /// 회원이 쓴 글 복원
+  factory Post.mine(Map<String, dynamic> j) => Post(j['id'] as String, 'F', '회원님', j['tier'] as String, '', j['tag'] as String, j['txt'] as String,
+      j['img'] as String, 0, 0, false, at: DateTime.parse(j['at'] as String));
 }
 
 class Comment {
   final String av, name, text, time;
-  const Comment(this.av, this.name, this.text, this.time);
+  final DateTime? at;
+  const Comment(this.av, this.name, this.text, this.time, {this.at});
+
+  String timeLabel(DateTime now) => at == null ? time : agoLabel(at!, now);
+
+  Map<String, Object?> toJson() => {'text': text, 'at': at!.toIso8601String()};
+  factory Comment.mine(Map<String, dynamic> j) => Comment('F', '회원님', j['text'] as String, '', at: DateTime.parse(j['at'] as String));
 }
 
-List<Post> seedPosts() => [
-      Post('K', '김철봉', 'Gold', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
-      Post('S', '수진트레이닝', 'PT', '40분 전', '꿀팁', '초보자분들 데드리프트 허리 안 아프게 하는 법 3가지 정리해봤어요. 궁금하면 댓글 남겨주세요!', '', 118, 23, true),
-      Post('J', '정다이어터', 'Silver', '1시간 전', '식단 인증', '점심 제육덮밥 642kcal 기록 완료. 칼로리 자동 계산 너무 편하다… 오늘 목표 안에서 클리어 ✅', '🍚', 67, 11, false),
-      Post('H', '헬린이탈출', 'Bronze', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
+/// 글·댓글 시각: '방금' / 'N분 전' / 'N시간 전'(같은 날) / 'M월 D일'
+String agoLabel(DateTime at, DateTime now) {
+  final d = now.difference(at);
+  if (d.inMinutes < 1) return '방금';
+  if (d.inMinutes < 60) return '${d.inMinutes}분 전';
+  if (at.year == now.year && at.month == now.month && at.day == now.day) return '${d.inHours}시간 전';
+  return '${at.month}월 ${at.day}일';
+}
+
+const seedPosts = [
+      Post('seed-0', 'K', '김철봉', 'Gold', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
+      Post('seed-1', 'S', '수진트레이닝', 'PT', '40분 전', '꿀팁', '초보자분들 데드리프트 허리 안 아프게 하는 법 3가지 정리해봤어요. 궁금하면 댓글 남겨주세요!', '', 118, 23, true),
+      Post('seed-2', 'J', '정다이어터', 'Silver', '1시간 전', '식단 인증', '점심 제육덮밥 642kcal 기록 완료. 칼로리 자동 계산 너무 편하다… 오늘 목표 안에서 클리어 ✅', '🍚', 67, 11, false),
+      Post('seed-3', 'H', '헬린이탈출', 'Bronze', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
     ];
 
-Map<Post, List<Comment>> seedComments(List<Post> posts) => {
-      posts[0]: [
-        Comment('J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'),
-        Comment('H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전')
-      ],
-      posts[1]: [
-        Comment('K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전')
-      ],
-      posts[2]: [],
-      posts[3]: [
-        Comment('S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전')
-      ],
-    };
+const seedComments = <String, List<Comment>>{
+  'seed-0': [
+    Comment('J', '정다이어터', '폼 미쳤네요 👏 저도 스틸핏 가봐야겠어요', '5분 전'),
+    Comment('H', '헬린이탈출', '랫풀다운 60kg 대단하십니다!', '2분 전'),
+  ],
+  'seed-1': [
+    Comment('K', '김철봉', '오 이거 진짜 도움됐어요 감사합니다 🙏', '30분 전'),
+  ],
+  'seed-3': [
+    Comment('S', '수진트레이닝', '주 4일이면 상·하체 2분할 추천해요! 회복 잘 됩니다', '20분 전'),
+  ],
+};
 
 class Group {
   final String em, name, desc;
@@ -409,22 +434,29 @@ class PtDeal {
   PtDeal(this.em, this.name, this.was, this.pts, this.left);
 }
 
-/// 주간 미션
-class Mission {
-  final String name;
-  int progress;
+/// 주간 미션 종류. 각 행동이 일어나면 [AppState]가 진행도를 올리고, 매주 월요일 0으로 초기화한다.
+enum MissionKind {
+  attend('출석 3일', 3), // 출석 체크
+  workoutPost('운동 인증 2회', 2), // 커뮤니티 '운동 인증' 글
+  delivery('배달 주문 1회', 1), // 배달 결제
+  review('리뷰 작성 1개', 1), // 포인트 허브의 리뷰 쓰기
+  personalRecord('PR 기록 갱신 1회', 1); // 운동 기록에서 신기록
+
+  const MissionKind(this.label, this.goal);
+  final String label;
   final int goal;
-  Mission(this.name, this.progress, this.goal);
+}
+
+class Mission {
+  final MissionKind kind;
+  int progress;
+  Mission(this.kind, [this.progress = 0]);
+  String get name => kind.label;
+  int get goal => kind.goal;
   bool get isDone => progress >= goal;
 }
 
-List<Mission> seedMissions() => [
-      Mission('출석 3일', 3, 3),
-      Mission('운동 인증 2회', 1, 2),
-      Mission('배달 주문 1회', 0, 1),
-      Mission('리뷰 작성 1개', 1, 1),
-      Mission('3대 기록 갱신', 0, 1),
-    ];
+List<Mission> seedMissions() => [for (final k in MissionKind.values) Mission(k)];
 
 /// 포인트 적립(+)·사용(−) 내역
 class PointLog {

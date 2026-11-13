@@ -180,4 +180,42 @@ void main() {
     expect(const PointLog('a', 2000, '').signed, '+2,000');
     expect(const PointLog('a', -3900, '').signed, '-3,900');
   });
+
+  group('주간 미션 · 실제 행동', () {
+    int prog(AppState s, MissionKind k) => s.missions.firstWhere((m) => m.kind == k).progress;
+
+    test('새로 시작하면 모든 미션이 0', () {
+      expect(AppState.fresh().missions.map((m) => m.progress), everyElement(0));
+    });
+
+    test('출석 · 운동 인증 글 · 배달 주문 · 리뷰 · 신기록이 각 미션을 올린다', () {
+      s.attend();
+      s.addPost('운동 인증', 'a');
+      s.addPost('식단 인증', 'b'); // 운동 인증만 센다
+      s.dAdd('d1');
+      s.placeDOrder();
+      s.writeReview();
+      s.recordPersonalRecord();
+      expect(prog(s, MissionKind.attend), 1);
+      expect(prog(s, MissionKind.workoutPost), 1);
+      expect(prog(s, MissionKind.delivery), 1);
+      expect(prog(s, MissionKind.review), 1);
+      expect(prog(s, MissionKind.personalRecord), 1);
+    });
+
+    test('목표를 넘어 올라가지 않는다', () {
+      for (var i = 0; i < 5; i++) {
+        s.addPost('운동 인증', '$i');
+        s.writeReview();
+      }
+      expect(prog(s, MissionKind.workoutPost), MissionKind.workoutPost.goal);
+      expect(prog(s, MissionKind.review), MissionKind.review.goal);
+    });
+
+    test('리뷰 쓰기는 +100P', () {
+      final p = s.points;
+      s.writeReview();
+      expect(s.points, p + 100);
+    });
+  });
 }

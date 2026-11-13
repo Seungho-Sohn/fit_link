@@ -6,9 +6,7 @@ import '../widgets/common.dart';
 
 AppState get _s => AppState.I;
 
-// 앱 실행 중 유지되는 커뮤니티 데이터
-final List<Post> _posts = seedPosts();
-final Map<Post, List<Comment>> _comments = seedComments(_posts);
+// 글·댓글·좋아요는 AppState(기기에 저장). 그룹·챌린지는 앱 실행 중에만 유지되는 목업.
 final List<Group> _groups = seedGroups();
 final List<Challenge> _challenges = seedChallenges();
 
@@ -79,7 +77,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             Container(color: C.gold, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), child: Text('인증', style: F.inter(size: 10, w: FontWeight.w600, color: C.ink))),
           ]),
         ),
-        for (final p in _posts) _post(p),
+        for (final p in _s.feed) _post(p),
       ];
 
   Widget _post(Post p) => Divided(
@@ -96,7 +94,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   Container(color: C.goldDim, padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), child: Text(p.tier, style: F.inter(size: 7.5, color: C.ink, ls: .04))),
                 ]),
                 const SizedBox(height: 2),
-                Text(p.time, style: F.inter(size: 9.5, color: C.textFaint, w: FontWeight.w300)),
+                Text(p.timeLabel(_s.now()), style: F.inter(size: 9.5, color: C.textFaint, w: FontWeight.w300)),
               ]),
             ),
             Tag(p.tag, color: C.gold, size: 9),
@@ -113,13 +111,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
               child: Text(p.img, style: const TextStyle(fontSize: 40)),
             ),
           Row(children: [
-            _act(p.liked ? Icons.favorite : Icons.favorite_border, '${p.likes}', p.liked ? C.live : C.textDim, label: '좋아요 ${p.likes}개', selected: p.liked, () {
-              setState(() {
-                p.liked = !p.liked;
-                p.likes += p.liked ? 1 : -1;
-              });
-            }),
-            _act(Icons.chat_bubble_outline, '${p.comments}', C.textDim, label: '댓글 ${p.comments}개', () => _openComments(p)),
+            _act(_s.isLiked(p) ? Icons.favorite : Icons.favorite_border, '${_s.likeCount(p)}', _s.isLiked(p) ? C.live : C.textDim,
+                label: '좋아요 ${_s.likeCount(p)}개', selected: _s.isLiked(p), () => _s.toggleLike(p)),
+            _act(Icons.chat_bubble_outline, '${_s.commentCount(p)}', C.textDim, label: '댓글 ${_s.commentCount(p)}개', () => _openComments(p)),
             _act(Icons.ios_share, '공유', C.textDim, label: '공유', () => _s.toast('공유 링크를 복사했어요')),
           ]),
         ]),
@@ -144,7 +138,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       title: '댓글',
       disposables: [input],
       body: (ctx, setS) {
-        final list = _comments[p] ?? [];
+        final list = _s.commentsOf(p);
         if (list.isEmpty) {
           return SizedBox(height: 140, child: Center(child: Text('첫 댓글을 남겨보세요.', style: F.inter(size: 12, color: C.textFaint))));
         }
@@ -158,7 +152,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text.rich(TextSpan(children: [
                       TextSpan(text: c.name, style: F.inter(size: 11, w: FontWeight.w500)),
-                      TextSpan(text: '  ${c.time}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
+                      TextSpan(text: '  ${c.timeLabel(_s.now())}', style: F.inter(size: 9, color: C.textFaint, w: FontWeight.w300)),
                     ])),
                     const SizedBox(height: 4),
                     Text(c.text, style: F.inter(size: 11.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
@@ -172,8 +166,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         void post() {
           final v = input.text.trim();
           if (v.isEmpty) return;
-          (_comments[p] ??= []).add(Comment('F', '회원님', v, '방금'));
-          p.comments++;
+          _s.addComment(p, v);
           input.clear();
           setS(() {});
           setState(() {});
@@ -248,7 +241,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ]),
       foot: (ctx, setS) => GoldButton('게시하기', upper: false, onTap: () {
         final v = ta.text.trim().isEmpty ? '오운완 💪 오늘도 완료!' : ta.text.trim();
-        _posts.insert(0, Post('F', '회원님', 'Gold', '방금', tag, v, tag == '운동 인증' ? '🔥' : '', 0, 0, false));
+        _s.addPost(tag, v);
         Navigator.pop(ctx);
         setState(() {});
         _s.toast('인증글을 게시했어요 🎉');

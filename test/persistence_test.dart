@@ -95,13 +95,92 @@ void main() {
     clock = DateTime(2026, 11, 15, 23, 59); // 일 — 아직 같은 주
     expect(s.stampClaimed, isTrue);
 
-    clock = DateTime(2026, 11, 16, 0, 1); // 월
+    clock = DateTime(2026, 11, 16, 0, 1); // 월 — 보너스와 미션 진행도 모두 새로 시작
     expect(s.stampClaimed, isFalse);
+    expect(s.missionsDone, 0);
 
     final p = s.points;
     s.attend();
+    s.claimStamp(); // 미션을 다 채우기 전에는 받을 수 없음
+    expect(s.points, p + 10);
+    for (final m in s.missions) {
+      m.progress = m.goal;
+    }
     s.claimStamp();
     expect(s.points, p + 10 + 500);
+  });
+
+  group('커뮤니티 · 미션 저장', () {
+    test('내가 쓴 글 · 댓글 · 좋아요가 다음 실행에도 남는다', () {
+      final store = MemoryStore();
+      final a = newState(store);
+      final mine = a.addPost('운동 인증', '오늘 하체 끝');
+      a.addComment(mine, '나도 수고했다');
+      final seed = seedPosts[0];
+      a.addComment(seed, '멋져요');
+      a.toggleLike(seed);
+      a.toggleLike(seedPosts[1]); // 원래 좋아요 상태였던 글 → 취소
+
+      final b = newState(MemoryStore(store.data));
+      expect(b.feed.first.txt, '오늘 하체 끝');
+      expect(b.feed.length, seedPosts.length + 1);
+      expect(b.commentsOf(b.feed.first).single.text, '나도 수고했다');
+      expect(b.commentsOf(seed).last.text, '멋져요');
+      expect((b.isLiked(seed), b.likeCount(seed)), (true, seed.likes + 1));
+      expect((b.isLiked(seedPosts[1]), b.likeCount(seedPosts[1])), (false, seedPosts[1].likes - 1));
+      expect(b.commentCount(seed), seed.comments + 1);
+      expect(b.toJson(), a.toJson());
+    });
+
+    test('좋아요를 두 번 누르면 원래대로 (저장할 기록도 없음)', () {
+      final s = newState(MemoryStore());
+      s.toggleLike(seedPosts[0]);
+      s.toggleLike(seedPosts[0]);
+      expect(s.likeOverrides, isEmpty);
+      expect(s.likeCount(seedPosts[0]), seedPosts[0].likes);
+    });
+
+    test('같은 주에는 미션 진행도가 남고, 다음 주 월요일에 0이 된다', () {
+      final store = MemoryStore();
+      final a = newState(store);
+      a.attend();
+      a.addPost('운동 인증', 'x');
+      expect(a.missionsDone, 0);
+
+      clock = DateTime(2026, 11, 14, 8); // 토 — 다시 켬
+      final b = newState(MemoryStore(store.data));
+      int prog(AppState s, MissionKind k) => s.missions.firstWhere((m) => m.kind == k).progress;
+      expect((prog(b, MissionKind.attend), prog(b, MissionKind.workoutPost)), (1, 1));
+
+      clock = DateTime(2026, 11, 16, 8); // 월
+      final c = newState(MemoryStore(store.data));
+      expect(c.missions.every((m) => m.progress == 0), isTrue);
+    });
+
+    test('예전 형식 저장본(새 항목 없음)도 포인트·장바구니를 그대로 읽는다', () {
+      final old = AppState.fresh()
+        ..points = 777
+        ..addToCart('p1', 2);
+      final j = old.toJson()
+        ..remove('missionWeek')
+        ..remove('posts')
+        ..remove('comments')
+        ..remove('likes')
+        ..['missions'] = {'출석 3일': 3, '3대 기록 갱신': 0}; // 예전 키는 한글 이름
+      final s = newState(MemoryStore(jsonEncode(j)));
+      expect(s.points, 777);
+      expect(s.cart, {'p1': 2});
+      expect(s.feed.length, seedPosts.length);
+      expect(s.missionsDone, 0); // 예전 진행도는 새 주로 보고 0부터
+    });
+  });
+
+  test('글·댓글 시각 표시', () {
+    final at = DateTime(2026, 11, 13, 10);
+    expect(agoLabel(at, DateTime(2026, 11, 13, 10, 0, 30)), '방금');
+    expect(agoLabel(at, DateTime(2026, 11, 13, 10, 12)), '12분 전');
+    expect(agoLabel(at, DateTime(2026, 11, 13, 13, 5)), '3시간 전');
+    expect(agoLabel(at, DateTime(2026, 11, 14, 9)), '11월 13일');
   });
 
   test('PrefsStore: SharedPreferences에 쓰고 다시 열어 읽는다', () async {
