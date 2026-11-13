@@ -248,7 +248,7 @@ class PointsScreen extends StatelessWidget {
         const SectHead('포인트 적립하기', more: '적립률 등급별 차등', top: 20),
         earn('📅', '매일 출석 체크', '앱 접속만 해도 하루 10P', eBtn(_s.attended ? '출석 완료 ✓' : '출석 +10P', _s.attend, doneB: _s.attended)),
         earn('💪', '운동 인증', '커뮤니티에 오운완 인증 시 +50P', eBtn('인증하러', () => _s.go(AppPage.comm))),
-        earn('✍️', '리뷰 작성', '배달·상품 리뷰 작성 시 +100P', eBtn('리뷰쓰기', () => _s.earnPoints(100, '리뷰 작성'))),
+        earn('✍️', '리뷰 작성', '배달·상품 리뷰 작성 시 +100P', eBtn('리뷰쓰기', _s.writeReview)),
         earn('🛒', '주문 적립', '배달·마켓 결제액의 등급별 적립률만큼', Text('자동 적립', style: F.inter(size: 10, color: C.goldBright))),
         earn('🎁', '친구 초대', '초대 코드로 가입 시 +500P', eBtn('초대하기', () => _s.toast('초대 링크를 복사했어요'))),
         // 등급표

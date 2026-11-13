@@ -52,6 +52,7 @@ class _WorkoutLogSectionState extends State<WorkoutLogSection> {
       if (kg > prevBest) {
         _s.toast('🎉 랫풀다운 신기록! ${r.kg.text}kg');
         setState(() => prRows.add(i));
+        _s.recordPersonalRecord(); // 주간 미션 'PR 기록 갱신'
       }
       startRest(90);
     } else {
