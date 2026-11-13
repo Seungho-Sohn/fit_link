@@ -43,7 +43,9 @@ class GoldButton extends StatelessWidget {
       padding: margin,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: Opacity(
+          opacity: onTap == null ? .45 : 1, // onTap이 없으면 비활성으로 표시
+          child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 15),
           alignment: Alignment.center,
@@ -54,6 +56,7 @@ class GoldButton extends StatelessWidget {
           child: Text(upper ? text.toUpperCase() : text,
               textAlign: TextAlign.center,
               style: F.inter(size: 12.5, w: FontWeight.w500, ls: upper ? .14 : .01, color: ghost ? C.textDim : C.ink)),
+          ),
         ),
       ),
     );
