@@ -34,6 +34,10 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - Text colors must keep ≥ 4.5:1 contrast on charcoal/panel/panel2/onyx (checked numerically in the test). `goldDim` and `hairline*` are for borders/decoration, not text.
 - The test walks every `AppPage`/`MarketView`/`DelivView` plus the gear (1–6) and calorie (1–4) step flows; extend `everyScreen`/`stepFlows` when adding screens.
 
+## App icon
+
+- Source images are rendered by `tool/icon/make_icon_test.dart` (not under `test/`, so `flutter test` doesn't run it) into `assets/icon/`; `dart run flutter_launcher_icons` (config in `pubspec.yaml`) generates all platform icons. flutter_launcher_icons 0.14.4 wrongly rewrites `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS` in `ios/Runner.xcodeproj/project.pbxproj` and drops the trailing newline in `web/manifest.json` — revert both after running it.
+
 ## Fonts (all bundled — no runtime download)
 
 - `main()` sets `GoogleFonts.config.allowRuntimeFetching = false`. `google_fonts` resolves each requested weight from `assets/google_fonts/<Family>-<Weight>.ttf` (e.g. `Inter-SemiBold.ttf`); files are the exact ones the package would download (sha256 = hash in the package source). **Using a family or weight/style not present there throws at runtime** — add the file first. Only normal (non-italic) styles are bundled; `NotoSerifKR` only has Regular and SemiBold.
