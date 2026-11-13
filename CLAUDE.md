@@ -17,7 +17,7 @@ flutter test --plain-name "출석"       # single test by name (substring)
 flutter run -d chrome                 # quickest visual check; also windows / emulator
 ```
 
-- Requires Flutter 3.27+ / Dart 3.6+ (`flutter_map`); development and CI use Flutter 3.47.9.
+- Requires Flutter 3.44+ / Dart 3.12+ (`go_router` 18); development and CI use Flutter 3.47.9.
 - CI (`.github/workflows/ci.yml`) runs `flutter analyze`, `flutter test` and `flutter build web` on every push to `master` and every PR — keep all three green. Pushes to `master` that pass are deployed to GitHub Pages (https://seungho-sohn.github.io/fit_link/), built with `--base-href /fit_link/` (in Git Bash locally, prefix `MSYS_NO_PATHCONV=1` or the path gets mangled).
 - Tests: `test/app_state_test.dart` unit-tests `AppState` logic via `AppState.fresh()` (a non-singleton instance; needs `TestWidgetsFlutterBinding.ensureInitialized()` because `toast()` touches a `GlobalKey`). `test/widget_test.dart` pumps every `AppPage`/`MarketView`/`DelivView` and fails on any exception (layout overflow, missing font). New pages/views are covered automatically since it iterates the enums' `values`.
 
@@ -44,10 +44,11 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 
 ## Architecture
 
-**Navigation is not Navigator-based.** A single global singleton `AppState.I` (`lib/state/app_state.dart`, a `ChangeNotifier`) holds `page` (`AppPage` enum) plus tab-internal views (`marketView: MarketView`, `delivView: DelivView`), all defined in `lib/state/routes.dart` (re-exported by `app_state.dart`). `Shell` in `lib/main.dart` wraps everything in one `ListenableBuilder` on `AppState.I` and switches on `page` to pick the screen.
+**Navigation is state-driven, with the URL kept in sync.** A single global singleton `AppState.I` (`lib/state/app_state.dart`, a `ChangeNotifier`) holds `page` (`AppPage` enum) plus tab-internal views (`marketView: MarketView`, `delivView: DelivView`), all defined in `lib/state/routes.dart` (re-exported by `app_state.dart`). `Shell` in `lib/main.dart` wraps everything in one `ListenableBuilder` on `AppState.I` and switches on `page` to pick the screen.
 
-- Change screens via `AppState.I.go(AppPage.x)`, `goMarket(MarketView.x)`, `goDeliv(DelivView.x)` — these mirror the HTML's `switchTab()/goMarket()/goDeliv()`.
-- Bottom tabs: `home comm market delivery cal my`; sub-pages `coach live inbody gear points` sit on top of a tab. `AppPage.tab` gives the highlighted tab and `AppPage.parent` the Android-back target. Adding a page: add the enum value, then the exhaustive `switch` in `Shell._page` (and `tab`/`parent` if not under home) — the compiler flags missing cases.
+- Change screens via `AppState.I.go(AppPage.x)`, `goMarket(MarketView.x)`, `goDeliv(DelivView.x)` — these mirror the HTML's `switchTab()/goMarket()/goDeliv()`. Never call `context.go` directly; `AppState` stays the source of truth.
+- URL sync (`lib/state/router.dart`, go_router): `AppState.notifyListeners` pushes `location` (via `onLocationChanged` = `GoRouter.go`) whenever the nav state's URL changes; router changes (deep links, browser back) call `AppState.applyLocation`. Every route renders the same `Shell` page (shared page key, no transition), so screen state survives URL changes. `locationOf`/`parseLocation` in `routes.dart` must round-trip for every page/view — `test/routes_test.dart` checks this and that each URL is in `routePaths`. Web uses hash URLs (`#/market/cart`) so GitHub Pages deep links work. Unit tests use `AppState.fresh()` with no router (`onLocationChanged` null).
+- Bottom tabs: `home comm market delivery cal my`; sub-pages `coach live inbody gear points` sit on top of a tab. `AppPage.tab` gives the highlighted tab and `AppPage.parent` the Android-back target. Adding a page: add the enum value, the exhaustive `switch` in `Shell._page`, `locationOf`/`parseLocation` and `routePaths` (and `tab`/`parent` if not under home).
 - Each screen gets `ValueKey('$page-$pageSeq')`; `go()` bumps `pageSeq`, so re-entering a page recreates it and resets its local `State`.
 - Toasts go through `AppState.I.toast(msg)` (SnackBar via a global `messengerKey`), so they can be fired without a `BuildContext`.
 - Shared app state (points/tier/missions, market cart, delivery cart/favorites, onboarding) lives on `AppState`; mutate it there and call `notifyListeners()`. Screens access it through a file-level `AppState get _s => AppState.I;` getter. Purely local UI state stays in each screen's `StatefulWidget`.

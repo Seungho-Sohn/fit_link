@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'state/app_state.dart';
 import 'state/persistence.dart';
+import 'state/router.dart';
 import 'theme.dart';
 import 'screens/onboarding.dart';
 import 'screens/home_screen.dart';
@@ -51,19 +53,34 @@ void _registerFontLicenses() {
 /// 앱이 반영하는 최대 글자 배율
 const maxTextScale = 1.5;
 
-class FitLinkApp extends StatelessWidget {
+class FitLinkApp extends StatefulWidget {
   const FitLinkApp({super.key});
 
   @override
+  State<FitLinkApp> createState() => _FitLinkAppState();
+}
+
+class _FitLinkAppState extends State<FitLinkApp> {
+  // 주소(웹 #/market/cart 등)와 화면 상태를 맞추는 라우터 — lib/state/router.dart
+  late final GoRouter _router = buildRouter(AppState.I, const Shell());
+
+  @override
+  void dispose() {
+    AppState.I.onLocationChanged = null;
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'FIT LINK',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       scaffoldMessengerKey: AppState.I.messengerKey,
       // 기기 글자 크기 설정은 150%까지 반영 (더 크면 고정 크기 카드·그리드가 깨짐 — test/a11y_test.dart)
       builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: maxTextScale, child: child!),
-      home: const Shell(),
+      routerConfig: _router,
     );
   }
 }

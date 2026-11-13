@@ -13,7 +13,7 @@ flutter run -d chrome   # 웹으로 빠르게 확인
 flutter run             # 연결된 Android/iOS 기기·에뮬레이터
 ```
 
-- 요구 버전: **Flutter 3.27 이상 (Dart 3.6+)**. 개발·CI는 Flutter 3.47.9.
+- 요구 버전: **Flutter 3.44 이상 (Dart 3.12+)** — `go_router` 18 요구사항. 개발·CI는 Flutter 3.47.9.
 - API 키나 별도 서버 없이 실행됩니다.
 - 웹(`flutter run -d chrome`)은 실행할 때마다 새 크롬 프로필로 열려서, 저장된 데이터는 **F5 새로고침**으로는 유지되지만 다시 실행하면 초기화됩니다.
 
@@ -32,6 +32,7 @@ flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 
 | `test/app_state_test.dart` | 포인트·등급·미션·장바구니·배달 결제 계산 |
 | `test/persistence_test.dart` | 저장/복원, 깨진 저장본 처리, 날짜가 바뀔 때 출석·주간 보너스 |
 | `test/map_test.dart` | 거리 표시, 헬스장 매칭 → 지도 → 확정 흐름 |
+| `test/routes_test.dart` | 주소 ↔ 화면 변환(모든 화면), 딥링크, 잘못된 주소, Android 뒤로 가기 |
 | `test/a11y_test.dart` | 버튼 이름, 터치 영역 24×24, 글자 150%/200%, 글자색 대비 |
 
 GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹 빌드를 자동으로 실행합니다 (`.github/workflows/ci.yml`).
@@ -56,7 +57,8 @@ lib/
 ├─ theme.dart                색상 C · 글꼴 헬퍼 F (CSS :root 변수에서 옮김)
 ├─ state/
 │  ├─ app_state.dart         전역 상태(포인트·장바구니·배달·찜·화면 전환·토스트) + 저장/복원
-│  ├─ routes.dart            화면 식별자 enum (AppPage · MarketView · DelivView)
+│  ├─ routes.dart            화면 식별자 enum (AppPage · MarketView · DelivView), 주소 ↔ 화면 변환
+│  ├─ router.dart            GoRouter 설정 (등록된 주소 목록)
 │  └─ persistence.dart       저장소 (SharedPreferences / 테스트용 메모리)
 ├─ services/location.dart    현재 위치(실패 시 강남역), 거리 계산·표시
 ├─ data/mock_data.dart       목업 데이터와 모델 클래스
@@ -84,7 +86,9 @@ assets/
 
 ## 개발 메모
 
-- **화면 전환**은 Navigator가 아니라 `AppState.I.go(AppPage.x)` / `goMarket(...)` / `goDeliv(...)`로 합니다. 화면을 추가하면 `routes.dart`의 enum과 `main.dart`의 `switch`를 함께 고칩니다.
+- **화면 전환**은 `AppState.I.go(AppPage.x)` / `goMarket(...)` / `goDeliv(...)`로 합니다. 화면이 바뀌면 주소가 따라 바뀌고(`go_router`), 주소로 들어오거나 브라우저 뒤로 가기를 하면 그 화면이 열립니다.
+  - 웹 주소 예: `…/fit_link/#/market/cart`, `#/market/product/p6`, `#/delivery/shop/s2`, `#/my/points`. 모르는 주소·없는 상품은 홈으로 갑니다.
+  - 화면을 추가하면 `routes.dart`의 enum · `locationOf` · `parseLocation`, `router.dart`의 `routePaths`, `main.dart`의 `switch`를 함께 고칩니다. `test/routes_test.dart`가 빠진 곳을 잡아냅니다.
 - **글꼴**은 모두 앱에 들어 있습니다. 새 굵기·글꼴을 쓰려면 `assets/google_fonts/`에 파일부터 추가해야 합니다 (없으면 실행 중 오류).
 - **지도 타일**: OpenStreetMap 공개 타일 서버는 소량 사용만 허용합니다. 실서비스 전에는 타일 제공 업체로 바꿔야 합니다 (`GymMap.tileUrl`).
 - **접근성 규칙**(버튼 이름, 터치 영역, 글자 대비, 고정 높이 금지)과 저장 구조 등 더 자세한 내용은 [`CLAUDE.md`](CLAUDE.md)에 있습니다.
