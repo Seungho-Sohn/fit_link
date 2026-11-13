@@ -90,6 +90,7 @@ assets/
   - 웹 주소 예: `…/fit_link/#/market/cart`, `#/market/product/p6`, `#/delivery/shop/s2`, `#/my/points`. 모르는 주소·없는 상품은 홈으로 갑니다.
   - 화면을 추가하면 `routes.dart`의 enum · `locationOf` · `parseLocation`, `router.dart`의 `routePaths`, `main.dart`의 `switch`를 함께 고칩니다. `test/routes_test.dart`가 빠진 곳을 잡아냅니다.
 - **글꼴**은 모두 앱에 들어 있습니다. 새 굵기·글꼴을 쓰려면 `assets/google_fonts/`에 파일부터 추가해야 합니다 (없으면 실행 중 오류).
+- **앱 아이콘**: `tool/icon/make_icon_test.dart`가 앱 색과 내장 글꼴로 원본(`assets/icon/`)을 그리고, `flutter_launcher_icons`가 각 플랫폼 아이콘을 만듭니다: `flutter test tool/icon/make_icon_test.dart && dart run flutter_launcher_icons`. 실행 뒤 `ios/Runner.xcodeproj/project.pbxproj` 변경은 되돌립니다(도구 버그).
 - **지도 타일**: OpenStreetMap 공개 타일 서버는 소량 사용만 허용합니다. 실서비스 전에는 타일 제공 업체로 바꿔야 합니다 (`GymMap.tileUrl`).
 - **접근성 규칙**(버튼 이름, 터치 영역, 글자 대비, 고정 높이 금지)과 저장 구조 등 더 자세한 내용은 [`CLAUDE.md`](CLAUDE.md)에 있습니다.
 
