@@ -34,6 +34,11 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - Text colors must keep ≥ 4.5:1 contrast on charcoal/panel/panel2/onyx (checked numerically in the test). `goldDim` and `hairline*` are for borders/decoration, not text.
 - The test walks every `AppPage`/`MarketView`/`DelivView` plus the gear (1–6) and calorie (1–4) step flows; extend `everyScreen`/`stepFlows` when adding screens.
 
+## Android release signing
+
+- `android/app/build.gradle.kts` signs release builds with the key from `android/key.properties` (git-ignored; points at a keystore outside the repo) and falls back to the debug key when that file is absent, so PR/CI builds still work.
+- `.github/workflows/release.yml`: pushing a `vX.Y.Z` tag runs tests, writes `key.properties` from repo Secrets, builds the APK with version name `X.Y.Z` and code `X*10000+Y*100+Z`, refuses to publish unless the APK is signed by `CN=FIT LINK`, then attaches it to a GitHub Release. Never commit keystores, passwords, or `key.properties`.
+
 ## App icon
 
 - Source images are rendered by `tool/icon/make_icon_test.dart` (not under `test/`, so `flutter test` doesn't run it) into `assets/icon/`; `dart run flutter_launcher_icons` (config in `pubspec.yaml`) generates all platform icons. flutter_launcher_icons 0.14.4 wrongly rewrites `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS` in `ios/Runner.xcodeproj/project.pbxproj` and drops the trailing newline in `web/manifest.json` — revert both after running it.

@@ -38,6 +38,15 @@ flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 
 GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹 빌드를 자동으로 실행합니다 (`.github/workflows/ci.yml`).
 `master`에 들어온 변경은 테스트를 통과하면 **https://seungho-sohn.github.io/fit_link/** 에 자동으로 배포됩니다.
 
+## Android APK 배포
+
+- `v1.0.1` 같은 태그를 올리면 GitHub Actions가 테스트 → 정식 키로 서명한 APK 빌드 → [Releases](https://github.com/Seungho-Sohn/fit_link/releases)에 `fitlink-1.0.1.apk` 첨부까지 자동으로 합니다 (`.github/workflows/release.yml`).
+  ```bash
+  git tag v1.0.1 && git push origin v1.0.1
+  ```
+- 버전 코드는 태그에서 계산합니다 (`v1.2.3` → 10203). 새 태그는 항상 이전보다 커야 기존 앱 위에 업데이트됩니다.
+- 서명 키는 저장소에 없습니다. 로컬은 `android/key.properties`(git 제외), CI는 저장소 Secrets(`ANDROID_KEYSTORE_BASE64` 등 4개)를 씁니다. 키가 없으면 로컬 빌드는 개발용 키로 서명됩니다.
+
 ## 주요 기능과 현재 상태
 
 | 기능 | 상태 |
