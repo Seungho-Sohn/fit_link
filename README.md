@@ -31,7 +31,8 @@ flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 
 | `test/widget_test.dart` | 모든 화면을 띄워 오류·레이아웃 넘침이 없는지 (내장 글꼴만 사용) |
 | `test/app_state_test.dart` | 포인트·등급·미션(실제 행동)·장바구니·배달 결제 계산 |
 | `test/persistence_test.dart` | 저장/복원, 깨진 저장본 처리, 날짜가 바뀔 때 출석·주간 보너스 |
-| `test/map_test.dart` | 거리 표시, 헬스장 매칭 → 지도 → 확정 흐름 |
+| `test/map_test.dart` | 거리 표시, 사진 → 후보 확인 → 매칭 → 지도 → 확정 흐름, 직접 찾기 |
+| `test/equipment_test.dart` | 기구·헬스장 데이터 무결성, 매칭 규칙 |
 | `test/routes_test.dart` | 주소 ↔ 화면 변환(모든 화면), 딥링크, 잘못된 주소, Android 뒤로 가기 |
 | `test/a11y_test.dart` | 버튼 이름, 터치 영역 24×24, 글자 150%/200%, 글자색 대비 |
 
@@ -55,7 +56,8 @@ GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹
 | 포인트·출석·장바구니·찜 · 커뮤니티 글·댓글·좋아요 | 기기에 저장 (`shared_preferences`) |
 | 주간 미션 | 출석·운동 인증 글·배달 주문·리뷰·신기록으로 진행, 매주 월요일 초기화 |
 | 헬스장 지도 | OpenStreetMap + 현재 위치, 카카오맵 길찾기 링크 (헬스장 목록은 목업) |
-| 기구·음식 사진 인식, AI 코치 | 목업 결과 (AI 연동 작업본은 로컬 `archive/ai-features` 브랜치 — Anthropic API 키 필요) |
+| 시그니처: 기구 → 같은 기구가 있는 헬스장 | 사진 선택·직접 찾기·후보 확인·매칭 계산은 실제 동작. 인식 후보와 기구·헬스장 데이터는 아직 데모/목업 (`lib/data/equipment.dart`) |
+| 음식 사진 인식, AI 코치 | 목업 결과 (AI 연동 작업본은 로컬 `archive/ai-features` 브랜치 — Anthropic API 키 필요) |
 | 결제 | 목업 (토스페이먼츠 연동은 보류) |
 | 접근성 | 스크린리더 이름, 터치 영역, 글자 대비, 글자 크기 150%까지 대응 |
 

@@ -3,6 +3,7 @@
 // - 터치 영역이 WCAG 2.2 AA 최소 24×24 이상이다 (Android 권장 48×48은 목표지만 강제하지 않음)
 // - 글자 크기를 150%(앱 상한)로 키워도 레이아웃이 넘치지 않는다
 // - 팔레트의 글자색이 배경 위에서 WCAG AA 대비 4.5:1 이상이다
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -73,12 +74,24 @@ void main() {
     }
 
     await t.pumpWidget(MaterialApp(
-      home: Scaffold(body: GearFlow(locate: () async => (pos: gangnamStation, real: false), mapTiles: false)),
+      home: Scaffold(
+        body: GearFlow(
+          pick: (_) async => (bytes: _png, mediaType: 'image/png'),
+          locate: () async => (pos: gangnamStation, real: false),
+          mapTiles: false,
+        ),
+      ),
     ));
     await check('기구 1');
     await tapGo('사진으로 계속하기', '기구 2');
-    await tapGo('분석 결과 보기', '기구 3');
-    await tapGo('이 브랜드로 헬스장 찾기', '기구 4');
+    await tapGo('분석 결과 보기', '기구 3 후보 확인');
+    // 큰 글자에서는 후보 목록 아래로 밀려나므로 사용자처럼 스크롤해서 누른다
+    final browseLink = find.text('목록에 없어요 · 직접 고르기 ›');
+    await t.scrollUntilVisible(browseLink, 200, scrollable: find.byType(Scrollable).first);
+    await t.tap(browseLink);
+    await t.pump();
+    await check('기구 3 직접 찾기');
+    await tapGo('이 기구가 있는 헬스장 찾기', '기구 4');
     await tapGo('지도에서 보기', '기구 5');
     await tapGo('이 헬스장 선택', '기구 6');
 
@@ -143,3 +156,6 @@ void main() {
     expect(ratio(C.ink, C.gold), greaterThanOrEqualTo(4.5), reason: '금색 버튼 위 글자');
   });
 }
+
+/// 화면에 실제로 그릴 수 있는 1×1 PNG
+final _png = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');

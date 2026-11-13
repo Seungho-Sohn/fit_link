@@ -21,6 +21,13 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - CI (`.github/workflows/ci.yml`) runs `flutter analyze`, `flutter test` and `flutter build web` on every push to `master` and every PR — keep all three green. Pushes to `master` that pass are deployed to GitHub Pages (https://seungho-sohn.github.io/fit_link/), built with `--base-href /fit_link/` (in Git Bash locally, prefix `MSYS_NO_PATHCONV=1` or the path gets mangled).
 - Tests: `test/app_state_test.dart` unit-tests `AppState` logic via `AppState.fresh()` (a non-singleton instance; needs `TestWidgetsFlutterBinding.ensureInitialized()` because `toast()` touches a `GlobalKey`). `test/widget_test.dart` pumps every `AppPage`/`MarketView`/`DelivView` and fails on any exception (layout overflow, missing font). New pages/views are covered automatically since it iterates the enums' `values`.
 
+## Signature feature: gear → gyms with the same machine (`GearFlow`)
+
+- Flow: photo (real `image_picker` via `lib/services/photo_picker.dart`) or "직접 찾기" → analysis → **user confirms a candidate or browses the catalog** → gym matching → map → confirm. The "분석 결과 보기" button stays disabled until the recognizer returns.
+- Recognition is behind `GearRecognizer` (`lib/services/gear_recognizer.dart`). Only `DemoGearRecognizer` exists (fixed candidates, labelled "데모 후보" in the UI); an AI recognizer just implements the interface — the confirm screen stays human-in-the-loop.
+- Data and rules live in `lib/data/equipment.dart`: `gearCatalog` (brand · line · model), `gymGear` (gym name → owned gear ids), `matchLevel` (exact > same brand & category > same category), `matchGyms`. Both datasets are mock and meant to be replaced by partner-gym / operator-registered data; keep the rules and `test/equipment_test.dart` integrity checks.
+- `GearFlow` takes `recognizer`, `pick`, `locate`, `mapTiles` for tests (`test/map_test.dart`).
+
 ## Map & location
 
 - `GymMap` (`lib/widgets/gym_map.dart`) uses `flutter_map` + public OpenStreetMap tiles (no API key; OSM's tile policy only allows light use, so production needs a tile provider — swap `GymMap.tileUrl`). Tiles are dark-inverted via `darkModeTileBuilder`; attribution must stay visible.
