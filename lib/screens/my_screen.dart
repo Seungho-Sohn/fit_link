@@ -156,28 +156,29 @@ class PointsScreen extends StatelessWidget {
               Text('$done / ${_s.missions.length}', style: F.gnum(size: 14)),
             ]),
             const SizedBox(height: 15),
+            // 스탬프 사이 간격은 따로 둔다 (칸 안에 간격을 넣으면 마지막 스탬프만 커짐)
             Row(children: [
-              for (int i = 0; i < _s.missions.length; i++)
+              for (int i = 0; i < _s.missions.length; i++) ...[
+                if (i > 0) const SizedBox(width: 9),
                 Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: i < _s.missions.length - 1 ? 9 : 0),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Builder(builder: (_) {
-                        final on = _s.missions[i].isDone;
-                        return Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: on ? C.gold : C.hairline),
-                            gradient: on ? RadialGradient(center: const Alignment(-.4, -.5), colors: [C.goldA(.3), C.goldA(.06)]) : null,
-                          ),
-                          child: Text(on ? '✓' : '', style: F.inter(size: 16, color: C.goldBright)),
-                        );
-                      }),
-                    ),
+                  child: AspectRatio(
+                    key: ValueKey('mission-stamp-$i'),
+                    aspectRatio: 1,
+                    child: Builder(builder: (_) {
+                      final on = _s.missions[i].isDone;
+                      return Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: on ? C.gold : C.hairline),
+                          gradient: on ? RadialGradient(center: const Alignment(-.4, -.5), colors: [C.goldA(.3), C.goldA(.06)]) : null,
+                        ),
+                        child: Text(on ? '✓' : '', style: F.inter(size: 16, color: C.goldBright)),
+                      );
+                    }),
                   ),
                 ),
+              ],
             ]),
             const SizedBox(height: 6),
             for (final m in _s.missions)
