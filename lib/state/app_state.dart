@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../data/equipment.dart';
+import '../services/gear_cloud.dart';
 import '../data/mock_data.dart';
 import '../theme.dart';
 import 'persistence.dart';
@@ -413,7 +415,8 @@ class AppState extends ChangeNotifier {
 
   /* ---------- 헬스장 보유 기구 (시그니처 기능 데이터 루프) ---------- */
   // 기본 데이터(gymGear) 위에 운영자 등록과 이용자 제보를 얹어 매칭에 쓴다.
-  // 지금은 이 기기에만 저장되고, 서버가 생기면 같은 동작을 서버로 보내면 된다.
+  // 내 등록·제보는 기기에 저장하고, 서버([GearCloud], Firebase)가 연결되면 함께 올린다.
+  // 다른 사용자들의 등록·제보는 서버에서 받아 [shared]에 둔다 (기기에는 저장하지 않음).
 
   /// B2B 화면을 쓰는 운영자의 헬스장 (데모: 운영 대시보드의 매장)
   static const myGym = '스틸핏 강남점';
@@ -421,36 +424,130 @@ class AppState extends ChangeNotifier {
   /// 리워드: 기구 정보를 처음 확인해 준 회원에게 주는 포인트
   static const gearReportReward = 30;
 
-  final Map<String, List<String>> operatorGear = {}; // 헬스장 → 운영자가 등록한 기구 id (기본 데이터를 대체)
-  final Map<String, bool> gearReports = {}; // '헬스장|기구id' → 있음(true) / 없음(false)
+  /// 다른 회원들의 "없어요"가 이만큼 모이고 "있어요"보다 많으면 모두의 매칭에서 뺀다
+  static const missingQuorum = 2;
+
+  final Map<String, List<String>> operatorGear = {}; // 내가 운영자로 등록한 헬스장 → 기구 id (기본 데이터를 대체)
+  final Map<String, bool> gearReports = {}; // 내 제보 '헬스장|기구id' → 있음(true) / 없음(false)
+  bool _uploadedLocal = false; // 서버 연결 전에 쌓인 내 기록을 한 번 올렸는지
+
+  GearCloud? _cloud;
+  StreamSubscription<SharedGear>? _cloudSub;
+  SharedGear shared = emptySharedGear;
+  bool get cloudConnected => _cloud != null;
+
+  /// 서버 연결. 다른 사용자들의 데이터를 받기 시작하고, 연결 전에 쌓인 내 기록을 한 번 올린다.
+  void attachCloud(GearCloud cloud) {
+    _cloud = cloud;
+    _cloudSub?.cancel();
+    _cloudSub = cloud.watch().listen((s) {
+      shared = s;
+      notifyListeners();
+    }, onError: (Object e) => debugPrint('공유 데이터를 받지 못했어요: $e'));
+    if (!_uploadedLocal) {
+      _uploadedLocal = true;
+      for (final e in operatorGear.entries) {
+        _upload(cloud.registerGym(e.key, e.value), gym: e.key);
+      }
+      for (final e in gearReports.entries) {
+        final (gym, id) = _splitKey(e.key);
+        _upload(cloud.report(gym, id, present: e.value));
+      }
+      notifyListeners();
+    }
+  }
+
+  /// 서버에 올리기. 다른 운영자가 먼저 등록한 헬스장이면 내 등록을 되돌린다.
+  void _upload(Future<void> f, {String? gym, List<String>? previous}) {
+    f.catchError((Object e) {
+      if (e is GymOwnedByOther && gym != null) {
+        previous == null ? operatorGear.remove(gym) : operatorGear[gym] = previous;
+        notifyListeners();
+        toast('$gym은(는) 이미 다른 운영자가 등록한 헬스장이에요');
+      } else {
+        debugPrint('서버에 올리지 못했어요 (기기에는 저장됨): $e');
+      }
+    });
+  }
 
   static String _reportKey(String gym, String gearId) => '$gym|$gearId';
+  static (String, String) _splitKey(String k) {
+    final i = k.lastIndexOf('|');
+    return (k.substring(0, i), k.substring(i + 1));
+  }
+
+  /// 내 제보
   bool? gearReport(String gym, String gearId) => gearReports[_reportKey(gym, gearId)];
 
-  /// 운영자 등록이 있으면 그 목록, 없으면 기본 데이터. 운영자가 고치기 전까지 쓰는 목록.
-  List<String> listedGear(String gym) => operatorGear[gym] ?? gymGear[gym] ?? const [];
+  /// 운영자 등록이 있는지 (내 등록 또는 서버의 등록)
+  bool operatorListed(String gym) => operatorGear.containsKey(gym) || shared.operators.containsKey(gym);
 
-  /// 매칭에 쓰는 보유 기구: [listedGear]에서 이용자가 "없어요"라고 한 기구를 뺀다.
+  /// 운영자 등록(내 것 > 서버) → 기본 데이터 순으로 정한 보유 목록
+  List<String> listedGear(String gym) => operatorGear[gym] ?? shared.operators[gym]?.gear ?? gymGear[gym] ?? const [];
+
+  /// 기구 하나의 제보 수 (나 + 다른 회원). 운영자가 마지막으로 등록하기 전의 다른 회원 제보는 처리된 것으로 본다.
+  ({int present, int missing}) reportCount(String gym, String gearId) {
+    final since = shared.operators[gym]?.at;
+    var p = 0, m = 0;
+    for (final r in shared.reports) {
+      if (r.gym != gym || r.gear != gearId || r.uid == _cloud?.uid) continue;
+      if (since != null && (r.at == null || r.at!.isBefore(since))) continue;
+      r.present ? p++ : m++;
+    }
+    switch (gearReport(gym, gearId)) {
+      case true:
+        p++;
+      case false:
+        m++;
+      case null:
+    }
+    return (present: p, missing: m);
+  }
+
+  /// 매칭에서 뺄지: 내가 "없어요"라고 했거나, "없어요"가 [missingQuorum]개 이상이고 "있어요"보다 많을 때
+  bool gearMissing(String gym, String gearId) {
+    if (gearReport(gym, gearId) == false) return true;
+    final c = reportCount(gym, gearId);
+    return c.missing >= missingQuorum && c.missing > c.present;
+  }
+
+  /// 매칭에 쓰는 보유 기구
   Map<String, List<String>> get gymGearNow => {
-        for (final g in gyms) g.name: [for (final id in listedGear(g.name)) if (gearReport(g.name, id) != false) id],
+        for (final g in gyms) g.name: [for (final id in listedGear(g.name)) if (!gearMissing(g.name, id)) id],
       };
 
   GearSource gearSource(String gym, String gearId) {
-    if (operatorGear.containsKey(gym)) return GearSource.operator;
-    return gearReport(gym, gearId) == true ? GearSource.member : GearSource.listed;
+    if (operatorListed(gym)) return GearSource.operator;
+    if (gearReport(gym, gearId) == true) return GearSource.member;
+    final c = reportCount(gym, gearId);
+    return c.present > 0 && c.present >= c.missing ? GearSource.member : GearSource.listed;
   }
 
-  /// 헬스장의 이용자 제보 수: (있어요, 없어요)
+  /// 헬스장 전체의 이용자 제보 수: (있어요, 없어요)
   ({int present, int missing}) gearReportCount(String gym) {
-    final mine = gearReports.entries.where((e) => e.key.startsWith('$gym|'));
-    return (present: mine.where((e) => e.value).length, missing: mine.where((e) => !e.value).length);
+    final ids = {
+      for (final r in shared.reports)
+        if (r.gym == gym) r.gear,
+      for (final k in gearReports.keys)
+        if (k.startsWith('$gym|')) _splitKey(k).$2,
+    };
+    var p = 0, m = 0;
+    for (final id in ids) {
+      final c = reportCount(gym, id);
+      p += c.present;
+      m += c.missing;
+    }
+    return (present: p, missing: m);
   }
 
   /// 운영자가 보유 기구를 등록·수정한다. 이전 이용자 제보는 운영자가 확인한 것으로 보고 정리한다.
   void registerGymGear(String gym, Iterable<String> ids) {
     final set = ids.toSet();
-    operatorGear[gym] = [for (final m in gearCatalog) if (set.contains(m.id)) m.id]; // 카탈로그 순서로
+    final previous = operatorGear[gym];
+    final list = [for (final m in gearCatalog) if (set.contains(m.id)) m.id]; // 카탈로그 순서로
+    operatorGear[gym] = list;
     gearReports.removeWhere((k, _) => k.startsWith('$gym|'));
+    if (_cloud case final c?) _upload(c.registerGym(gym, list), gym: gym, previous: previous);
     notifyListeners();
     toast('보유 기구 ${set.length}대를 등록했어요 · 기구 매칭에 바로 반영돼요');
   }
@@ -460,6 +557,7 @@ class AppState extends ChangeNotifier {
     final key = _reportKey(gym, gearId);
     final first = !gearReports.containsKey(key);
     gearReports[key] = present;
+    if (_cloud case final c?) _upload(c.report(gym, gearId, present: present));
     if (first) {
       earnPoints(gearReportReward, '기구 정보 확인');
     } else {
@@ -521,6 +619,7 @@ class AppState extends ChangeNotifier {
         'likes': likeOverrides,
         'operatorGear': operatorGear,
         'gearReports': gearReports,
+        'uploadedLocal': _uploadedLocal,
       };
 
   /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
@@ -553,6 +652,7 @@ class AppState extends ChangeNotifier {
         final i = k.indexOf('|');
         return i < 0 || !knownGym(k.substring(0, i)) || !knownGear(k.substring(i + 1));
       });
+    final uploaded = j['uploadedLocal'] as bool? ?? false;
 
     onboarded = j['onboarded'] as bool;
     goal = j['goal'] as String;
@@ -596,6 +696,7 @@ class AppState extends ChangeNotifier {
     gearReports
       ..clear()
       ..addAll(reports);
+    _uploadedLocal = uploaded;
   }
 }
 

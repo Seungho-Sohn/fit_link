@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'firebase_options.dart';
+import 'services/gear_cloud.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,6 +37,21 @@ Future<void> main() async {
     debugPrint('저장소를 열지 못해 저장 없이 실행합니다: $e');
   }
   runApp(const FitLinkApp());
+  // 서버 연결은 화면을 띄운 뒤 뒤에서 — 오프라인이거나 설정이 없으면 기기 저장만 쓴다
+  unawaited(_connectCloud());
+}
+
+/// Firebase 연결 (익명 로그인 → 헬스장 기구 등록·제보 공유)
+Future<void> _connectCloud() async {
+  final options = firebaseOptions;
+  if (options == null) return;
+  try {
+    await Firebase.initializeApp(options: options);
+    final cloud = await FirestoreGearCloud.connect().timeout(const Duration(seconds: 20));
+    AppState.I.attachCloud(cloud);
+  } catch (e) {
+    debugPrint('서버에 연결하지 못해 기기 저장만 씁니다: $e');
+  }
 }
 
 /// 내장 글꼴(SIL OFL)의 라이선스를 앱의 오픈소스 라이선스 화면에 등록
