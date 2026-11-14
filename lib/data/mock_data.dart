@@ -1,6 +1,10 @@
 // HTML <script> 안의 하드코딩 데이터를 그대로 옮긴 목업 데이터
 import 'package:latlong2/latlong.dart';
 
+import 'gym_data.dart';
+
+export 'gym_data.dart' show gyms;
+
 String won(num n) {
   final s = n.round().toString();
   final b = StringBuffer();
@@ -349,15 +353,7 @@ class Gym {
   }
 }
 
-/// 목업 헬스장 (좌표는 강남 일대 실제 지역 기준의 가상 위치)
-const gyms = [
-  Gym('스틸핏 강남점', 37, 150, LatLng(37.4997, 127.0300), rating: 4.8, hours: '06:00–24:00', perk: 'PT 가능'),
-  Gym('코어짐24 역삼', 90, 120, LatLng(37.5009, 127.0368), rating: 4.6, hours: '24시간', perk: '24시간'),
-  Gym('바디스퀘어 논현', 62, 200, LatLng(37.5085, 127.0236), rating: 4.4, hours: '06:00–23:00', perk: '주차 가능'),
-  Gym('아이언짐 삼성', 128, 140, LatLng(37.5088, 127.0631), rating: 4.5, hours: '05:00–24:00', perk: '샤워실'),
-  Gym('머슬팩토리 선릉', 200, 320, LatLng(37.5045, 127.0490), rating: 4.7, hours: '24시간', perk: '프리웨이트 존'),
-];
-
+// 헬스장 목록 [gyms]는 data/gyms.csv 에서 만든 gym_data.dart 에 있다 (목업: 강남 일대 가상 위치).
 Gym gymByName(String name) => gyms.firstWhere((g) => g.name == name);
 
 /* ===== PT 트레이너 ===== */

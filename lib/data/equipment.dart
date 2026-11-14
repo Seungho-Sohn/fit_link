@@ -1,8 +1,12 @@
 // 시그니처 기능(기구 → 같은 기구가 있는 헬스장)의 데이터와 매칭 규칙.
 //
-// 지금은 목업 데이터다. 제휴 헬스장·운영자 등록 데이터가 생기면 [gearCatalog]와 [gymGear]를
-// 서버 데이터로 바꾸면 되고, 매칭 규칙([matchLevel] · [matchGyms])은 그대로 쓴다.
+// 데이터([gearCatalog] · [gymGear] · 헬스장 목록)는 data/*.csv 에서 만든 gym_data.dart 에 있다
+// (지금은 목업, 제휴 헬스장 데이터가 오면 CSV만 바꾼다 — data/README.md).
+// 매칭 규칙([matchLevel] · [matchGyms])은 데이터가 바뀌어도 그대로 쓴다.
+import 'gym_data.dart';
 import 'mock_data.dart';
+
+export 'gym_data.dart' show gearCatalog, gymGear;
 
 /// 기구 종류
 enum GearCategory {
@@ -35,32 +39,7 @@ class GearModel {
   String get brandLine => '$brand · $line';
 }
 
-/// 기구 카탈로그 (목업). 브랜드명은 실제 제조사, 모델 구성은 예시.
-const gearCatalog = [
-  GearModel('hs-pl-pulldown', 'Hammer Strength', 'Plate-Loaded', '프론트 풀다운', 'Front Pulldown', GearCategory.pulldown, DriveType.plateLoaded, '광배근'),
-  GearModel('hs-sel-pulldown', 'Hammer Strength', 'Select', '랫 풀다운', 'Lat Pulldown', GearCategory.pulldown, DriveType.selectorized, '광배근'),
-  GearModel('lf-ins-pulldown', 'Life Fitness', 'Insignia', '랫 풀다운', 'Lat Pulldown', GearCategory.pulldown, DriveType.selectorized, '광배근'),
-  GearModel('cybex-pulldown', 'Cybex', 'Prestige', '랫 풀다운', 'Lat Pulldown', GearCategory.pulldown, DriveType.selectorized, '광배근'),
-  GearModel('newtech-pulldown', '뉴텍', 'Plate', '프론트 풀다운', 'Front Pulldown', GearCategory.pulldown, DriveType.plateLoaded, '광배근'),
-  GearModel('hs-pl-low-row', 'Hammer Strength', 'Plate-Loaded', '로우 로우', 'Low Row', GearCategory.row, DriveType.plateLoaded, '광배근 · 능형근'),
-  GearModel('lf-ins-row', 'Life Fitness', 'Insignia', '시티드 로우', 'Seated Row', GearCategory.row, DriveType.selectorized, '능형근 · 승모근'),
-  GearModel('hs-pl-chest', 'Hammer Strength', 'Plate-Loaded', '아이소 래터럴 체스트 프레스', 'Iso-Lateral Chest Press', GearCategory.chestPress, DriveType.plateLoaded, '대흉근'),
-  GearModel('tg-sel-chest', 'Technogym', 'Selection', '체스트 프레스', 'Chest Press', GearCategory.chestPress, DriveType.selectorized, '대흉근'),
-  GearModel('hs-pl-leg-press', 'Hammer Strength', 'Plate-Loaded', '레그 프레스', 'Leg Press', GearCategory.legPress, DriveType.plateLoaded, '대퇴사두 · 둔근'),
-  GearModel('cybex-leg-press', 'Cybex', 'Plate', '레그 프레스', 'Leg Press', GearCategory.legPress, DriveType.plateLoaded, '대퇴사두 · 둔근'),
-  GearModel('matrix-leg-press', 'Matrix', 'Aura', '레그 프레스', 'Leg Press', GearCategory.legPress, DriveType.selectorized, '대퇴사두 · 둔근'),
-];
-
 GearModel gearById(String id) => gearCatalog.firstWhere((g) => g.id == id);
-
-/// 헬스장별 보유 기구 (목업). 키는 [Gym.name].
-const gymGear = <String, List<String>>{
-  '스틸핏 강남점': ['hs-pl-pulldown', 'hs-pl-low-row', 'hs-pl-chest', 'hs-pl-leg-press', 'lf-ins-row'],
-  '코어짐24 역삼': ['hs-sel-pulldown', 'hs-pl-low-row', 'cybex-leg-press', 'tg-sel-chest'],
-  '바디스퀘어 논현': ['lf-ins-pulldown', 'lf-ins-row', 'matrix-leg-press', 'tg-sel-chest'],
-  '아이언짐 삼성': ['newtech-pulldown', 'hs-pl-chest', 'cybex-leg-press'],
-  '머슬팩토리 선릉': ['cybex-pulldown', 'hs-pl-pulldown', 'hs-pl-leg-press', 'lf-ins-row'],
-};
 
 /// 헬스장 보유 기구 정보가 어디서 왔는지 (회원에게 신뢰도로 보여준다).
 /// 매칭에 쓰는 실제 목록은 [gymGear]에 운영자 등록·이용자 제보를 합친 `AppState.gymGearNow`.

@@ -1,0 +1,13 @@
+기구ID,브랜드,제품라인,이름(한글),이름(영문),종류,구동방식,타겟부위
+hs-pl-pulldown,Hammer Strength,Plate-Loaded,프론트 풀다운,Front Pulldown,랫풀다운,플레이트 로디드,광배근
+hs-sel-pulldown,Hammer Strength,Select,랫 풀다운,Lat Pulldown,랫풀다운,셀렉토라이즈드,광배근
+lf-ins-pulldown,Life Fitness,Insignia,랫 풀다운,Lat Pulldown,랫풀다운,셀렉토라이즈드,광배근
+cybex-pulldown,Cybex,Prestige,랫 풀다운,Lat Pulldown,랫풀다운,셀렉토라이즈드,광배근
+newtech-pulldown,뉴텍,Plate,프론트 풀다운,Front Pulldown,랫풀다운,플레이트 로디드,광배근
+hs-pl-low-row,Hammer Strength,Plate-Loaded,로우 로우,Low Row,로우,플레이트 로디드,광배근 · 능형근
+lf-ins-row,Life Fitness,Insignia,시티드 로우,Seated Row,로우,셀렉토라이즈드,능형근 · 승모근
+hs-pl-chest,Hammer Strength,Plate-Loaded,아이소 래터럴 체스트 프레스,Iso-Lateral Chest Press,체스트 프레스,플레이트 로디드,대흉근
+tg-sel-chest,Technogym,Selection,체스트 프레스,Chest Press,체스트 프레스,셀렉토라이즈드,대흉근
+hs-pl-leg-press,Hammer Strength,Plate-Loaded,레그 프레스,Leg Press,레그 프레스,플레이트 로디드,대퇴사두 · 둔근
+cybex-leg-press,Cybex,Plate,레그 프레스,Leg Press,레그 프레스,플레이트 로디드,대퇴사두 · 둔근
+matrix-leg-press,Matrix,Aura,레그 프레스,Leg Press,레그 프레스,셀렉토라이즈드,대퇴사두 · 둔근
