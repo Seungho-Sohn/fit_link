@@ -380,7 +380,7 @@ class _B2BViewState extends State<B2BView> {
 
     Widget tile(GearModel m) {
       final on = draft.contains(m.id);
-      final noReport = _s.gearReport(gym, m.id) == false;
+      final missing = _s.reportCount(gym, m.id).missing;
       return Box(
         onTap: () => toggle(m.id),
         margin: const EdgeInsets.only(bottom: 8),
@@ -395,9 +395,9 @@ class _B2BViewState extends State<B2BView> {
                 Text(m.brandLine.toUpperCase(), style: F.inter(size: 9, color: C.gold, ls: .12, w: FontWeight.w500)),
                 const SizedBox(height: 3),
                 Text(m.nameKo, style: F.inter(size: 12.5, w: FontWeight.w500)),
-                if (noReport) ...[
+                if (missing > 0) ...[
                   const SizedBox(height: 3),
-                  Text('회원이 "없어요"라고 알려 왔어요', style: F.inter(size: 9.5, color: C.cHigh)),
+                  Text('회원 $missing명이 "없어요"라고 알려 왔어요', style: F.inter(size: 9.5, color: C.cHigh)),
                 ],
               ]),
             ),
