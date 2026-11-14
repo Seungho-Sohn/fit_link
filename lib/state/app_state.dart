@@ -547,6 +547,31 @@ class AppState extends ChangeNotifier {
     toast('보유 기구 ${set.length}대를 등록했어요 · 기구 매칭에 바로 반영돼요');
   }
 
+  /// 내 기구 제보 수 (이 기기에 있는 것)
+  int get myReportCount => gearReports.length;
+
+  /// 내 기구 제보를 서버와 이 기기에서 모두 지운다 (개인정보 삭제 요청). 받은 포인트는 그대로 둔다.
+  /// 서버에 올린 적이 있는데 지금 연결이 안 되면 지우지 않고 false.
+  Future<bool> deleteMyReports() async {
+    final cloud = _cloud;
+    if (cloud == null && _uploadedLocal) {
+      toast('서버에 연결되지 않아 지우지 못했어요. 인터넷 연결을 확인해 주세요');
+      return false;
+    }
+    try {
+      final n = cloud == null ? 0 : await cloud.deleteMine();
+      final local = gearReports.length;
+      gearReports.clear();
+      notifyListeners();
+      toast('내 기구 제보를 지웠어요 (서버 $n건 · 이 기기 $local건)');
+      return true;
+    } catch (e) {
+      debugPrint('제보 삭제 실패: $e');
+      toast('지우지 못했어요. 잠시 후 다시 시도해 주세요');
+      return false;
+    }
+  }
+
   /// 회원이 헬스장에 그 기구가 실제로 있는지 알려 준다. 처음 알려 준 기구면 포인트 적립.
   void reportGear(String gym, String gearId, {required bool present}) {
     final key = _reportKey(gym, gearId);

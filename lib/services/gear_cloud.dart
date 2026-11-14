@@ -23,6 +23,9 @@ abstract class GearCloud {
 
   /// 내 제보 (같은 헬스장·기구면 덮어씀)
   Future<void> report(String gym, String gear, {required bool present});
+
+  /// 서버에 올린 내 제보를 모두 지운다 (개인정보 삭제 요청). 지운 개수를 돌려준다.
+  Future<int> deleteMine();
 }
 
 /// Firestore 문서 id에 쓸 수 없는 '/'만 바꾼다
@@ -54,4 +57,15 @@ class FirestoreGearCloud implements GearCloud {
   @override
   Future<void> report(String gym, String gear, {required bool present}) =>
       _reports.doc('${uid}__${gymDocId(gym)}__$gear').set({'uid': uid, 'gym': gym, 'gear': gear, 'present': present, 'at': FieldValue.serverTimestamp()});
+
+  @override
+  Future<int> deleteMine() async {
+    final mine = await _reports.where('uid', isEqualTo: uid).get();
+    final batch = db.batch();
+    for (final d in mine.docs) {
+      batch.delete(d.reference);
+    }
+    await batch.commit();
+    return mine.docs.length;
+  }
 }

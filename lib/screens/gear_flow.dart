@@ -483,6 +483,8 @@ class _GearFlowState extends State<GearFlow> {
           const SizedBox(width: 8),
           Expanded(child: LineButton('없어요', expand: true, padding: const EdgeInsets.symmetric(vertical: 10), onTap: () => report(false))),
         ]),
+        const SizedBox(height: 10),
+        Text('제보는 이름 없이 익명으로 모든 회원과 공유돼요 · 마이 탭에서 언제든 지울 수 있어요', style: F.inter(size: 9.5, color: C.textFaint, h: 1.5)),
       ]),
     );
   }

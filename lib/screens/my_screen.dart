@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/mock_data.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
@@ -77,10 +78,43 @@ class MyScreen extends StatelessWidget {
         menu('식단 기록', '오늘 1,642kcal'),
         menu('웨어러블 연동', 'Apple Health 연결됨'),
         menu('알림 설정', '›'),
+        const SectHead('개인정보 · 데이터', top: 22),
+        menu('개인정보 처리방침', '›', onTap: _openPrivacy),
+        menu('내 기구 제보 지우기', _s.myReportCount == 0 ? '없음' : '${_s.myReportCount}건 ›', onTap: () => _confirmDelete(context)),
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text('기구 제보("있어요/없어요")만 익명으로 서버에 저장돼 다른 회원과 공유돼요. 포인트·장바구니·글 등 나머지는 이 기기에만 저장돼요.',
+              style: F.inter(size: 10, color: C.textFaint, h: 1.55)),
+        ),
       ],
     );
   }
+
+  Future<void> _openPrivacy() async {
+    if (!await launchUrl(privacyPolicyUrl, mode: LaunchMode.externalApplication)) _s.toast('페이지를 열지 못했어요');
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showGoldSheet<void>(
+      context,
+      title: '내 기구 제보 지우기',
+      body: (ctx, setS) => Text(
+        '서버와 이 기기에 저장된 내 기구 제보를 모두 지워요. 지운 제보는 되돌릴 수 없고, 다른 회원의 매칭에서도 빠져요.\n\n제보로 받은 포인트는 그대로 남아요.',
+        style: F.inter(size: 12, color: C.textDim, h: 1.65),
+      ),
+      foot: (ctx, setS) => Column(children: [
+        GoldButton('모두 지우기', upper: false, onTap: () async {
+          Navigator.of(ctx).pop();
+          await _s.deleteMyReports();
+        }),
+        GoldButton('취소', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => Navigator.of(ctx).pop()),
+      ]),
+    );
+  }
 }
+
+/// 개인정보 처리방침 (web/privacy.html 을 GitHub Pages로 게시)
+final privacyPolicyUrl = Uri.parse('https://seungho-sohn.github.io/fit_link/privacy.html');
 
 /* ================= WILD WEAR 포인트 허브 ================= */
 class PointsScreen extends StatelessWidget {
