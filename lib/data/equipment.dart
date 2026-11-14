@@ -62,6 +62,17 @@ const gymGear = <String, List<String>>{
   '머슬팩토리 선릉': ['cybex-pulldown', 'hs-pl-pulldown', 'hs-pl-leg-press', 'lf-ins-row'],
 };
 
+/// 헬스장 보유 기구 정보가 어디서 왔는지 (회원에게 신뢰도로 보여준다).
+/// 매칭에 쓰는 실제 목록은 [gymGear]에 운영자 등록·이용자 제보를 합친 `AppState.gymGearNow`.
+enum GearSource {
+  listed('등록 정보'), // 기본(제휴) 데이터, 아직 아무도 확인하지 않음
+  operator('운영자 등록'), // 헬스장 운영자가 B2B 화면에서 직접 등록
+  member('이용자 확인'); // 회원이 "있어요"로 확인
+
+  const GearSource(this.label);
+  final String label;
+}
+
 /// 찾는 기구와 헬스장 보유 기구의 일치 정도 (위쪽일수록 좋음)
 enum MatchLevel {
   exact('동일 모델', 100),

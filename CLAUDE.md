@@ -27,6 +27,7 @@ flutter run -d chrome                 # quickest visual check; also windows / em
 - Recognition is behind `GearRecognizer` (`lib/services/gear_recognizer.dart`). Only `DemoGearRecognizer` exists (fixed candidates, labelled "데모 후보" in the UI); an AI recognizer just implements the interface — the confirm screen stays human-in-the-loop.
 - Data and rules live in `lib/data/equipment.dart`: `gearCatalog` (brand · line · model), `gymGear` (gym name → owned gear ids), `matchLevel` (exact > same brand & category > same category), `matchGyms`. Both datasets are mock and meant to be replaced by partner-gym / operator-registered data; keep the rules and `test/equipment_test.dart` integrity checks.
 - `GearFlow` takes `recognizer`, `pick`, `locate`, `mapTiles` for tests (`test/map_test.dart`).
+- **Data loop** (on `AppState`, persisted): operators register their gym's gear in B2B (`MarketView.gymGear`, `/market/b2b/gear`, gym = `AppState.myGym`) → `operatorGear` replaces `gymGear` for that gym; members answer "이 기구가 실제로 있나요?" on step 6 → `gearReports` (`'gym|gearId'` → bool; "없어요" removes it from matching, first report +30P). Always match with `matchGyms(g, gear: s.gymGearNow)`, never the raw `gymGear`; `gearSource()` gives the trust label (`GearSource`: 등록 정보 / 운영자 등록 / 이용자 확인). Re-registering clears that gym's reports. Local-only for now; a backend would receive the same two actions.
 
 ## Map & location
 

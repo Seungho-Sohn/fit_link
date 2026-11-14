@@ -23,6 +23,7 @@ const routePaths = [
   '/market/b2b',
   '/market/b2b/quote',
   '/market/b2b/quote/done',
+  '/market/b2b/gear',
   '/market/used',
   '/market/dashboard',
   '/delivery',
