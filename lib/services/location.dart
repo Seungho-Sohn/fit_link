@@ -7,7 +7,11 @@ const gangnamStation = LatLng(37.4979, 127.0276);
 typedef MyLocation = ({LatLng pos, bool real});
 
 /// 현재 위치. 실패하면 [gangnamStation] (real == false).
-Future<MyLocation> currentLocation({Duration timeout = const Duration(seconds: 8)}) async {
+/// 권한 요청에 답하지 않고 두면(웹 브라우저 등) 끝없이 기다리므로 [overall] 뒤에는 기준점으로 넘어간다.
+Future<MyLocation> currentLocation({Duration timeout = const Duration(seconds: 8), Duration overall = const Duration(seconds: 15)}) =>
+    _locate(timeout).timeout(overall, onTimeout: () => (pos: gangnamStation, real: false));
+
+Future<MyLocation> _locate(Duration timeout) async {
   try {
     if (!await Geolocator.isLocationServiceEnabled()) return (pos: gangnamStation, real: false);
     var perm = await Geolocator.checkPermission();

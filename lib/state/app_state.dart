@@ -100,11 +100,14 @@ class AppState extends ChangeNotifier {
     final m = messengerKey.currentState;
     if (m == null) return;
     m.hideCurrentSnackBar();
+    // 태블릿·웹에서도 폰 폭(430) 화면 안에 들어오게 좌우 여백을 넓힌다
+    final w = MediaQuery.maybeSizeOf(m.context)?.width ?? 430;
+    final side = 40 + (w > 430 ? (w - 430) / 2 : 0.0);
     m.showSnackBar(SnackBar(
       content: Text(msg, textAlign: TextAlign.center, style: F.inter(size: 11.5, color: C.goldBright, ls: .04)),
       backgroundColor: const Color(0xF514120C),
       behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(40, 0, 40, 90),
+      margin: EdgeInsets.fromLTRB(side, 0, side, 90),
       shape: const RoundedRectangleBorder(side: BorderSide(color: C.goldDim)),
       duration: const Duration(milliseconds: 1600),
       elevation: 0,
