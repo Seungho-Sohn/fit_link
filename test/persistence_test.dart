@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:fit_link/data/equipment.dart';
 import 'package:fit_link/data/mock_data.dart';
 import 'package:fit_link/state/app_state.dart';
 import 'package:fit_link/state/persistence.dart';
@@ -166,12 +167,67 @@ void main() {
         ..remove('posts')
         ..remove('comments')
         ..remove('likes')
+        ..remove('operatorGear')
+        ..remove('gearReports')
         ..['missions'] = {'출석 3일': 3, '3대 기록 갱신': 0}; // 예전 키는 한글 이름
       final s = newState(MemoryStore(jsonEncode(j)));
       expect(s.points, 777);
       expect(s.cart, {'p1': 2});
       expect(s.feed.length, seedPosts.length);
       expect(s.missionsDone, 0); // 예전 진행도는 새 주로 보고 0부터
+    });
+  });
+
+  group('헬스장 보유 기구 (운영자 등록 · 이용자 제보)', () {
+    const gym = AppState.myGym; // 기본 데이터: hs-pl-pulldown 등 5종
+    test('운영자 등록이 기본 데이터를 대체하고 매칭에 반영된다', () {
+      final s = newState(MemoryStore());
+      expect(s.gearSource(gym, 'hs-pl-pulldown'), GearSource.listed);
+      final before = matchGyms(gearById('matrix-leg-press'), gear: s.gymGearNow);
+      expect(before.firstWhere((m) => m.gym.name == gym).level, MatchLevel.alternative);
+
+      s.registerGymGear(gym, ['matrix-leg-press', 'hs-pl-pulldown']);
+      expect(s.listedGear(gym), ['hs-pl-pulldown', 'matrix-leg-press']); // 카탈로그 순서
+      expect(s.gearSource(gym, 'matrix-leg-press'), GearSource.operator);
+      final after = matchGyms(gearById('matrix-leg-press'), gear: s.gymGearNow);
+      expect(after.first.gym.name, gym);
+      expect(after.first.level, MatchLevel.exact);
+      // 등록에서 뺀 기구는 더 이상 매칭되지 않음
+      expect(matchGyms(gearById('lf-ins-row'), gear: s.gymGearNow).where((m) => m.gym.name == gym && m.level == MatchLevel.exact), isEmpty);
+    });
+
+    test('"없어요" 제보는 매칭에서 빼고, 처음 확인할 때만 포인트를 준다', () {
+      final s = newState(MemoryStore());
+      final p = s.points;
+      s.reportGear(gym, 'hs-pl-pulldown', present: true);
+      expect(s.points, p + AppState.gearReportReward);
+      expect(s.gearSource(gym, 'hs-pl-pulldown'), GearSource.member);
+
+      s.reportGear(gym, 'hs-pl-pulldown', present: false); // 고쳐도 포인트는 한 번만
+      expect(s.points, p + AppState.gearReportReward);
+      expect(s.gymGearNow[gym], isNot(contains('hs-pl-pulldown')));
+      expect(s.gearReportCount(gym), (present: 0, missing: 1));
+
+      s.registerGymGear(gym, ['hs-pl-pulldown']); // 운영자가 확인하면 제보는 처리 완료
+      expect(s.gearReportCount(gym), (present: 0, missing: 0));
+      expect(s.gymGearNow[gym], ['hs-pl-pulldown']);
+    });
+
+    test('등록·제보가 다음 실행에도 남고, 사라진 헬스장·기구 기록은 버린다', () {
+      final store = MemoryStore();
+      final a = newState(store);
+      a.registerGymGear(gym, ['cybex-pulldown']);
+      a.reportGear('코어짐24 역삼', 'hs-sel-pulldown', present: false);
+      final b = newState(MemoryStore(store.data));
+      expect(b.toJson(), a.toJson());
+      expect(b.listedGear(gym), ['cybex-pulldown']);
+
+      final j = a.toJson()
+        ..['operatorGear'] = {gym: ['cybex-pulldown', 'gone'], '없는 헬스장': ['cybex-pulldown']}
+        ..['gearReports'] = {'$gym|gone': true, '없는 헬스장|cybex-pulldown': false, 'broken': true, '$gym|cybex-pulldown': true};
+      final c = newState(MemoryStore(jsonEncode(j)));
+      expect(c.operatorGear, {gym: ['cybex-pulldown']});
+      expect(c.gearReports, {'$gym|cybex-pulldown': true});
     });
   });
 

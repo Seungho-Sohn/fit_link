@@ -183,7 +183,9 @@ class StepTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // 화면 폭을 다 써야 왼쪽 정렬이 유지된다 (뒤로 가기 링크가 없으면 글자 폭으로 줄어 가운데로 밀림)
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (onBack != null)

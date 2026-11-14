@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../data/equipment.dart';
 import '../data/mock_data.dart';
 import '../theme.dart';
 import 'persistence.dart';
@@ -99,11 +100,14 @@ class AppState extends ChangeNotifier {
     final m = messengerKey.currentState;
     if (m == null) return;
     m.hideCurrentSnackBar();
+    // 태블릿·웹에서도 폰 폭(430) 화면 안에 들어오게 좌우 여백을 넓힌다
+    final w = MediaQuery.maybeSizeOf(m.context)?.width ?? 430;
+    final side = 40 + (w > 430 ? (w - 430) / 2 : 0.0);
     m.showSnackBar(SnackBar(
       content: Text(msg, textAlign: TextAlign.center, style: F.inter(size: 11.5, color: C.goldBright, ls: .04)),
       backgroundColor: const Color(0xF514120C),
       behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(40, 0, 40, 90),
+      margin: EdgeInsets.fromLTRB(side, 0, side, 90),
       shape: const RoundedRectangleBorder(side: BorderSide(color: C.goldDim)),
       duration: const Duration(milliseconds: 1600),
       elevation: 0,
@@ -407,6 +411,63 @@ class AppState extends ChangeNotifier {
     return post;
   }
 
+  /* ---------- 헬스장 보유 기구 (시그니처 기능 데이터 루프) ---------- */
+  // 기본 데이터(gymGear) 위에 운영자 등록과 이용자 제보를 얹어 매칭에 쓴다.
+  // 지금은 이 기기에만 저장되고, 서버가 생기면 같은 동작을 서버로 보내면 된다.
+
+  /// B2B 화면을 쓰는 운영자의 헬스장 (데모: 운영 대시보드의 매장)
+  static const myGym = '스틸핏 강남점';
+
+  /// 리워드: 기구 정보를 처음 확인해 준 회원에게 주는 포인트
+  static const gearReportReward = 30;
+
+  final Map<String, List<String>> operatorGear = {}; // 헬스장 → 운영자가 등록한 기구 id (기본 데이터를 대체)
+  final Map<String, bool> gearReports = {}; // '헬스장|기구id' → 있음(true) / 없음(false)
+
+  static String _reportKey(String gym, String gearId) => '$gym|$gearId';
+  bool? gearReport(String gym, String gearId) => gearReports[_reportKey(gym, gearId)];
+
+  /// 운영자 등록이 있으면 그 목록, 없으면 기본 데이터. 운영자가 고치기 전까지 쓰는 목록.
+  List<String> listedGear(String gym) => operatorGear[gym] ?? gymGear[gym] ?? const [];
+
+  /// 매칭에 쓰는 보유 기구: [listedGear]에서 이용자가 "없어요"라고 한 기구를 뺀다.
+  Map<String, List<String>> get gymGearNow => {
+        for (final g in gyms) g.name: [for (final id in listedGear(g.name)) if (gearReport(g.name, id) != false) id],
+      };
+
+  GearSource gearSource(String gym, String gearId) {
+    if (operatorGear.containsKey(gym)) return GearSource.operator;
+    return gearReport(gym, gearId) == true ? GearSource.member : GearSource.listed;
+  }
+
+  /// 헬스장의 이용자 제보 수: (있어요, 없어요)
+  ({int present, int missing}) gearReportCount(String gym) {
+    final mine = gearReports.entries.where((e) => e.key.startsWith('$gym|'));
+    return (present: mine.where((e) => e.value).length, missing: mine.where((e) => !e.value).length);
+  }
+
+  /// 운영자가 보유 기구를 등록·수정한다. 이전 이용자 제보는 운영자가 확인한 것으로 보고 정리한다.
+  void registerGymGear(String gym, Iterable<String> ids) {
+    final set = ids.toSet();
+    operatorGear[gym] = [for (final m in gearCatalog) if (set.contains(m.id)) m.id]; // 카탈로그 순서로
+    gearReports.removeWhere((k, _) => k.startsWith('$gym|'));
+    notifyListeners();
+    toast('보유 기구 ${set.length}대를 등록했어요 · 기구 매칭에 바로 반영돼요');
+  }
+
+  /// 회원이 헬스장에 그 기구가 실제로 있는지 알려 준다. 처음 알려 준 기구면 포인트 적립.
+  void reportGear(String gym, String gearId, {required bool present}) {
+    final key = _reportKey(gym, gearId);
+    final first = !gearReports.containsKey(key);
+    gearReports[key] = present;
+    if (first) {
+      earnPoints(gearReportReward, '기구 정보 확인');
+    } else {
+      notifyListeners();
+      toast(present ? '"있어요"로 바꿨어요' : '"없어요"로 바꿨어요 · 매칭에서 빠져요');
+    }
+  }
+
   /* ---------- 저장 · 복원 ---------- */
   // 저장 대상: 사용자가 쌓은 데이터(온보딩·포인트·미션·장바구니·찜).
   // 화면 위치, 결제 화면 옵션, 직전 주문 금액 같은 일시적인 값은 저장하지 않는다.
@@ -458,6 +519,8 @@ class AppState extends ChangeNotifier {
         'posts': [for (final p in myPosts) p.toJson()],
         'comments': {for (final e in myComments.entries) e.key: [for (final c in e.value) c.toJson()]},
         'likes': likeOverrides,
+        'operatorGear': operatorGear,
+        'gearReports': gearReports,
       };
 
   /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
@@ -478,6 +541,18 @@ class AppState extends ChangeNotifier {
     final savedCart = (j['cart'] as Map).cast<String, int>()..removeWhere((id, _) => !products.any((p) => p.id == id));
     final savedDcart = (j['dcart'] as Map).cast<String, int>()..removeWhere((id, _) => !dmenu.any((m) => m.id == id));
     final favs = (j['dfavs'] as List).cast<String>();
+    // 기구 데이터: 예전 저장본에는 없다. 목업에서 사라진 헬스장·기구는 버린다
+    bool knownGym(Object? g) => gyms.any((x) => x.name == g);
+    bool knownGear(Object? id) => gearCatalog.any((m) => m.id == id);
+    final opGear = {
+      for (final e in (j['operatorGear'] as Map? ?? const {}).entries)
+        if (knownGym(e.key)) e.key as String: [for (final id in e.value as List) if (knownGear(id)) id as String],
+    };
+    final reports = Map<String, bool>.of((j['gearReports'] as Map? ?? const {}).cast<String, bool>())
+      ..removeWhere((k, _) {
+        final i = k.indexOf('|');
+        return i < 0 || !knownGym(k.substring(0, i)) || !knownGear(k.substring(i + 1));
+      });
 
     onboarded = j['onboarded'] as bool;
     goal = j['goal'] as String;
@@ -515,6 +590,12 @@ class AppState extends ChangeNotifier {
     dfavs
       ..clear()
       ..addAll(favs);
+    operatorGear
+      ..clear()
+      ..addAll(opGear);
+    gearReports
+      ..clear()
+      ..addAll(reports);
   }
 }
 

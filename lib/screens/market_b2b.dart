@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/equipment.dart';
 import '../data/mock_data.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
@@ -12,6 +13,8 @@ class B2BFilters {
   // 견적 폼
   String fOpen = '신규 오픈', fSize = '~30평';
   final Set<String> fItems = {};
+  // 보유 기구 등록: 저장 전 선택 (null이면 지금 등록된 목록에서 시작)
+  Set<String>? gearDraft;
 }
 
 /// 헬스장 운영자(B2B) 화면: 전용관 · 견적 폼 · 접수 완료 · 중고 거래 · 운영 대시보드
@@ -41,6 +44,7 @@ class _B2BViewState extends State<B2BView> {
         MarketView.b2bDone => _b2bDone(),
         MarketView.used => _used(),
         MarketView.dash => _dash(),
+        MarketView.gymGear => _gymGear(),
         _ => _b2b(),
       };
 
@@ -114,6 +118,26 @@ class _B2BViewState extends State<B2BView> {
               LineButton('견적담기', size: 10, padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8), onTap: () => _s.toast('${i.name} 견적을 담았어요')),
             ]),
           ),
+        const SizedBox(height: 11),
+        Box(
+          onTap: () => _s.goMarket(MarketView.gymGear),
+          border: C.goldDim,
+          gradient: softGold(.10),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          child: Row(children: [
+            const Text('🏋️', style: TextStyle(fontSize: 23)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('우리 헬스장 보유 기구 등록', style: F.inter(size: 12.5, w: FontWeight.w500)),
+                const SizedBox(height: 4),
+                Text('기구 사진으로 헬스장을 찾는 회원에게 우리 매장이 노출돼요.', style: F.inter(size: 9.5, color: C.textDim, w: FontWeight.w300, h: 1.45)),
+              ]),
+            ),
+            const SizedBox(width: 8),
+            Text('등록 ›', style: F.inter(size: 9.5, color: C.goldBright)),
+          ]),
+        ),
         const SectHead('운영자 전용 서비스', more: '헬스장 창업·운영', top: 22),
         FlexGrid(
           columns: 2, ratio: 1.15, hSpacing: 10, vSpacing: 10,
@@ -304,6 +328,118 @@ class _B2BViewState extends State<B2BView> {
         asRow('🦵', '레그프레스 #2', '최근 점검 완료 · 정상', '정상', C.cLow),
         asRow('🏋️', '스미스머신 #1', '정기 점검 D-9', '정상', C.cLow),
         const HintCard('점검필요 1건 · 수리중 1건.', 'A/S는 구매처(WILD WEAR B2B)에서 무상 접수돼요.', top: 16),
+        ..._gearExposure(),
+      ],
+    );
+  }
+
+  /// 대시보드: 기구 매칭 노출 상태와 회원 제보
+  List<Widget> _gearExposure() {
+    const gym = AppState.myGym;
+    final registered = _s.operatorGear.containsKey(gym);
+    final r = _s.gearReportCount(gym);
+    final reports = r.present + r.missing == 0 ? '회원 제보 없음' : '회원 확인 ${r.present}건 · 없음 제보 ${r.missing}건';
+    return [
+      SectHead('기구 매칭 노출', more: registered ? '운영자 등록' : '확인 필요', top: 20),
+      Box(
+        onTap: () => _s.goMarket(MarketView.gymGear),
+        border: registered ? C.hairlineSoft : C.goldDim,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(children: [
+          const Text('🏋️', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('보유 기구 ${_s.listedGear(gym).length}대 · 기구 사진 검색에 노출 중', style: F.inter(size: 11.5)),
+              const SizedBox(height: 2),
+              Text(registered ? reports : '제휴 데이터 기준 · 확인하고 "운영자 등록" 받기 · $reports', style: F.inter(size: 9, color: C.textFaint, h: 1.4)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Text('관리 ›', style: F.inter(size: 9.5, color: C.goldBright)),
+        ]),
+      ),
+    ];
+  }
+
+  /* ================= 보유 기구 등록 ================= */
+  Widget _gymGear() {
+    const gym = AppState.myGym;
+    final current = _s.listedGear(gym).toSet();
+    final draft = _f.gearDraft ??= {...current};
+    final registered = _s.operatorGear.containsKey(gym);
+    final changed = draft.length != current.length || !draft.containsAll(current);
+    final canSave = draft.isNotEmpty && (changed || !registered);
+    final missing = _s.gearReportCount(gym).missing;
+
+    void toggle(String id) => setState(() => draft.contains(id) ? draft.remove(id) : draft.add(id));
+    void save() {
+      _s.registerGymGear(gym, draft);
+      setState(() => _f.gearDraft = null);
+    }
+
+    Widget tile(GearModel m) {
+      final on = draft.contains(m.id);
+      final noReport = _s.gearReport(gym, m.id) == false;
+      return Box(
+        onTap: () => toggle(m.id),
+        margin: const EdgeInsets.only(bottom: 8),
+        border: on ? C.gold : C.hairlineSoft,
+        gradient: on ? softGold(.10) : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Semantics(
+          checked: on,
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(m.brandLine.toUpperCase(), style: F.inter(size: 9, color: C.gold, ls: .12, w: FontWeight.w500)),
+                const SizedBox(height: 3),
+                Text(m.nameKo, style: F.inter(size: 12.5, w: FontWeight.w500)),
+                if (noReport) ...[
+                  const SizedBox(height: 3),
+                  Text('회원이 "없어요"라고 알려 왔어요', style: F.inter(size: 9.5, color: C.cHigh)),
+                ],
+              ]),
+            ),
+            Icon(on ? Icons.check_box : Icons.check_box_outline_blank, size: 19, color: on ? C.goldBright : C.textFaint),
+          ]),
+        ),
+      );
+    }
+
+    return ScreenFrame(
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '보유 기구 등록', titleSize: 22, desc: '$gym · 등록한 기구는 회원의 기구 사진 검색(FIT LINK 시그니처)에 바로 반영돼요.'),
+      footer: [
+        GoldButton(
+          canSave ? '저장하고 매칭에 반영 (${draft.length}대)' : (draft.isEmpty ? '기구를 1대 이상 골라 주세요' : '등록된 내용과 같아요'),
+          upper: false,
+          onTap: canSave ? save : null,
+        ),
+      ],
+      children: [
+        HintCard(
+          registered ? '운영자 등록 완료.' : '아직 운영자 확인 전이에요.',
+          registered
+              ? '회원에게 "운영자 등록" 표시로 보여요. 기구가 바뀌면 언제든 고쳐 주세요.'
+              : '지금은 제휴 데이터 기준으로 노출돼요. 확인하고 저장하면 "운영자 등록" 표시가 붙어요.',
+          top: 0,
+        ),
+        if (missing > 0) HintCard('회원 제보 $missing건.', '"없어요" 제보가 있는 기구는 확인 후 다시 저장해 주세요. 저장하면 제보는 처리 완료돼요.', top: 10),
+        for (final c in GearCategory.values) ...[
+          SectHead(c.label, more: '${gearCatalog.where((m) => m.category == c && draft.contains(m.id)).length}대 선택', top: 18),
+          for (final m in gearCatalog.where((m) => m.category == c)) tile(m),
+        ],
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TapArea(
+            onTap: () => _s.toast('기구 추가 요청이 FIT LINK 운영팀에 전달됐어요'),
+            label: '목록에 없는 기구 추가 요청',
+            minSize: 36,
+            alignment: Alignment.centerLeft,
+            child: Text('목록에 없는 기구 추가 요청 ›', style: F.inter(size: 11.5, color: C.gold)),
+          ),
+        ),
       ],
     );
   }

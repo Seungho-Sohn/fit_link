@@ -30,7 +30,7 @@ enum AppPage {
 }
 
 /// 마켓 탭 내부 화면
-enum MarketView { home, detail, store, cart, done, b2b, b2bForm, b2bDone, used, dash }
+enum MarketView { home, detail, store, cart, done, b2b, b2bForm, b2bDone, used, dash, gymGear }
 
 /// 배달 탭 내부 화면
 enum DelivView { home, store, cart, pay, done }
@@ -73,6 +73,7 @@ String locationOf({
         MarketView.b2bDone => '/market/b2b/quote/done',
         MarketView.used => '/market/used',
         MarketView.dash => '/market/dashboard',
+        MarketView.gymGear => '/market/b2b/gear',
       },
     AppPage.delivery => switch (deliv) {
         DelivView.home => '/delivery',
@@ -109,6 +110,7 @@ NavTarget? parseLocation(Uri uri) {
     ['market', 'done'] => m(MarketView.done),
     ['market', 'b2b'] => m(MarketView.b2b),
     ['market', 'b2b', 'quote'] => m(MarketView.b2bForm),
+    ['market', 'b2b', 'gear'] => m(MarketView.gymGear),
     ['market', 'b2b', 'quote', 'done'] => m(MarketView.b2bDone),
     ['market', 'used'] => m(MarketView.used),
     ['market', 'dashboard'] => m(MarketView.dash),

@@ -111,9 +111,12 @@ class _GearFlowState extends State<GearFlow> {
     });
   }
 
+  /// 운영자 등록 · 이용자 제보까지 반영한 매칭
+  List<GymMatch> _match(GearModel g) => matchGyms(g, gear: s.gymGearNow);
+
   /// 고른 기구 기준 매칭 결과에 필터 적용
   List<GymMatch> get _results {
-    final list = matchGyms(chosen!);
+    final list = _match(chosen!);
     double dist(GymMatch m) => metersBetween(here, m.gym.pos);
     switch (_filters[filter]) {
       case '동일 모델만':
@@ -133,7 +136,7 @@ class _GearFlowState extends State<GearFlow> {
   }
 
   GymMatch get _selectedMatch {
-    final all = matchGyms(chosen!);
+    final all = _match(chosen!);
     return all.firstWhere((m) => m.gym.name == selectedGym, orElse: () => all.first);
   }
 
@@ -308,7 +311,7 @@ class _GearFlowState extends State<GearFlow> {
 
   /// 고른 기구로 몇 곳이 맞는지 미리 보여준다
   Widget _matchSummary(GearModel g) {
-    final all = matchGyms(g);
+    final all = _match(g);
     int n(MatchLevel l) => all.where((m) => m.level == l).length;
     return HintCard(
       '동일 모델 ${n(MatchLevel.exact)}곳.',
@@ -320,7 +323,7 @@ class _GearFlowState extends State<GearFlow> {
   /* ---------------- 4. 헬스장 매칭 ---------------- */
   Widget _matching() {
     final g = chosen!;
-    final all = matchGyms(g);
+    final all = _match(g);
     final list = _results;
     final exact = all.where((m) => m.level == MatchLevel.exact).length;
     final where = loc == null ? '내 위치를 확인하고 있어요…' : (loc!.real ? '내 위치 기준 거리예요.' : '위치를 확인할 수 없어 강남역 기준 거리예요.');
@@ -339,6 +342,8 @@ class _GearFlowState extends State<GearFlow> {
       ],
     );
   }
+
+  GearSource _source(GymMatch m) => s.gearSource(m.gym.name, m.gear.id);
 
   String _levelTag(GymMatch m) => m.level == MatchLevel.exact ? '동일 모델 보유' : '${m.level.label} · ${m.gear.brand} ${m.gear.nameKo}';
 
@@ -373,6 +378,7 @@ class _GearFlowState extends State<GearFlow> {
                 const SizedBox(height: 9),
                 Wrap(spacing: 6, runSpacing: 6, children: [
                   Tag(_levelTag(m), color: m.level == MatchLevel.exact ? C.goldBright : C.textDim, border: m.level == MatchLevel.exact ? C.goldDim : C.hairlineSoft),
+                  if (_source(m) case final src when src != GearSource.listed) Tag('✓ ${src.label}', color: C.cLow, border: C.cLow.op(.42)),
                   Tag(m.gym.perk),
                 ]),
               ]),
@@ -395,7 +401,7 @@ class _GearFlowState extends State<GearFlow> {
           key: ValueKey(here),
           me: here,
           meIsReal: loc?.real ?? false,
-          pins: [for (final m in matchGyms(chosen!)) (id: m.gym.name, pos: m.gym.pos, label: '${m.gym.name.split(' ').first} · ${m.level.score}')],
+          pins: [for (final m in _match(chosen!)) (id: m.gym.name, pos: m.gym.pos, label: '${m.gym.name.split(' ').first} · ${m.level.score}')],
           selectedId: sel.gym.name,
           onSelect: (id) => setState(() => selectedGym = id),
           showTiles: widget.mapTiles,
@@ -439,8 +445,45 @@ class _GearFlowState extends State<GearFlow> {
           ('거리', dist),
           ('예상 도보', d.contains('도보') ? d.split('도보 ').last : '도보 1시간 이상'),
           ('운영 시간', m.gym.hours),
+          ('정보 출처', _source(m).label),
         ]),
+        _verify(m),
       ],
+    );
+  }
+
+  /// 6단계: 회원이 기구가 실제로 있는지 알려 주는 카드 (데이터 루프)
+  Widget _verify(GymMatch m) {
+    final r = s.gearReport(m.gym.name, m.gear.id);
+    void report(bool present) {
+      s.reportGear(m.gym.name, m.gear.id, present: present);
+      // 없다고 하면 이 헬스장은 매칭에서 빠지므로 목록으로 돌아간다
+      if (!present) {
+        setState(() => selectedGym = null);
+        go(4);
+      } else {
+        setState(() {});
+      }
+    }
+
+    return Box(
+      margin: const EdgeInsets.only(top: 16),
+      border: C.hairline,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('이 기구가 실제로 있나요?', style: F.inter(size: 13, w: FontWeight.w500)),
+        const SizedBox(height: 4),
+        Text(
+          r == null ? '다녀오셨다면 알려 주세요. 처음 확인해 주시면 ${AppState.gearReportReward}P를 드려요.' : '알려 주셔서 고마워요. 기구 매칭에 반영됐어요.',
+          style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300, h: 1.5),
+        ),
+        const SizedBox(height: 11),
+        Row(children: [
+          Expanded(child: LineButton(r == true ? '✓ 있어요' : '있어요', done: r == true, expand: true, padding: const EdgeInsets.symmetric(vertical: 10), onTap: r == true ? null : () => report(true))),
+          const SizedBox(width: 8),
+          Expanded(child: LineButton('없어요', expand: true, padding: const EdgeInsets.symmetric(vertical: 10), onTap: () => report(false))),
+        ]),
+      ]),
     );
   }
 

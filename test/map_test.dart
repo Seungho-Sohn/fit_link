@@ -9,6 +9,7 @@ import 'package:fit_link/data/mock_data.dart';
 import 'package:fit_link/screens/gear_flow.dart';
 import 'package:fit_link/services/location.dart';
 import 'package:fit_link/services/photo_picker.dart';
+import 'package:fit_link/state/app_state.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -116,6 +117,28 @@ void main() {
     await tapText(t, '이 기구가 있는 헬스장 찾기');
     expect(find.text('같은 기구가 있는 헬스장 1곳'), findsOneWidget); // 바디스퀘어 논현만 Matrix 보유
     expect(find.textContaining('강남역 기준'), findsOneWidget);
+  });
+
+  testWidgets('확정 화면에서 "없어요"라고 하면 그 헬스장이 매칭에서 빠진다', (t) async {
+    addTearDown(AppState.I.gearReports.clear);
+    await openFlow(t, () async => (pos: gangnamStation, real: false));
+    await tapText(t, '사진 없이 직접 찾기');
+    await t.tap(find.text('레그 프레스').first);
+    await t.pump();
+    await t.tap(find.text('MATRIX · AURA'));
+    await t.pump();
+    await tapText(t, '이 기구가 있는 헬스장 찾기');
+    await tapText(t, '바디스퀘어 논현'); // 목록에서 선택 → 지도
+    await tapText(t, '이 헬스장 선택');
+    expect(find.text('이 기구가 실제로 있나요?'), findsOneWidget);
+    expect(find.text('등록 정보'), findsOneWidget); // 정보 출처
+
+    await t.tap(find.textContaining('없어요'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 400));
+    expect(AppState.I.gearReport('바디스퀘어 논현', 'matrix-leg-press'), isFalse);
+    expect(find.textContaining('비슷한 기구가 있는 헬스장'), findsOneWidget); // 동일 모델 0곳 → 대체 기구 목록
+    expect(find.text('바디스퀘어 논현'), findsNothing);
   });
 }
 

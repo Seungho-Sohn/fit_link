@@ -64,6 +64,7 @@ class _MarketScreenState extends State<MarketScreen> {
           MarketView.b2bDone => B2BView(MarketView.b2bDone, b2b),
           MarketView.used => B2BView(MarketView.used, b2b),
           MarketView.dash => B2BView(MarketView.dash, b2b),
+          MarketView.gymGear => B2BView(MarketView.gymGear, b2b),
         },
       ),
     );
