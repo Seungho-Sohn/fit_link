@@ -9,14 +9,12 @@ import 'package:fit_link/services/gear_cloud.dart';
 import 'package:fit_link/state/app_state.dart';
 import 'package:fit_link/state/persistence.dart';
 
-/// 메모리 서버: 여러 기기(uid)가 같은 데이터를 공유한다
+/// 메모리 서버: 여러 기기(uid)가 같은 제보를 공유한다
 class MemoryServer {
-  final ops = <String, OperatorEntry>{};
   final reports = <String, CloudReport>{};
   final _changes = StreamController<void>.broadcast();
-  DateTime clock = DateTime(2026, 11, 14, 10);
+  bool rejectWrites = false; // 보안 규칙이 막는 상황
 
-  SharedGear get snapshot => (operators: Map.of(ops), reports: reports.values.toList());
   void changed() => _changes.add(null);
 }
 
@@ -27,24 +25,17 @@ class MemoryCloud implements GearCloud {
   MemoryCloud(this.server, this.uid);
 
   @override
-  Stream<SharedGear> watch() async* {
-    yield server.snapshot;
+  Stream<List<CloudReport>> watch() async* {
+    yield server.reports.values.toList();
     await for (final _ in server._changes.stream) {
-      yield server.snapshot;
+      yield server.reports.values.toList();
     }
   }
 
   @override
-  Future<void> registerGym(String gym, List<String> gear) async {
-    final cur = server.ops[gym];
-    if (cur != null && cur.owner != uid) throw const GymOwnedByOther();
-    server.ops[gym] = (gear: gear, owner: uid, at: server.clock);
-    server.changed();
-  }
-
-  @override
   Future<void> report(String gym, String gear, {required bool present}) async {
-    server.reports['$uid|$gym|$gear'] = (uid: uid, gym: gym, gear: gear, present: present, at: server.clock);
+    if (server.rejectWrites) throw StateError('permission-denied');
+    server.reports['$uid|$gym|$gear'] = (uid: uid, gym: gym, gear: gear, present: present, at: DateTime(2026, 11, 14));
     server.changed();
   }
 }
@@ -64,12 +55,12 @@ void main() {
     return s;
   }
 
-  Future<void> otherSays(String uid, bool present) async {
-    await MemoryCloud(server, uid).report(gym, gear, present: present);
+  Future<void> otherSays(String uid, bool present, {String at = gym}) async {
+    await MemoryCloud(server, uid).report(at, gear, present: present);
     await pumpEventQueue();
   }
 
-  group('여러 사용자의 제보', () {
+  group('여러 회원의 제보', () {
     test('다른 회원 한 명의 "없어요"로는 빠지지 않고, 두 명 이상·"있어요"보다 많으면 모두의 매칭에서 빠진다', () async {
       final me = await device('me');
       await otherSays('a', false);
@@ -82,6 +73,7 @@ void main() {
       await otherSays('d', true); // 있어요 2 = 없어요 2 → 다시 포함
       expect(me.gymGearNow[gym], contains(gear));
       expect(me.gearSource(gym, gear), GearSource.member);
+      expect(me.gearReportCount(gym), (present: 2, missing: 2));
     });
 
     test('내 "없어요"는 나에게 바로 반영되고, 서버에도 올라가 다른 기기에서 보인다', () async {
@@ -98,77 +90,71 @@ void main() {
     });
   });
 
-  group('운영자 등록 공유', () {
-    test('한 기기의 운영자 등록이 다른 기기의 매칭에 반영되고, 등록 전 제보는 처리된 것으로 본다', () async {
-      await otherSays('a', false);
-      await otherSays('b', false);
-      final member = await device('member');
-      expect(member.gymGearNow[gym], isNot(contains(gear)));
-
-      server.clock = server.clock.add(const Duration(hours: 1));
+  group('운영자 등록 (기기에만 저장)', () {
+    test('운영자 등록은 서버에 올리지 않고, 다른 기기에는 보이지 않는다', () async {
       final owner = await device('owner');
-      owner.registerGymGear(gym, [gear, 'lf-ins-row']);
+      owner.registerGymGear(gym, ['lf-ins-row']);
       await pumpEventQueue();
+      expect(server.reports, isEmpty);
+      expect(owner.listedGear(gym), ['lf-ins-row']);
 
-      expect(member.operatorListed(gym), isTrue);
-      expect(member.listedGear(gym), ['lf-ins-row', gear]); // 카탈로그 순서
-      expect(member.gymGearNow[gym], contains(gear)); // 등록 전 "없어요"는 무시
-      expect(member.gearSource(gym, gear), GearSource.operator);
-      expect(member.gearReportCount(gym), (present: 0, missing: 0));
+      final other = await device('other');
+      expect(other.operatorListed(gym), isFalse);
+      expect(other.listedGear(gym), gymGear[gym]);
     });
 
-    test('다른 운영자가 먼저 등록한 헬스장은 내 등록이 되돌려진다', () async {
-      await MemoryCloud(server, 'first').registerGym(gym, ['lf-ins-row']);
-      final me = await device('me');
-      me.registerGymGear(gym, [gear]);
-      expect(me.operatorGear[gym], [gear]); // 일단 바로 반영
-      await pumpEventQueue();
-      expect(me.operatorGear.containsKey(gym), isFalse);
-      expect(me.listedGear(gym), ['lf-ins-row']); // 서버의 등록을 따른다
-      expect(server.ops[gym]!.owner, 'first');
+    test('내가 등록한 헬스장은 다른 회원들의 "없어요"보다 내 등록을 믿는다', () async {
+      final owner = await device('owner');
+      owner.registerGymGear(gym, [gear]);
+      await otherSays('a', false);
+      await otherSays('b', false);
+      expect(owner.gymGearNow[gym], [gear]);
+      expect(owner.gearReportCount(gym), (present: 0, missing: 2)); // 대시보드에는 제보 수가 보인다
     });
   });
 
-  test('서버 연결 전에 쌓인 내 기록은 처음 연결할 때 한 번만 올린다', () async {
+  test('서버 연결 전에 쌓인 내 제보는 처음 연결할 때 올리고, 그 뒤로는 다시 올리지 않는다', () async {
     final store = MemoryStore();
-    final offline = AppState.fresh()..attachStore(store);
-    offline.reportGear(gym, gear, present: true);
-    offline.registerGymGear(AppState.myGym, ['hs-pl-pulldown']);
+    AppState.fresh()
+      ..attachStore(store)
+      ..reportGear(gym, gear, present: true)
+      ..registerGymGear(AppState.myGym, ['hs-pl-pulldown']);
 
     final next = MemoryStore(store.data); // 다음 실행 (서버 설정이 들어간 새 버전)
     await device('me', store: next);
-    expect(server.reports.keys, ['me|$gym|$gear']);
-    expect(server.ops[AppState.myGym]!.gear, ['hs-pl-pulldown']);
+    expect(server.reports.keys, ['me|$gym|$gear']); // 운영자 등록은 올리지 않음
 
     server.reports.clear();
-    final again = await device('me', store: MemoryStore(next.data)); // 그다음 실행: 이미 올렸다는 표시가 저장돼 있음
-    expect(again.cloudConnected, isTrue);
+    await device('me', store: MemoryStore(next.data)); // 그다음 실행: 이미 올렸다는 표시가 저장돼 있음
     expect(server.reports, isEmpty);
   });
 
-  group('Firestore 저장소', () {
-    late FakeFirebaseFirestore db;
-    setUp(() => db = FakeFirebaseFirestore());
+  test('처음 올리기가 실패하면(규칙이 막는 등) 다음 실행에서 다시 올린다', () async {
+    final store = MemoryStore();
+    AppState.fresh()
+      ..attachStore(store)
+      ..reportGear(gym, gear, present: true);
 
-    test('익명 로그인 후 등록·제보를 쓰고, 공유 데이터로 다시 읽는다', () async {
-      final cloud = await FirestoreGearCloud.connect(auth: MockFirebaseAuth(mockUser: MockUser(isAnonymous: true, uid: 'u1')), db: db);
-      expect(cloud.uid, 'u1');
-      await cloud.registerGym('A/B 짐', ['hs-pl-pulldown']);
-      await cloud.report(gym, gear, present: false);
+    server.rejectWrites = true;
+    final first = MemoryStore(store.data);
+    await device('me', store: first);
+    expect(server.reports, isEmpty);
 
-      expect((await db.collection('gym_gear').doc('A∕B 짐').get()).data()!['owner'], 'u1');
-      expect((await db.collection('gear_reports').doc('u1__${gym}__$gear').get()).exists, isTrue);
+    server.rejectWrites = false;
+    await device('me', store: MemoryStore(first.data));
+    expect(server.reports.keys, ['me|$gym|$gear']);
+  });
 
-      final s = await cloud.watch().first;
-      expect(s.operators['A/B 짐']!.gear, ['hs-pl-pulldown']);
-      expect(s.operators['A/B 짐']!.at, isNotNull);
-      expect(s.reports.single, (uid: 'u1', gym: gym, gear: gear, present: false, at: s.reports.single.at));
-    });
+  test('Firestore 저장소: 익명 로그인 후 제보를 쓰고, 모든 회원의 제보로 다시 읽는다', () async {
+    final db = FakeFirebaseFirestore();
+    final cloud = await FirestoreGearCloud.connect(auth: MockFirebaseAuth(mockUser: MockUser(isAnonymous: true, uid: 'u1')), db: db);
+    expect(cloud.uid, 'u1');
+    await cloud.report('A/B 짐', gear, present: false);
+    await FirestoreGearCloud(db, 'u2').report(gym, gear, present: true);
 
-    test('다른 사람이 등록한 헬스장을 고치려 하면 GymOwnedByOther', () async {
-      await FirestoreGearCloud(db, 'first').registerGym(gym, ['lf-ins-row']);
-      await FirestoreGearCloud(db, 'first').registerGym(gym, ['lf-ins-row', gear]); // 본인은 수정 가능
-      expect(FirestoreGearCloud(db, 'second').registerGym(gym, [gear]), throwsA(isA<GymOwnedByOther>()));
-    });
+    expect((await db.collection('gear_reports').doc('u1__A∕B 짐__$gear').get()).exists, isTrue);
+    final s = await cloud.watch().first;
+    expect({for (final r in s) (r.uid, r.gym, r.present)}, {('u1', 'A/B 짐', false), ('u2', gym, true)});
+    expect(s.every((r) => r.at != null), isTrue);
   });
 }

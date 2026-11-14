@@ -13,8 +13,25 @@ FirebaseOptions? get firebaseOptions {
   };
 }
 
-// TODO(설정): 콘솔의 웹 앱 firebaseConfig 값을 넣는다.
-const FirebaseOptions? _web = null;
+// 프로젝트 fit-link-6922f 공통 값
+const _apiKey = 'AIzaSyDyvFdpo817LHDAIknylqvWs5CYDJ-vRx8';
+const _projectId = 'fit-link-6922f';
+const _senderId = '195223662588';
+const _storageBucket = 'fit-link-6922f.firebasestorage.app';
 
-// TODO(설정): Android 앱 ID를 넣는다 (apiKey·projectId 등은 웹 앱과 같다).
-const FirebaseOptions? _android = null;
+const FirebaseOptions _web = FirebaseOptions(
+  apiKey: _apiKey,
+  appId: '1:195223662588:web:d35ef9e616965faa674c79',
+  messagingSenderId: _senderId,
+  projectId: _projectId,
+  authDomain: 'fit-link-6922f.firebaseapp.com',
+  storageBucket: _storageBucket,
+);
+
+const FirebaseOptions _android = FirebaseOptions(
+  apiKey: _apiKey,
+  appId: '1:195223662588:android:20d86b0a4736cec6674c79',
+  messagingSenderId: _senderId,
+  projectId: _projectId,
+  storageBucket: _storageBucket,
+);
