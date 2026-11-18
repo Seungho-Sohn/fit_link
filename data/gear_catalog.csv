@@ -1,4 +1,4 @@
-기구ID,브랜드,제품라인,이름(한글),이름(영문),종류,구동방식,타겟부위
+﻿기구ID,브랜드,제품라인,이름(한글),이름(영문),종류,구동방식,타겟부위
 hs-pl-pulldown,Hammer Strength,Plate-Loaded,프론트 풀다운,Front Pulldown,랫풀다운,플레이트 로디드,광배근
 hs-sel-pulldown,Hammer Strength,Select,랫 풀다운,Lat Pulldown,랫풀다운,셀렉토라이즈드,광배근
 lf-ins-pulldown,Life Fitness,Insignia,랫 풀다운,Lat Pulldown,랫풀다운,셀렉토라이즈드,광배근
