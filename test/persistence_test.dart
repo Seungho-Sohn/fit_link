@@ -57,7 +57,7 @@ void main() {
   });
 
   test('저장본이 깨져 있거나 형식이 다르면 초기 상태로 시작한다', () {
-    final defaults = AppState.fresh().toJson();
+    final defaults = (AppState.fresh()..now = (() => clock)).toJson(); // 같은 시계로 비교 (실제 날짜에 따라 주가 달라지지 않게)
     for (final bad in ['{not json', '[]', jsonEncode({'schema': 999}), jsonEncode({'schema': 1, 'points': 'x'})]) {
       final s = newState(MemoryStore(bad));
       expect(s.toJson(), defaults, reason: bad);
