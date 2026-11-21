@@ -62,7 +62,7 @@ def idlist(ds, n=8):
     return s or ['—']
 
 
-R.title('FIT LINK 구축 계획서', '1장 비용 · 2장 로드맵 · 3장 의사결정 기록 (개조식)')
+R.title('FIT LINK 구축 계획서', '1장 비용 · 2장 로드맵 · 3장 의사결정 기록')
 R.meta([
     ['문서 번호 · 판', 'FITLINK-4 · r1'],
     ['작성일', '2026-11-18'],
