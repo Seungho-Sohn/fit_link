@@ -33,7 +33,7 @@ def flow(title, ids, steps):
     R.numbered(steps, size=9.5)
 
 
-R.title('FIT LINK 시스템 설계서', '앱 · 서버 · 데이터베이스 · 인터페이스 · 보안 · 운영 (개조식)')
+R.title('FIT LINK 시스템 설계서', '앱 · 서버 · 데이터베이스 · 인터페이스 · 보안 · 운영')
 R.meta([
     ['문서 번호 · 판', 'FITLINK-3 · r1'],
     ['작성일', '2026-11-18'],
