@@ -29,7 +29,7 @@ flutter test --plain-name "출석"            # 이름에 '출석'이 들어간 
 | 파일 | 내용 |
 |---|---|
 | `test/widget_test.dart` | 모든 화면을 띄워 오류·레이아웃 넘침이 없는지 (내장 글꼴만 사용) |
-| `test/app_state_test.dart` | 포인트·등급·미션(실제 행동)·장바구니·배달 결제 계산 |
+| `test/app_state_test.dart` | 화면 전환·탭 구성·커뮤니티 글 |
 | `test/persistence_test.dart` | 저장/복원, 깨진 저장본 처리, 날짜가 바뀔 때 출석·주간 보너스 |
 | `test/map_test.dart` | 거리 표시, 사진 → 후보 확인 → 매칭 → 지도 → 확정 흐름, 직접 찾기 |
 | `test/equipment_test.dart` | 기구·헬스장 데이터 무결성, 매칭 규칙 |
@@ -52,9 +52,9 @@ GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹
 
 | 기능 | 상태 |
 |---|---|
-| 6개 탭(홈·커뮤니티·마켓·배달·칼로리·마이), 온보딩 | 프로토타입 화면 이식 완료 |
-| 포인트·출석·장바구니·찜 · 커뮤니티 글·댓글·좋아요 | 기기에 저장 (`shared_preferences`) |
-| 주간 미션 | 출석·운동 인증 글·배달 주문·리뷰·신기록으로 진행, 매주 월요일 초기화 |
+| 5개 탭(홈·헬스장 찾기·커뮤니티·칼로리·마이), 온보딩, 운영자 전용관(마이 탭) | 프로토타입 화면 이식 완료 |
+| 커뮤니티 글·댓글·좋아요 · 운영자 등록 · 기구 제보 | 기기에 저장 (`shared_preferences`) |
+| 마켓 · 배달 · 포인트 허브 | 범위 조정(2026-11-21)으로 뺌 — 인지도가 생긴 뒤 다시 추가 (이전 코드: 태그 `archive/store-delivery-points`) |
 | 헬스장 지도 | OpenStreetMap + 현재 위치, 카카오맵 길찾기 링크 (헬스장 목록은 목업) |
 | 시그니처: 기구 → 같은 기구가 있는 헬스장 | 사진 선택·직접 찾기·후보 확인·매칭 계산은 실제 동작. 인식 후보와 기구·헬스장 데이터는 아직 데모/목업 (`lib/data/equipment.dart`) |
 | 음식 사진 인식, AI 코치 | 목업 결과 (AI 연동 작업본은 로컬 `archive/ai-features` 브랜치 — Anthropic API 키 필요) |
@@ -68,8 +68,8 @@ lib/
 ├─ main.dart                 앱 진입점 · 셸(상단 워드마크 + 하단 6탭 + 온보딩 오버레이), 저장소 연결, 글자 배율 상한
 ├─ theme.dart                색상 C · 글꼴 헬퍼 F (CSS :root 변수에서 옮김)
 ├─ state/
-│  ├─ app_state.dart         전역 상태(포인트·장바구니·배달·찜·화면 전환·토스트) + 저장/복원
-│  ├─ routes.dart            화면 식별자 enum (AppPage · MarketView · DelivView), 주소 ↔ 화면 변환
+│  ├─ app_state.dart         전역 상태(온보딩·커뮤니티·기구 제보·화면 전환·토스트) + 저장/복원
+│  ├─ routes.dart            화면 식별자 enum (AppPage · B2BPage), 주소 ↔ 화면 변환
 │  ├─ router.dart            GoRouter 설정 (등록된 주소 목록)
 │  └─ persistence.dart       저장소 (SharedPreferences / 테스트용 메모리)
 ├─ services/location.dart    현재 위치(실패 시 강남역), 거리 계산·표시
@@ -85,11 +85,9 @@ lib/
    ├─ inbody_screen.dart     인바디 리포트
    ├─ gear_flow.dart         기구 사진 → 인식 → 결과 → 헬스장 매칭 → 지도 → 확정 (6단계)
    ├─ community_screen.dart  피드(댓글·글쓰기)·챌린지·그룹·랭킹
-   ├─ market_screen.dart     마켓 홈·타임특가·상세·스토어·장바구니
-   ├─ market_b2b.dart        헬스장 운영자 전용관·견적·중고 거래·운영 대시보드
-   ├─ delivery_screen.dart   헬스 배달(정렬·찜·메뉴·장바구니·결제·배달추적)
+   ├─ b2b_screen.dart        헬스장 운영자 전용관·견적·중고 거래·운영 대시보드·보유 기구 등록
    ├─ calorie_screen.dart    음식 스캔 → 결과 → 오늘의 식단
-   └─ my_screen.dart         마이페이지 + WILD WEAR 포인트 허브
+   └─ my_screen.dart         마이페이지 (개인정보·운영자 전용관 메뉴)
 assets/
 ├─ images/                   프로토타입의 이미지 3종
 ├─ fonts/pretendard/         한글 글꼴 (모든 영문 글꼴의 대체 글꼴)
@@ -98,8 +96,8 @@ assets/
 
 ## 개발 메모
 
-- **화면 전환**은 `AppState.I.go(AppPage.x)` / `goMarket(...)` / `goDeliv(...)`로 합니다. 화면이 바뀌면 주소가 따라 바뀌고(`go_router`), 주소로 들어오거나 브라우저 뒤로 가기를 하면 그 화면이 열립니다.
-  - 웹 주소 예: `…/fit_link/#/market/cart`, `#/market/product/p6`, `#/delivery/shop/s2`, `#/my/points`. 모르는 주소·없는 상품은 홈으로 갑니다.
+- **화면 전환**은 `AppState.I.go(AppPage.x)` / `goB2B(B2BPage.x)`로 합니다. 화면이 바뀌면 주소가 따라 바뀌고(`go_router`), 주소로 들어오거나 브라우저 뒤로 가기를 하면 그 화면이 열립니다.
+  - 웹 주소 예: `…/fit_link/#/gear`, `#/b2b/quote`, `#/b2b/gear`, `#/coach/live`. 모르는 주소(예전 마켓·배달 주소 포함)는 홈으로 갑니다.
   - 화면을 추가하면 `routes.dart`의 enum · `locationOf` · `parseLocation`, `router.dart`의 `routePaths`, `main.dart`의 `switch`를 함께 고칩니다. `test/routes_test.dart`가 빠진 곳을 잡아냅니다.
 - **글꼴**은 모두 앱에 들어 있습니다. 새 굵기·글꼴을 쓰려면 `assets/google_fonts/`에 파일부터 추가해야 합니다 (없으면 실행 중 오류).
 - **앱 아이콘**: `tool/icon/make_icon_test.dart`가 앱 색과 내장 글꼴로 원본(`assets/icon/`)을 그리고, `flutter_launcher_icons`가 각 플랫폼 아이콘을 만듭니다: `flutter test tool/icon/make_icon_test.dart && dart run flutter_launcher_icons`. 실행 뒤 `ios/Runner.xcodeproj/project.pbxproj` 변경은 되돌립니다(도구 버그).
@@ -110,8 +108,9 @@ assets/
 
 | HTML/JS | Flutter |
 |---|---|
-| `switchTab()`, `goMarket()`, `goDeliv()`, `openCoach()` | `AppState.go()` / `goMarket()` / `goDeliv()` |
-| 전역 변수 `POINTS`, `cart`, `dcart`, `dfavs` | `AppState` 필드 + `notifyListeners()` (기기에 저장) |
+| `switchTab()`, `openCoach()` | `AppState.go()` (운영자 전용관 안은 `goB2B()`) |
+| 전역 변수 (커뮤니티 글 등) | `AppState` 필드 + `notifyListeners()` (기기에 저장) |
+| `goMarket()`, `goDeliv()`, `POINTS`, `cart`, `dcart` | 범위 조정으로 뺌 |
 | `toast()` | `ScaffoldMessenger` SnackBar |
 | CSS `conic-gradient` 링 | `Ring` (CustomPainter `drawArc`) |
 | `@keyframes pulse`, 스캔라인, 분석 로그 지연 | `AnimationController`, `AnimatedOpacity` |

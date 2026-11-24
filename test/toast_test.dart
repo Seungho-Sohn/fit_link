@@ -16,7 +16,7 @@ void main() {
       await t.pumpWidget(const FitLinkApp()); // 실제 앱 구조 (폰 폭 Scaffold 등)
       AppState.I
         ..finishOnboard(0)
-        ..goMarket(MarketView.gymGear);
+        ..goB2B(B2BPage.gear);
       await t.pump(const Duration(milliseconds: 500));
 
       AppState.I.toast('저장했어요');

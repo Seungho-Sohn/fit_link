@@ -90,8 +90,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
                   Text(p.name, style: F.inter(size: 12, w: FontWeight.w500)),
-                  const SizedBox(width: 6),
-                  Container(color: C.goldDim, padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), child: Text(p.tier, style: F.inter(size: 7.5, color: C.ink, ls: .04))),
+                  if (p.tier.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(color: C.goldDim, padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), child: Text(p.tier, style: F.inter(size: 7.5, color: C.ink, ls: .04))),
+                  ],
                 ]),
                 const SizedBox(height: 2),
                 Text(p.timeLabel(_s.now()), style: F.inter(size: 9.5, color: C.textFaint, w: FontWeight.w300)),
@@ -245,9 +247,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
         Navigator.pop(ctx);
         setState(() {});
         _s.toast('인증글을 게시했어요 🎉');
-        if (tag == '운동 인증' || tag == '식단 인증') {
-          Future.delayed(const Duration(milliseconds: 700), () => _s.earnPoints(50, tag));
-        }
       }),
     );
   }

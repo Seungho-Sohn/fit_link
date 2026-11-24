@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIT LINK 개인정보 처리방침</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; background: #0A0A0B; color: #E9E2D0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+      line-height: 1.75; font-size: 15px;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 24px; color: #F0DA92; margin: 0 0 4px; }
+    .meta { color: #A89D82; font-size: 13px; margin-bottom: 28px; }
+    h2 { font-size: 17px; color: #F0DA92; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid #2A2720; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+    th, td { border: 1px solid #3A352A; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #1B1A14; color: #E9E2D0; font-weight: 600; }
+    a { color: #F0DA92; }
+    .note { background: #1B1A14; border-left: 3px solid #C9A24B; padding: 10px 14px; margin: 12px 0; }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>FIT LINK 개인정보 처리방침</h1>
+  <p class="meta">시행일: 2026년 11월 14일 · 적용 대상: FIT LINK 앱(Android)과 웹 데모</p>
+
+  <p>FIT LINK(이하 "서비스")는 이용자의 개인정보를 소중히 다루며, 「개인정보 보호법」 등 관련 법령을 지킵니다.
+    이 방침은 서비스가 어떤 정보를 어디에, 왜, 얼마 동안 저장하는지 알려 드립니다.</p>
+
+  <div class="note">
+    <strong>요약</strong> — 서비스는 이름·전화번호·이메일 같은 신원 정보를 받지 않습니다.
+    서버에 저장되는 것은 <strong>익명 사용자 ID</strong>와 이용자가 직접 남긴 <strong>기구 제보</strong>("이 헬스장에 이 기구가 있어요/없어요")뿐이며,
+    나머지는 모두 이용자의 기기 안에만 저장됩니다. 제보는 앱의 <strong>마이 → 내 기구 제보 지우기</strong>로 언제든 지울 수 있습니다.
+  </div>
+
+  <h2>1. 처리하는 개인정보와 목적</h2>
+  <table>
+    <tr><th>항목</th><th>저장 위치</th><th>목적</th></tr>
+    <tr>
+      <td>익명 사용자 ID<br><small>(앱 설치 시 Firebase Authentication이 자동으로 만드는 무작위 식별자)</small></td>
+      <td>서버 (Google Firebase)</td>
+      <td>제보를 누가 남겼는지 구분해 중복 제보를 막고, 본인 제보만 고치거나 지울 수 있게 하기 위해</td>
+    </tr>
+    <tr>
+      <td>기구 제보<br><small>(헬스장 이름, 기구 ID, 있음/없음, 제보 시각)</small></td>
+      <td>서버 (Google Cloud Firestore, 서울 리전)</td>
+      <td>헬스장 보유 기구 정보의 정확도를 높여 모든 회원의 기구 매칭 결과에 반영하기 위해</td>
+    </tr>
+  </table>
+
+  <p>다음 정보는 <strong>서버로 보내지 않고 이용자의 기기 안에만</strong> 저장하거나 사용합니다.</p>
+  <ul>
+    <li><strong>위치 정보</strong> — 이용자가 허용한 경우, 가까운 헬스장까지의 거리를 기기 안에서 계산하는 데만 씁니다. 허용하지 않으면 강남역을 기준으로 계산합니다.</li>
+    <li><strong>사진</strong> — 기구 사진은 기기 안에서 화면에 보여 주는 데만 쓰며, 업로드하지 않습니다.</li>
+    <li><strong>커뮤니티 글과 댓글·좋아요·운영자 보유 기구 등록·온보딩 목표</strong> — 기기 저장소에만 저장합니다. 앱을 지우면 함께 지워집니다.</li>
+  </ul>
+
+  <h2>2. 공개 범위</h2>
+  <p>기구 제보는 다른 회원의 매칭에 쓰이도록 <strong>익명 사용자 ID와 함께 누구나 읽을 수 있게</strong> 저장됩니다.
+    익명 ID만으로는 이용자가 누구인지 알 수 없지만, 같은 ID로 남긴 제보끼리는 서로 연결될 수 있습니다.
+    헬스장 이름 외에 이용자에 관한 내용은 담기지 않습니다.</p>
+
+  <h2>3. 보관 기간과 파기</h2>
+  <ul>
+    <li>기구 제보와 익명 ID는 이용자가 지우거나 서비스가 종료될 때까지 보관합니다.</li>
+    <li>이용자가 <strong>마이 → 내 기구 제보 지우기</strong>를 누르면 서버와 기기에서 즉시 삭제합니다.</li>
+    <li>서비스를 종료하면 서버의 데이터를 지체 없이 파기합니다.</li>
+  </ul>
+
+  <h2>4. 처리 위탁과 국외 이전</h2>
+  <table>
+    <tr><th>받는 자</th><th>내용</th><th>위치</th></tr>
+    <tr>
+      <td>Google LLC<br><small>(Firebase Authentication, Cloud Firestore)</small></td>
+      <td>익명 ID 발급, 기구 제보 저장</td>
+      <td>제보 데이터: 대한민국 서울(asia-northeast3)<br>익명 로그인 처리: Google의 전 세계 데이터센터(미국 등)</td>
+    </tr>
+  </table>
+  <p>Google은 서비스 제공 과정에서 접속 IP 등 기술 정보를 처리할 수 있습니다. 자세한 내용은
+    <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase 개인정보 보호 안내</a>를 참고하세요.</p>
+
+  <h2>5. 외부 서비스</h2>
+  <ul>
+    <li><strong>지도(OpenStreetMap)</strong> — 지도 화면을 보면 지도 이미지를 받기 위해 이용자의 기기가 OpenStreetMap 서버에 접속하며, 이때 IP 주소가 전달됩니다.</li>
+    <li><strong>길찾기(카카오맵)</strong> — "길찾기"를 누르면 카카오맵 앱이나 웹으로 이동하며, 이후에는 카카오의 개인정보 처리방침이 적용됩니다.</li>
+  </ul>
+
+  <h2>6. 이용자의 권리</h2>
+  <ul>
+    <li>이용자는 언제든지 자신의 기구 제보를 확인·수정(확정 화면에서 다시 선택)하거나 삭제(마이 → 내 기구 제보 지우기)할 수 있습니다.</li>
+    <li>앱을 지우고 다시 설치하면 새로운 익명 ID가 만들어지며, 이전 ID와 연결되지 않습니다. 이전 제보를 지우려면 앱을 지우기 전에 삭제 기능을 이용해 주세요.</li>
+    <li>그 밖의 열람·정정·삭제·처리정지 요청은 아래 문의처로 연락해 주세요.</li>
+  </ul>
+
+  <h2>7. 만 14세 미만 아동</h2>
+  <p>서비스는 이름·연락처 등 신원 정보를 받지 않으므로 법정대리인 동의가 필요한 정보를 수집하지 않습니다.</p>
+
+  <h2>8. 안전성 확보 조치</h2>
+  <ul>
+    <li>서버 데이터는 보안 규칙으로 보호되며, 이용자는 자신의 익명 ID로 남긴 제보만 쓰거나 지울 수 있습니다.</li>
+    <li>서버와의 모든 통신은 암호화(HTTPS)됩니다.</li>
+  </ul>
+
+  <h2>9. 개인정보 보호책임자 · 문의</h2>
+  <table>
+    <tr><th>책임자</th><td>FIT LINK 운영팀</td></tr>
+    <tr><th>문의</th><td><a href="mailto:fitlink.cs@gmail.com">fitlink.cs@gmail.com</a></td></tr>
+  </table>
+  <p>개인정보 침해에 관한 상담은 개인정보침해신고센터(국번 없이 118, <a href="https://privacy.kisa.or.kr" target="_blank" rel="noopener">privacy.kisa.or.kr</a>)에도 하실 수 있습니다.</p>
+
+  <h2>10. 방침의 변경</h2>
+  <p>이 방침이 바뀌면 이 페이지와 앱을 통해 알려 드립니다.</p>
+</main>
+</body>
+</html>

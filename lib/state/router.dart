@@ -7,30 +7,19 @@ import 'app_state.dart';
 /// 모두 여기 있어야 한다 (test/routes_test.dart가 확인).
 const routePaths = [
   '/',
+  '/gear',
   '/comm',
   '/cal',
   '/my',
-  '/my/points',
   '/coach',
   '/coach/live',
   '/inbody',
-  '/gear',
-  '/market',
-  '/market/product/:id',
-  '/market/store/:id',
-  '/market/cart',
-  '/market/done',
-  '/market/b2b',
-  '/market/b2b/quote',
-  '/market/b2b/quote/done',
-  '/market/b2b/gear',
-  '/market/used',
-  '/market/dashboard',
-  '/delivery',
-  '/delivery/shop/:id',
-  '/delivery/cart',
-  '/delivery/pay',
-  '/delivery/done',
+  '/b2b',
+  '/b2b/quote',
+  '/b2b/quote/done',
+  '/b2b/used',
+  '/b2b/dashboard',
+  '/b2b/gear',
 ];
 
 /// 앱 라우터. 모든 주소가 같은 [shell] 페이지를 보여주고, 어떤 화면을 그릴지는 [AppState]가 정한다.
@@ -38,7 +27,7 @@ const routePaths = [
 ///
 /// - 화면 상태 → 주소: [AppState.onLocationChanged]가 [GoRouter.go]를 부른다.
 /// - 주소 → 화면 상태: 라우터가 바뀌면 [AppState.applyLocation].
-/// - 모르는 주소·없는 상품 id는 홈('/')으로 보낸다.
+/// - 모르는 주소(예: 빠진 마켓·배달 주소)는 홈('/')으로 보낸다.
 GoRouter buildRouter(AppState s, Widget shell) {
   final page = NoTransitionPage<void>(key: const ValueKey('shell'), child: shell);
   final router = GoRouter(

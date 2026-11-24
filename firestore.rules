@@ -3,8 +3,8 @@ rules_version = '2';
 // FIT LINK Firestore 보안 규칙 (원본: 저장소의 firestore.rules)
 // 콘솔 → Firestore → 규칙 탭에 이 파일 내용을 그대로 붙여넣고 "게시".
 //
-// - 회원 제보(gear_reports)만 공유한다. 누구나 읽을 수 있고, 쓰기는 익명 로그인한 앱이
-//   자기 uid로 된 문서만. 지우기는 막는다.
+// - 회원 제보(gear_reports)만 공유한다. 누구나 읽을 수 있고, 쓰기·지우기는 익명 로그인한 앱이
+//   자기 uid로 된 문서만 (앱의 "내 기구 제보 지우기" = 개인정보 삭제 요청).
 // - 운영자 보유 기구 등록은 운영자 인증이 생기기 전까지 공유하지 않으므로 서버 경로가 없다.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -28,7 +28,7 @@ service cloud.firestore {
 
       allow read: if true;
       allow create, update: if request.auth != null && validReport();
-      allow delete: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // 그 밖의 모든 문서는 막는다

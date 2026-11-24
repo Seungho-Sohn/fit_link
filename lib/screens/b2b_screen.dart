@@ -7,7 +7,7 @@ import '../widgets/common.dart';
 
 AppState get _s => AppState.I;
 
-/// B2B 화면들의 선택값. [MarketScreen]이 보관해서 B2B 화면 사이를 오가도 유지된다.
+/// B2B 화면들의 선택값. [B2BScreen]이 보관해서 B2B 화면 사이를 오가도 유지된다.
 class B2BFilters {
   String b2bCat = '전체', usedCat = '전체';
   // 견적 폼
@@ -17,9 +17,26 @@ class B2BFilters {
   Set<String>? gearDraft;
 }
 
-/// 헬스장 운영자(B2B) 화면: 전용관 · 견적 폼 · 접수 완료 · 중고 거래 · 운영 대시보드
+/// 헬스장 운영자 전용관 (마이 탭 → "헬스장 운영자 전용관"). 내부 화면은 [AppState.b2bPage].
+class B2BScreen extends StatefulWidget {
+  const B2BScreen({super.key});
+  @override
+  State<B2BScreen> createState() => _B2BScreenState();
+}
+
+class _B2BScreenState extends State<B2BScreen> {
+  final filters = B2BFilters(); // 전용관 안에서 화면을 오가도 선택값 유지
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+        listenable: _s,
+        builder: (_, __) => B2BView(_s.b2bPage, filters, key: ValueKey(_s.b2bPage)),
+      );
+}
+
+/// 헬스장 운영자(B2B) 화면: 전용관 · 견적 폼 · 접수 완료 · 중고 거래 · 운영 대시보드 · 보유 기구 등록
 class B2BView extends StatefulWidget {
-  final MarketView view;
+  final B2BPage view;
   final B2BFilters filters;
   const B2BView(this.view, this.filters, {super.key});
   @override
@@ -40,12 +57,12 @@ class _B2BViewState extends State<B2BView> {
 
   @override
   Widget build(BuildContext context) => switch (widget.view) {
-        MarketView.b2bForm => _b2bForm(),
-        MarketView.b2bDone => _b2bDone(),
-        MarketView.used => _used(),
-        MarketView.dash => _dash(),
-        MarketView.gymGear => _gymGear(),
-        _ => _b2b(),
+        B2BPage.quote => _b2bForm(),
+        B2BPage.quoteDone => _b2bDone(),
+        B2BPage.used => _used(),
+        B2BPage.dash => _dash(),
+        B2BPage.gear => _gymGear(),
+        B2BPage.home => _b2b(),
       };
 
   /* ================= B2B 운영자 전용관 ================= */
@@ -58,8 +75,8 @@ class _B2BViewState extends State<B2BView> {
             child: Column(children: [Text(i, style: const TextStyle(fontSize: 17)), const SizedBox(height: 6), Text(l, style: F.inter(size: 8.5, color: C.textDim, h: 1.3))]),
           ),
         );
-    Widget svc(String i, String t, String d, String go, MarketView to) => Box(
-          onTap: () => _s.goMarket(to),
+    Widget svc(String i, String t, String d, String go, B2BPage to) => Box(
+          onTap: () => _s.goB2B(to),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(i, style: const TextStyle(fontSize: 23)),
             const SizedBox(height: 9),
@@ -71,10 +88,10 @@ class _B2BViewState extends State<B2BView> {
           ]),
         );
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 마켓', onBack: () => _s.goMarket(MarketView.home), title: '헬스장 운영자 전용관', titleSize: 23, desc: '상업용(commercial-grade) 기구를 도매가로. 신규 오픈·리뉴얼 견적을 받아보세요.'),
+      header: StepTitle(eyebrow: '← 마이', onBack: () => _s.go(AppPage.my), title: '헬스장 운영자 전용관', titleSize: 23, desc: '상업용(commercial-grade) 기구를 도매가로. 신규 오픈·리뉴얼 견적을 받아보세요.'),
       footer: [
-        GoldButton('🧾 매장 전체 견적 요청하기', upper: false, onTap: () => _s.goMarket(MarketView.b2bForm)),
-        GoldButton('사업자 인증하고 도매가 보기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => _s.goMarket(MarketView.b2bForm)),
+        GoldButton('🧾 매장 전체 견적 요청하기', upper: false, onTap: () => _s.goB2B(B2BPage.quote)),
+        GoldButton('사업자 인증하고 도매가 보기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => _s.goB2B(B2BPage.quote)),
       ],
       children: [
         Box(
@@ -120,7 +137,7 @@ class _B2BViewState extends State<B2BView> {
           ),
         const SizedBox(height: 11),
         Box(
-          onTap: () => _s.goMarket(MarketView.gymGear),
+          onTap: () => _s.goB2B(B2BPage.gear),
           border: C.goldDim,
           gradient: softGold(.10),
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
@@ -142,10 +159,10 @@ class _B2BViewState extends State<B2BView> {
         FlexGrid(
           columns: 2, ratio: 1.15, hSpacing: 10, vSpacing: 10,
           children: [
-            svc('🔄', '중고 기구 거래', '안 쓰는 기구 판매 & 검수된 중고 매물 보기', '매물 보기 ›', MarketView.used),
-            svc('📊', '운영 대시보드', '회원·매출·기구 A/S를 한눈에 관리', '대시보드 ›', MarketView.dash),
-            svc('🏗️', '인테리어·시공', '바닥·거울·조명·동선 설계 · 턴키 시공', '견적 문의 ›', MarketView.b2bForm),
-            svc('🧑‍🏫', 'PT·트레이너 채용', '검증된 트레이너 매칭 · 채용 공고 등록', '채용 의뢰 ›', MarketView.b2bForm),
+            svc('🔄', '중고 기구 거래', '안 쓰는 기구 판매 & 검수된 중고 매물 보기', '매물 보기 ›', B2BPage.used),
+            svc('📊', '운영 대시보드', '회원·매출·기구 A/S를 한눈에 관리', '대시보드 ›', B2BPage.dash),
+            svc('🏗️', '인테리어·시공', '바닥·거울·조명·동선 설계 · 턴키 시공', '견적 문의 ›', B2BPage.quote),
+            svc('🧑‍🏫', 'PT·트레이너 채용', '검증된 트레이너 매칭 · 채용 공고 등록', '채용 의뢰 ›', B2BPage.quote),
           ],
         ),
       ],
@@ -188,8 +205,8 @@ class _B2BViewState extends State<B2BView> {
             ),
         ]);
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '사업자 인증 · 견적 요청', titleSize: 22, desc: '정보를 남겨주시면 전담 매니저가 도매 견적과 함께 연락드려요.'),
-      footer: [GoldButton('견적·상담 신청하기', upper: false, onTap: () => _s.goMarket(MarketView.b2bDone))],
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '사업자 인증 · 견적 요청', titleSize: 22, desc: '정보를 남겨주시면 전담 매니저가 도매 견적과 함께 연락드려요.'),
+      footer: [GoldButton('견적·상담 신청하기', upper: false, onTap: () => _s.goB2B(B2BPage.quoteDone))],
       children: [
         fg('상호명', input('예: 스틸핏 강남점'), req: true),
         fg('사업자등록번호', input('000-00-00000'), req: true),
@@ -205,12 +222,12 @@ class _B2BViewState extends State<B2BView> {
 
   Widget _b2bDone() => ScreenFrame(
         header: const StepTitle(eyebrow: 'Submitted'),
-        footer: [GoldButton('전용관으로 돌아가기', upper: false, onTap: () => _s.goMarket(MarketView.b2b))],
+        footer: [GoldButton('전용관으로 돌아가기', upper: false, onTap: () => _s.goB2B(B2BPage.home))],
         children: const [
           ConfirmHero('견적 요청이 접수됐어요', '사업자 인증 확인 후, 전담 매니저가\n영업일 1일 내 도매 견적과 함께 연락드립니다.'),
           DetailList([
             ('접수번호', 'WW-B2B-20260811-014'),
-            ('담당', 'WILD WEAR B2B팀'),
+            ('담당', 'B2B 담당 매니저'),
             ('예상 회신', '영업일 1일 이내'),
           ]),
           HintCard('사업자 인증이 완료되면', '전용관 도매가·리스/할부 견적을 앱에서 바로 확인할 수 있어요.', top: 16),
@@ -221,8 +238,8 @@ class _B2BViewState extends State<B2BView> {
   Widget _used() {
     final list = usedCat == '전체' ? usedItems : usedItems.where((i) => i.cat == usedCat).toList();
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '중고 기구 거래', titleSize: 22, desc: '검수·등급 인증된 상업용 중고 기구를 사고팔아요.'),
-      footer: [GoldButton('＋ 내 기구 팔기 (무료 검수 신청)', upper: false, onTap: () => _s.goMarket(MarketView.b2bForm))],
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '중고 기구 거래', titleSize: 22, desc: '검수·등급 인증된 상업용 중고 기구를 사고팔아요.'),
+      footer: [GoldButton('＋ 내 기구 팔기 (무료 검수 신청)', upper: false, onTap: () => _s.goB2B(B2BPage.quote))],
       children: [
         ChipRow(items: usedCats, selected: usedCat, onSelect: (v) => setState(() => usedCat = v)),
         SectHead(usedCat == '전체' ? '전체 매물' : usedCat, more: '${list.length}건', top: 12),
@@ -287,9 +304,9 @@ class _B2BViewState extends State<B2BView> {
       (month: '6월', ratio: .72), (month: '7월', ratio: .80), (month: '8월', ratio: .92),
     ];
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '운영 대시보드', titleSize: 22, desc: '스틸핏 강남점 · 2026년 8월'),
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '운영 대시보드', titleSize: 22, desc: '스틸핏 강남점 · 2026년 8월'),
       footer: [
-        GoldButton('🛠️ A/S 접수하기', upper: false, onTap: () => _s.toast('A/S 접수가 WILD WEAR B2B팀에 전달됐어요')),
+        GoldButton('🛠️ A/S 접수하기', upper: false, onTap: () => _s.toast('A/S 접수가 B2B 담당 매니저에게 전달됐어요')),
         GoldButton('회원 관리 열기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => _s.toast('회원 관리 화면은 개발 버전에서 연결돼요')),
       ],
       children: [
@@ -327,7 +344,7 @@ class _B2BViewState extends State<B2BView> {
         asRow('🔩', '케이블 크로스오버 #1', '케이블 교체 수리 진행 중 (D-2)', '수리중', C.cHigh),
         asRow('🦵', '레그프레스 #2', '최근 점검 완료 · 정상', '정상', C.cLow),
         asRow('🏋️', '스미스머신 #1', '정기 점검 D-9', '정상', C.cLow),
-        const HintCard('점검필요 1건 · 수리중 1건.', 'A/S는 구매처(WILD WEAR B2B)에서 무상 접수돼요.', top: 16),
+        const HintCard('점검필요 1건 · 수리중 1건.', 'A/S는 구매처에서 무상 접수돼요.', top: 16),
         ..._gearExposure(),
       ],
     );
@@ -342,7 +359,7 @@ class _B2BViewState extends State<B2BView> {
     return [
       SectHead('기구 매칭 노출', more: registered ? '운영자 등록' : '확인 필요', top: 20),
       Box(
-        onTap: () => _s.goMarket(MarketView.gymGear),
+        onTap: () => _s.goB2B(B2BPage.gear),
         border: registered ? C.hairlineSoft : C.goldDim,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         child: Row(children: [
@@ -408,7 +425,7 @@ class _B2BViewState extends State<B2BView> {
     }
 
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goMarket(MarketView.b2b), title: '보유 기구 등록', titleSize: 22, desc: '$gym · 등록한 기구는 회원의 기구 사진 검색(FIT LINK 시그니처)에 바로 반영돼요.'),
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '보유 기구 등록', titleSize: 22, desc: '$gym · 등록한 기구는 회원의 기구 사진 검색(FIT LINK 시그니처)에 바로 반영돼요.'),
       footer: [
         GoldButton(
           canSave ? '저장하고 매칭에 반영 (${draft.length}대)' : (draft.isEmpty ? '기구를 1대 이상 골라 주세요' : '등록된 내용과 같아요'),

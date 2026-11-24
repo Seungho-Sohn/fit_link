@@ -179,7 +179,7 @@ class _GearFlowState extends State<GearFlow> {
 
   /* ---------------- 1. 사진 ---------------- */
   Widget _capture() => ScreenFrame(
-        header: StepTitle(eyebrow: '← 홈', onBack: () => s.go(AppPage.home), title: '운동기구 사진을 올려주세요', desc: '기구 전체가 보이게 촬영하면 인식 정확도가 올라갑니다.'),
+        header: const StepTitle(eyebrow: '헬스장 찾기 · Signature', title: '운동기구 사진을 올려주세요', desc: '기구 전체가 보이게 촬영하면 인식 정확도가 올라갑니다.'),
         footer: [
           GoldButton('사진으로 계속하기', onTap: _pick),
           GoldButton('사진 없이 직접 찾기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: _browse),
@@ -435,7 +435,7 @@ class _GearFlowState extends State<GearFlow> {
       header: const StepTitle(eyebrow: '06 · Confirmed', title: '헬스장이 선택됐습니다'),
       footer: [
         GoldButton('길찾기 시작 (카카오맵)', onTap: _directions),
-        GoldButton('이 운동에 필요한 장비, 마켓에서 보기', ghost: true, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.market)),
+        GoldButton('헬스장 운영자이신가요? 보유 기구 등록하기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.b2b)),
       ],
       children: [
         ConfirmHero(m.gym.name, '$what\n현재 위치에서 $dist 거리입니다.'),
@@ -474,7 +474,7 @@ class _GearFlowState extends State<GearFlow> {
         Text('이 기구가 실제로 있나요?', style: F.inter(size: 13, w: FontWeight.w500)),
         const SizedBox(height: 4),
         Text(
-          r == null ? '다녀오셨다면 알려 주세요. 처음 확인해 주시면 ${AppState.gearReportReward}P를 드려요.' : '알려 주셔서 고마워요. 기구 매칭에 반영됐어요.',
+          r == null ? '다녀오셨다면 알려 주세요. 다른 회원의 헬스장 찾기에 반영돼요.' : '알려 주셔서 고마워요. 기구 매칭에 반영됐어요.',
           style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300, h: 1.5),
         ),
         const SizedBox(height: 11),
@@ -483,6 +483,8 @@ class _GearFlowState extends State<GearFlow> {
           const SizedBox(width: 8),
           Expanded(child: LineButton('없어요', expand: true, padding: const EdgeInsets.symmetric(vertical: 10), onTap: () => report(false))),
         ]),
+        const SizedBox(height: 10),
+        Text('제보는 이름 없이 익명으로 모든 회원과 공유돼요 · 마이 탭에서 언제든 지울 수 있어요', style: F.inter(size: 9.5, color: C.textFaint, h: 1.5)),
       ]),
     );
   }

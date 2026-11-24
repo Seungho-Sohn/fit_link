@@ -38,6 +38,14 @@ class MemoryCloud implements GearCloud {
     server.reports['$uid|$gym|$gear'] = (uid: uid, gym: gym, gear: gear, present: present, at: DateTime(2026, 11, 14));
     server.changed();
   }
+
+  @override
+  Future<int> deleteMine() async {
+    final before = server.reports.length;
+    server.reports.removeWhere((_, r) => r.uid == uid);
+    server.changed();
+    return before - server.reports.length;
+  }
 }
 
 void main() {
@@ -145,6 +153,34 @@ void main() {
     expect(server.reports.keys, ['me|$gym|$gear']);
   });
 
+  group('내 기구 제보 지우기 (개인정보 삭제 요청)', () {
+    test('서버와 기기에서 내 제보만 지우고, 다른 회원 제보는 남긴다', () async {
+      final me = await device('me');
+      me.reportGear(gym, gear, present: false);
+      me.reportGear('스틸핏 강남점', 'hs-pl-pulldown', present: true);
+      await otherSays('a', true);
+      expect(me.myReportCount, 2);
+
+      expect(await me.deleteMyReports(), isTrue);
+      await pumpEventQueue();
+      expect(server.reports.keys, ['a|$gym|$gear']);
+      expect(me.myReportCount, 0);
+      expect(me.gymGearNow[gym], contains(gear)); // 내 "없어요"가 사라져 다시 매칭
+    });
+
+    test('서버에 올린 적이 있는데 연결이 안 되면 지우지 않는다', () async {
+      final store = MemoryStore();
+      final a = await device('me', store: store);
+      a.reportGear(gym, gear, present: true);
+      await pumpEventQueue();
+
+      final offline = AppState.fresh()..attachStore(MemoryStore(store.data)); // 다음 실행, 서버 연결 전
+      expect(await offline.deleteMyReports(), isFalse);
+      expect(offline.myReportCount, 1);
+      expect(server.reports, isNotEmpty);
+    });
+  });
+
   test('Firestore 저장소: 익명 로그인 후 제보를 쓰고, 모든 회원의 제보로 다시 읽는다', () async {
     final db = FakeFirebaseFirestore();
     final cloud = await FirestoreGearCloud.connect(auth: MockFirebaseAuth(mockUser: MockUser(isAnonymous: true, uid: 'u1')), db: db);
@@ -156,5 +192,9 @@ void main() {
     final s = await cloud.watch().first;
     expect({for (final r in s) (r.uid, r.gym, r.present)}, {('u1', 'A/B 짐', false), ('u2', gym, true)});
     expect(s.every((r) => r.at != null), isTrue);
+
+    expect(await cloud.deleteMine(), 1); // 내 제보만
+    final left = await db.collection('gear_reports').get();
+    expect([for (final d in left.docs) d.data()['uid']], ['u2']);
   });
 }
