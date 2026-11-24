@@ -72,7 +72,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
               child: pick == null
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Text('위에서 하나를 선택하면\n짐웨이가 맞춰줄 설정을 미리 보여드려요',
+                      child: Text('위에서 하나를 선택하면\n짐비아가 맞춰줄 설정을 미리 보여드려요',
                           textAlign: TextAlign.center, style: F.inter(size: 11, color: C.textFaint, w: FontWeight.w300, h: 1.6)),
                     )
                   : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -96,13 +96,13 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
               ),
           ]),
         ),
-        // 1단계에서만 GYMWAY 브랜드 표시
+        // 1단계에서만 GYMVIA 브랜드 표시
         if (idx == 0)
           Center(
             child: Column(children: [
               Container(width: 44, height: 1, decoration: const BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, C.goldDim, Colors.transparent]))),
               const SizedBox(height: 7),
-              const HoloWordmark('GYMWAY', size: 30),
+              const HoloWordmark('GYMVIA', size: 30),
             ]),
           ),
         const SizedBox(height: 6),
@@ -116,7 +116,7 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
             ),
         ]),
         const SizedBox(height: 16),
-        GoldButton(idx < obSteps.length - 1 ? '다음' : '짐웨이 시작하기', onTap: next),
+        GoldButton(idx < obSteps.length - 1 ? '다음' : '짐비아 시작하기', onTap: next),
       ]),
     );
   }

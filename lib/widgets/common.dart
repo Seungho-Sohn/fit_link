@@ -379,7 +379,7 @@ class _LiveDotState extends State<LiveDot> with SingleTickerProviderStateMixin {
   }
 }
 
-/// 홀로그램 금색 글자 로고 (GYMWAY): 글자 위로 흐르는 금색 그라데이션
+/// 홀로그램 금색 글자 로고 (GYMVIA): 글자 위로 흐르는 금색 그라데이션
 class HoloWordmark extends StatefulWidget {
   final String text;
   final double size;

@@ -30,7 +30,7 @@ const FirebaseOptions _web = FirebaseOptions(
 
 const FirebaseOptions _android = FirebaseOptions(
   apiKey: _apiKey,
-  appId: '1:195223662588:android:20d86b0a4736cec6674c79',
+  appId: '1:195223662588:android:236d639c885cb515674c79', // 짐비아 Android (kr.gymvia.app)
   messagingSenderId: _senderId,
   projectId: _projectId,
   storageBucket: _storageBucket,

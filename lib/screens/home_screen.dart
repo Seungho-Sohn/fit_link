@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(children: [
           const LiveDot(),
           const SizedBox(width: 6),
-          Expanded(child: Text('GYMWAY SIGNATURE · 특허 기술', style: F.inter(size: 9, color: C.gold, ls: .1))),
+          Expanded(child: Text('GYMVIA SIGNATURE · 특허 기술', style: F.inter(size: 9, color: C.gold, ls: .1))),
           Text('📍 강남구 · 내 주변', style: F.inter(size: 9.5, color: C.textDim)),
         ]),
         const SizedBox(height: 11),
