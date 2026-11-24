@@ -56,7 +56,7 @@ class MyScreen extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('회원님', style: F.inter(size: 14.5, w: FontWeight.w500)),
                 const SizedBox(height: 3),
-                Text('FIT LINK 회원 · 🔥 12일 연속', style: F.serif(size: 12, w: FontWeight.w400, color: C.textDim)),
+                Text('짐웨이 회원 · 🔥 12일 연속', style: F.serif(size: 12, w: FontWeight.w400, color: C.textDim)),
               ]),
             ),
           ]),

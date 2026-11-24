@@ -425,7 +425,7 @@ class _B2BViewState extends State<B2BView> {
     }
 
     return ScreenFrame(
-      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '보유 기구 등록', titleSize: 22, desc: '$gym · 등록한 기구는 회원의 기구 사진 검색(FIT LINK 시그니처)에 바로 반영돼요.'),
+      header: StepTitle(eyebrow: '← 전용관', onBack: () => _s.goB2B(B2BPage.home), title: '보유 기구 등록', titleSize: 22, desc: '$gym · 등록한 기구는 회원의 헬스장 찾기(기구 사진 검색)에 바로 반영돼요.'),
       footer: [
         GoldButton(
           canSave ? '저장하고 매칭에 반영 (${draft.length}대)' : (draft.isEmpty ? '기구를 1대 이상 골라 주세요' : '등록된 내용과 같아요'),
@@ -450,7 +450,7 @@ class _B2BViewState extends State<B2BView> {
         Align(
           alignment: Alignment.centerLeft,
           child: TapArea(
-            onTap: () => _s.toast('기구 추가 요청이 FIT LINK 운영팀에 전달됐어요'),
+            onTap: () => _s.toast('기구 추가 요청이 짐웨이 운영팀에 전달됐어요'),
             label: '목록에 없는 기구 추가 요청',
             minSize: 36,
             alignment: Alignment.centerLeft,

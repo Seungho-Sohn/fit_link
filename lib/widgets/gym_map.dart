@@ -58,7 +58,7 @@ class GymMap extends StatelessWidget {
             if (showTiles)
               TileLayer(
                 urlTemplate: tileUrl,
-                userAgentPackageName: 'kr.wildwear.fit_link',
+                userAgentPackageName: 'kr.gymway.app',
                 tileBuilder: darkModeTileBuilder, // 앱의 어두운 테마에 맞춰 반전
               ),
             MarkerLayer(

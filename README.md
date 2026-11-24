@@ -1,9 +1,9 @@
-# FIT LINK
+# 짐웨이 (GYMWAY)
 
 🌐 웹 데모: **https://seungho-sohn.github.io/fit_link/**
 
-피트니스 종합 앱 **FIT LINK**의 Flutter 앱입니다. 단일 HTML 프로토타입(`FIT_LINK_prototype.html`)의 화면·문구·인터랙션을 옮긴 뒤,
-데이터 저장·실제 지도·접근성 등을 더했습니다. 대부분의 데이터(헬스장, 상품, 게시글 등)는 아직 **목업**입니다.
+내 운동 기구가 있는 헬스장을 찾아 주는 피트니스 앱 **짐웨이(GYMWAY)**의 Flutter 앱입니다 (v1.0.3까지 이름 FIT LINK). 단일 HTML 프로토타입(`FIT_LINK_prototype.html`)의 화면·문구·인터랙션을 옮긴 뒤,
+데이터 저장·실제 지도·접근성 등을 더했습니다. 대부분의 데이터(헬스장, 게시글 등)는 아직 **목업**입니다.
 
 ## 실행
 
@@ -41,7 +41,7 @@ GitHub에 push하거나 PR을 올리면 GitHub Actions가 `analyze`·`test`·웹
 
 ## Android APK 배포
 
-- `v1.0.1` 같은 태그를 올리면 GitHub Actions가 테스트 → 정식 키로 서명한 APK 빌드 → [Releases](https://github.com/Seungho-Sohn/fit_link/releases)에 `fitlink-1.0.1.apk` 첨부까지 자동으로 합니다 (`.github/workflows/release.yml`).
+- `v2.0.0` 같은 태그를 올리면 GitHub Actions가 테스트 → 정식 키로 서명한 APK 빌드 → [Releases](https://github.com/Seungho-Sohn/fit_link/releases)에 `gymway-2.0.0.apk` 같은 파일 첨부까지 자동으로 합니다 (`.github/workflows/release.yml`).
   ```bash
   git tag v1.0.1 && git push origin v1.0.1
   ```
@@ -114,7 +114,7 @@ assets/
 | `toast()` | `ScaffoldMessenger` SnackBar |
 | CSS `conic-gradient` 링 | `Ring` (CustomPainter `drawArc`) |
 | `@keyframes pulse`, 스캔라인, 분석 로그 지연 | `AnimationController`, `AnimatedOpacity` |
-| WILD WEAR 홀로그램 로고(mask-image + 그라데이션) | `ShaderMask` + 마스크 PNG |
+| 홀로그램 금색 로고(mask-image + 그라데이션) | `HoloWordmark` (`ShaderMask` + GYMWAY 글자) |
 | 인라인 SVG(실루엣·머슬맵·기구·접시) | CustomPainter로 좌표 그대로 재현 |
 | 하단 시트(PT 예약·댓글·글쓰기) | `showModalBottomSheet` (`showGoldSheet`) |
 | `setInterval` 타이머 | `Timer.periodic` |
