@@ -7,21 +7,14 @@ import 'package:fit_link/main.dart';
 import 'package:fit_link/state/app_state.dart';
 import 'package:fit_link/state/router.dart';
 
-/// 모든 화면 상태 (페이지 × 마켓/배달 내부 화면, 상품·판매자·매장 id 포함)
+/// 모든 화면 상태 (페이지 × 운영자 전용관 내부 화면)
 List<AppState> everyNavState() => [
       for (final p in AppPage.values)
-        if (p != AppPage.market && p != AppPage.delivery) AppState.fresh()..page = p,
-      for (final v in MarketView.values)
+        if (p != AppPage.b2b) AppState.fresh()..page = p,
+      for (final v in B2BPage.values)
         AppState.fresh()
-          ..page = AppPage.market
-          ..marketView = v
-          ..curProductId = 'p6'
-          ..curStoreSeller = 'hammer',
-      for (final v in DelivView.values)
-        AppState.fresh()
-          ..page = AppPage.delivery
-          ..delivView = v
-          ..curShopId = 's3',
+          ..page = AppPage.b2b
+          ..b2bPage = v,
     ];
 
 void main() {
@@ -30,7 +23,7 @@ void main() {
   group('주소 ↔ 화면 상태', () {
     test('모든 화면: 화면 → 주소 → 화면이 그대로 돌아온다', () {
       final states = everyNavState();
-      expect(states.length, AppPage.values.length - 2 + MarketView.values.length + DelivView.values.length);
+      expect(states.length, AppPage.values.length - 1 + B2BPage.values.length);
       final seen = <String>{};
       for (final a in states) {
         final loc = a.location;
@@ -40,8 +33,7 @@ void main() {
         expect(b.applyLocation(Uri.parse(loc)), isTrue, reason: loc);
         expect(b.location, loc);
         expect(b.page, a.page, reason: loc);
-        if (a.page == AppPage.market) expect(b.marketView, a.marketView, reason: loc);
-        if (a.page == AppPage.delivery) expect(b.delivView, a.delivView, reason: loc);
+        if (a.page == AppPage.b2b) expect(b.b2bPage, a.b2bPage, reason: loc);
       }
     });
 
@@ -52,9 +44,9 @@ void main() {
       }
     });
 
-    test('모르는 주소 · 없는 상품/판매자/매장은 거부한다', () {
+    test('모르는 주소 · 빠진 마켓·배달·포인트 주소는 거부한다', () {
       final s = AppState.fresh();
-      for (final bad in ['/nope', '/market/x', '/market/product/zzz', '/market/store/nobody', '/delivery/shop/s999', '/my/points/extra']) {
+      for (final bad in ['/nope', '/b2b/x', '/market', '/market/product/p1', '/market/b2b', '/delivery', '/my/points']) {
         expect(s.resolveLocation(Uri.parse(bad)), isNull, reason: bad);
         expect(s.applyLocation(Uri.parse(bad)), isFalse, reason: bad);
       }
@@ -65,19 +57,19 @@ void main() {
       final s = AppState.fresh();
       final sent = <String>[];
       s.onLocationChanged = sent.add;
-      s.go(AppPage.market);
-      s.openProduct('p6');
-      s.addToCart('p6', 1); // 화면은 그대로 → 알리지 않음
-      s.applyLocation(Uri.parse('/delivery/cart')); // 주소에서 온 변경 → 다시 알리지 않음
-      expect(sent, ['/market', '/market/product/p6']);
+      s.go(AppPage.gear);
+      s.goB2B(B2BPage.quote);
+      s.addPost('질문', 'x'); // 화면은 그대로 → 알리지 않음
+      s.applyLocation(Uri.parse('/b2b/used')); // 주소에서 온 변경 → 다시 알리지 않음
+      expect(sent, ['/gear', '/b2b/quote']);
     });
 
     test('주소로 다른 화면에 들어오면 그 화면을 새로 시작한다', () {
       final s = AppState.fresh();
       final seq = s.pageSeq;
-      s.applyLocation(Uri.parse('/market/cart'));
+      s.applyLocation(Uri.parse('/b2b/quote'));
       expect(s.pageSeq, seq + 1);
-      s.applyLocation(Uri.parse('/market/product/p1')); // 같은 화면 안 이동
+      s.applyLocation(Uri.parse('/b2b/dashboard')); // 같은 화면 안 이동
       expect(s.pageSeq, seq + 1);
     });
   });
@@ -104,16 +96,16 @@ void main() {
       await openApp(t);
       final s = AppState.I;
 
-      await t.binding.handlePushRoute('/market/product/p6');
+      await t.binding.handlePushRoute('/b2b/gear');
       await settle(t);
-      expect((s.page, s.marketView, s.curProductId), (AppPage.market, MarketView.detail, 'p6'));
-      expect(find.text('장바구니 담기'.toUpperCase()), findsOneWidget);
+      expect((s.page, s.b2bPage), (AppPage.b2b, B2BPage.gear));
+      expect(find.text('보유 기구 등록'), findsWidgets);
 
-      await t.binding.handlePushRoute('/delivery/shop/s3');
+      await t.binding.handlePushRoute('/gear');
       await settle(t);
-      expect((s.page, s.delivView, s.curShopId), (AppPage.delivery, DelivView.store, 's3'));
+      expect(s.page, AppPage.gear);
 
-      await t.binding.handlePushRoute('/market/product/zzz');
+      await t.binding.handlePushRoute('/market/product/p6'); // 빠진 마켓 주소
       await settle(t);
       expect(s.page, AppPage.home);
       expect(currentPath(t), '/');
@@ -128,13 +120,13 @@ void main() {
       s.go(AppPage.comm);
       await settle(t);
       expect(currentPath(t), '/comm');
-      s.go(AppPage.market);
-      s.goMarket(MarketView.b2bForm);
+      s.go(AppPage.b2b);
+      s.goB2B(B2BPage.quote);
       await settle(t);
-      expect(currentPath(t), '/market/b2b/quote');
-      s.openShop('s2');
+      expect(currentPath(t), '/b2b/quote');
+      s.go(AppPage.gear);
       await settle(t);
-      expect(currentPath(t), '/delivery/shop/s2');
+      expect(currentPath(t), '/gear');
       s.go(AppPage.home);
       await t.pump(const Duration(seconds: 3));
     });
@@ -143,17 +135,14 @@ void main() {
       await openApp(t);
       final s = AppState.I;
 
-      s.go(AppPage.points);
+      s.goB2B(B2BPage.dash);
       await settle(t);
+      await t.binding.handlePopRoute();
+      await settle(t);
+      expect((s.page, s.b2bPage), (AppPage.b2b, B2BPage.home));
       await t.binding.handlePopRoute();
       await settle(t);
       expect(s.page, AppPage.my);
-
-      s.openProduct('p1');
-      await settle(t);
-      await t.binding.handlePopRoute();
-      await settle(t);
-      expect((s.page, s.marketView), (AppPage.market, MarketView.home));
       await t.binding.handlePopRoute();
       await settle(t);
       expect(s.page, AppPage.home);

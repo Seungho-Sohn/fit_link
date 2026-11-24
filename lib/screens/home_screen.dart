@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
     return Padding(
       padding: const EdgeInsets.only(top: 14),
-      child: Row(children: [q('🍚', '음식 기록', AppPage.cal), q('🏆', '챌린지', AppPage.comm), q('🛍️', '마켓', AppPage.market)]),
+      child: Row(children: [q('🍚', '음식 기록', AppPage.cal), q('🏆', '챌린지', AppPage.comm)]),
     );
   }
 
@@ -365,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ----- 리워드 챌린지 ----- */
   List<Widget> _rewardChallenge() => [
-        const ProgHead('🏆 리워드 챌린지', 'Reward Challenge', '참가는 무료! 돈 대신 포인트로 동기부여해요. 목표를 완주하면 WILD WEAR 적립 포인트, 1등에겐 보너스 포인트를 드려요.'),
+        const ProgHead('🏆 리워드 챌린지', 'Reward Challenge', '참가는 무료! 목표를 완주하면 완주 배지를, 1등에겐 명예의 전당 배지를 드려요.'),
         Box(
           border: C.goldDim,
           gradient: softGold(.12),
@@ -381,14 +381,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ]),
             const SizedBox(height: 13),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('완주 시 지급  ', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
-              Text('2,000 P', style: F.gnum(size: 24)),
+              Text('완주 시  ', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
+              Text('🏅 완주 배지', style: F.serif(size: 20, w: FontWeight.w600, color: C.goldBright)),
               Text('  참가비 0원', style: F.inter(size: 9.5, color: C.textFaint)),
             ]),
             const SizedBox(height: 9),
             Wrap(spacing: 18, children: [
               _stat('참가 ', '1,284명'),
-              _stat('1등 보너스 ', '10,000P'),
               _stat('완주율 ', '71%'),
             ]),
             const SizedBox(height: 15),
@@ -403,8 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
               child: Text.rich(TextSpan(style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300), children: [
                 const TextSpan(text: '🎁 이대로 완주하면 '),
-                TextSpan(text: '2,000P', style: F.gnum(size: 15, color: C.cLow)),
-                const TextSpan(text: ' 적립 · WILD WEAR 마켓에서 현금처럼 사용'),
+                TextSpan(text: '완주 배지', style: F.inter(size: 11, w: FontWeight.w600, color: C.cLow)),
+                const TextSpan(text: '를 받아요 · 마이 > 내 배지에 표시'),
               ])),
             ),
             GoldButton('오늘 운동 인증하기', upper: false, margin: const EdgeInsets.only(top: 12), onTap: () => s.toast('오늘 운동을 인증했어요 · 앞으로 2회!')),

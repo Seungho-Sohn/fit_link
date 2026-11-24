@@ -154,19 +154,17 @@ void main() {
   });
 
   group('내 기구 제보 지우기 (개인정보 삭제 요청)', () {
-    test('서버와 기기에서 내 제보만 지우고, 포인트와 다른 회원 제보는 남긴다', () async {
+    test('서버와 기기에서 내 제보만 지우고, 다른 회원 제보는 남긴다', () async {
       final me = await device('me');
       me.reportGear(gym, gear, present: false);
       me.reportGear('스틸핏 강남점', 'hs-pl-pulldown', present: true);
       await otherSays('a', true);
-      final points = me.points;
       expect(me.myReportCount, 2);
 
       expect(await me.deleteMyReports(), isTrue);
       await pumpEventQueue();
       expect(server.reports.keys, ['a|$gym|$gear']);
       expect(me.myReportCount, 0);
-      expect(me.points, points);
       expect(me.gymGearNow[gym], contains(gear)); // 내 "없어요"가 사라져 다시 매칭
     });
 

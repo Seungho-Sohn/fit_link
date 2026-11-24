@@ -45,16 +45,9 @@ void main() {
       s.go(p);
       await at('화면 ${p.name}');
     }
-    for (final v in MarketView.values) {
-      s.go(AppPage.market);
-      s.goMarket(v);
-      await at('마켓 ${v.name}');
-    }
-    s.openShop('s2');
-    s.dAdd('d1');
-    for (final v in DelivView.values) {
-      s.goDeliv(v);
-      await at('배달 ${v.name}');
+    for (final v in B2BPage.values) {
+      s.goB2B(v);
+      await at('운영자 전용관 ${v.name}');
     }
     s.go(AppPage.coach);
     await t.pump();

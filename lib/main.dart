@@ -18,8 +18,7 @@ import 'screens/coach_screen.dart';
 import 'screens/inbody_screen.dart';
 import 'screens/gear_flow.dart';
 import 'screens/community_screen.dart';
-import 'screens/market_screen.dart';
-import 'screens/delivery_screen.dart';
+import 'screens/b2b_screen.dart';
 import 'screens/calorie_screen.dart';
 import 'screens/my_screen.dart';
 
@@ -29,7 +28,7 @@ Future<void> main() async {
   GoogleFonts.config.allowRuntimeFetching = false;
   _registerFontLicenses();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-  // 저장된 포인트·장바구니 등을 복원하고 이후 변경을 자동 저장.
+  // 저장된 온보딩·글·기구 제보 등을 복원하고 이후 변경을 자동 저장.
   // 저장소를 열 수 없어도 앱은 저장 없이 실행한다.
   try {
     AppState.I.attachStore(await PrefsStore.open());
@@ -81,7 +80,7 @@ class FitLinkApp extends StatefulWidget {
 }
 
 class _FitLinkAppState extends State<FitLinkApp> {
-  // 주소(웹 #/market/cart 등)와 화면 상태를 맞추는 라우터 — lib/state/router.dart
+  // 주소(웹 #/b2b/quote 등)와 화면 상태를 맞추는 라우터 — lib/state/router.dart
   late final GoRouter _router = buildRouter(AppState.I, const Shell());
 
   @override
@@ -115,14 +114,12 @@ class Shell extends StatelessWidget {
       listenable: s,
       builder: (context, _) {
         return PopScope(
-          // 안드로이드 뒤로가기: 하위 화면이면 홈/마켓 홈 등으로 복귀
+          // 안드로이드 뒤로가기: 하위 화면이면 상위 화면·홈으로 복귀
           canPop: s.page == AppPage.home && s.onboarded,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            if (s.page == AppPage.market && s.marketView != MarketView.home) {
-              s.goMarket(MarketView.home);
-            } else if (s.page == AppPage.delivery && s.delivView != DelivView.home) {
-              s.goDeliv(DelivView.home);
+            if (s.page == AppPage.b2b && s.b2bPage != B2BPage.home) {
+              s.goB2B(B2BPage.home);
             } else {
               s.go(s.page.parent);
             }
@@ -158,16 +155,14 @@ class Shell extends StatelessWidget {
     final k = ValueKey('${s.page.name}-${s.pageSeq}');
     return switch (s.page) {
       AppPage.home => HomeScreen(key: k),
+      AppPage.gear => GearFlow(key: k),
       AppPage.comm => CommunityScreen(key: k),
-      AppPage.market => MarketScreen(key: k),
-      AppPage.delivery => DeliveryScreen(key: k),
       AppPage.cal => CalorieScreen(key: k),
       AppPage.my => MyScreen(key: k),
       AppPage.coach => CoachScreen(key: k),
       AppPage.live => LiveCoachScreen(key: k),
       AppPage.inbody => InbodyScreen(key: k),
-      AppPage.gear => GearFlow(key: k),
-      AppPage.points => PointsScreen(key: k),
+      AppPage.b2b => B2BScreen(key: k),
     };
   }
 }
@@ -193,9 +188,8 @@ class _TabBar extends StatelessWidget {
 
   static const tabs = [
     (page: AppPage.home, label: '홈', icon: Icons.home_outlined),
+    (page: AppPage.gear, label: '헬스장 찾기', icon: Icons.fitness_center_outlined),
     (page: AppPage.comm, label: '커뮤니티', icon: Icons.people_outline),
-    (page: AppPage.market, label: '마켓', icon: Icons.shopping_cart_outlined),
-    (page: AppPage.delivery, label: '배달', icon: Icons.delivery_dining_outlined),
     (page: AppPage.cal, label: '칼로리', icon: Icons.restaurant_outlined),
     (page: AppPage.my, label: '마이', icon: Icons.person_outline),
   ];

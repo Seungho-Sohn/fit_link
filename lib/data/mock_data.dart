@@ -110,6 +110,7 @@ const liveSteps = [
 /* ===== 커뮤니티 ===== */
 /// 커뮤니티 글. 목업 글은 [time] 문구('12분 전'), 회원이 쓴 글은 [at] 실제 시각을 쓴다.
 /// 좋아요·댓글 수의 변화는 [AppState]가 따로 기록한다 (글 자체는 바뀌지 않음).
+/// [tier]는 이름 옆 배지(예: 'PT' 트레이너) — 비어 있으면 표시하지 않는다.
 class Post {
   final String id, av, name, tier, time, tag, txt, img;
   final int likes, comments;
@@ -147,10 +148,10 @@ String agoLabel(DateTime at, DateTime now) {
 }
 
 const seedPosts = [
-      Post('seed-0', 'K', '김철봉', 'Gold', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
+      Post('seed-0', 'K', '김철봉', '', '12분 전', '운동 인증', '오늘 스틸핏 강남에서 등 운동 완료 🔥 랫풀다운 60kg 성공! 기구 매칭으로 찾은 곳인데 진짜 딱 맞아요.', '🏋️', 42, 8, false),
       Post('seed-1', 'S', '수진트레이닝', 'PT', '40분 전', '꿀팁', '초보자분들 데드리프트 허리 안 아프게 하는 법 3가지 정리해봤어요. 궁금하면 댓글 남겨주세요!', '', 118, 23, true),
-      Post('seed-2', 'J', '정다이어터', 'Silver', '1시간 전', '식단 인증', '점심 제육덮밥 642kcal 기록 완료. 칼로리 자동 계산 너무 편하다… 오늘 목표 안에서 클리어 ✅', '🍚', 67, 11, false),
-      Post('seed-3', 'H', '헬린이탈출', 'Bronze', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
+      Post('seed-2', 'J', '정다이어터', '', '1시간 전', '식단 인증', '점심 제육덮밥 642kcal 기록 완료. 칼로리 자동 계산 너무 편하다… 오늘 목표 안에서 클리어 ✅', '🍚', 67, 11, false),
+      Post('seed-3', 'H', '헬린이탈출', '', '2시간 전', '질문', '3대 500 목표로 하는데 주 4일 분할 어떻게 짜는 게 좋을까요? 선배님들 조언 부탁드려요 🙏', '', 15, 19, false),
     ];
 
 const seedComments = <String, List<Comment>>{
@@ -204,83 +205,6 @@ const rankList = [
   (rank: '4', name: '아침운동러', meta: '운동 6일 · 940pt', score: '940', top: false),
   (rank: '5', name: '단백질요정', meta: '운동 5일 · 820pt', score: '820', top: false),
   (rank: '6', name: '헬창라이프', meta: '운동 5일 · 720pt', score: '720', top: false),
-];
-
-/* ===== 마켓 ===== */
-class Seller {
-  final String name, emoji, meta, desc;
-  final bool official;
-  const Seller(this.name, this.emoji, this.official, this.meta, this.desc);
-}
-
-const sellers = <String, Seller>{
-  'wildwear': Seller('WILD WEAR', '🏔️', true, '공식 스토어 · 만족도 98% · 4.9★', 'FIT LINK 자체 브랜드 공식 스토어'),
-  'hammer': Seller('Hammer Strength Korea', '🏋️', true, '공식 총판 · 만족도 97% · 4.8★', '해머스트렝스 공식 수입·총판'),
-  'onlab': Seller('옵티멈뉴트리션 정품관', '🥤', true, '브랜드관 · 만족도 96% · 4.8★', '옵티멈뉴트리션 정품 인증 판매자'),
-  'healthlab': Seller('헬스랩 스토어', '💊', false, '파워셀러 · 만족도 95% · 4.7★', '건강기능식품 전문 셀러'),
-  'corefit': Seller('코어핏 기어', '🔩', false, '우수셀러 · 만족도 94% · 4.6★', '홈트·소도구 전문 판매자'),
-  'ptlink': Seller('FIT LINK 파트너 짐', '🎟️', true, '제휴 헬스장 · 만족도 96% · 4.8★', '제휴 헬스장 이용권·PT 판매'),
-};
-
-class Product {
-  final String id, seller, cat, name, emoji, ship, desc;
-  final String? img, flag;
-  final int price, reviews;
-  final double rating;
-  const Product(this.id, this.seller, this.cat, this.name, this.price, this.emoji, this.rating, this.reviews, this.ship, this.desc, {this.img, this.flag});
-}
-
-const imgStraps = 'assets/images/prod_straps.jpg';
-const imgShorts = 'assets/images/prod_shorts.jpg';
-
-const products = [
-  Product('p1', 'wildwear', '운동복', '시그니처 리프팅 스트랩', 38000, '🎗️', 4.9, 214, '무료배송 · 오늘출발', '손목 보호와 그립력 강화를 위한 자체 제작 리프팅 스트랩. 이중 스티치로 내구성을 높였습니다.', img: imgStraps, flag: 'BEST'),
-  Product('p2', 'wildwear', '운동복', '컴프레션 반팔', 52000, '👕', 4.7, 98, '무료배송', '흡한속건 원단의 컴프레션 반팔. 매칭된 헬스장에서 바로 착용하기 좋은 슬림 핏입니다.'),
-  Product('p3', 'wildwear', '운동복', '트레이닝 조거팬츠', 74000, '🩳', 4.8, 156, '무료배송', '테이퍼드 핏의 트레이닝 조거팬츠. 스쿼트 동작에도 밑위가 편안합니다.', img: imgShorts),
-  Product('p4', 'hammer', '운동장비', '조절식 웨이트 벤치', 1290000, '🪑', 4.8, 42, '설치배송 · 3~5일', '인식하신 브랜드와 동일 라인의 가정용 조절식 벤치. 헬스장 기구와 같은 각도 세팅이 가능합니다.', flag: '인증'),
-  Product('p5', 'hammer', '운동장비', '올림픽 바벨 20kg', 340000, '🏋️', 4.9, 73, '무료배송 · 2~3일', 'IWF 규격 올림픽 바벨. 널링 가공으로 그립감이 우수합니다.'),
-  Product('p6', 'onlab', '보충제·건기식', '골드 스탠다드 웨이', 68000, '🥤', 4.8, 1204, '무료배송 · 오늘출발', '회원님이 자주 찾는 벌크업 목적에 맞춘 고단백 웨이 프로틴, 2.27kg.', flag: 'BEST'),
-  Product('p7', 'onlab', '보충제·건기식', '마이크로나이즈드 크레아틴', 32000, '⚗️', 4.7, 521, '무료배송', '순도 높은 크레아틴 모노하이드레이트 300g. 무맛으로 쉐이크에 타 먹기 좋습니다.'),
-  Product('p8', 'healthlab', '보충제·건기식', '알티지 오메가3', 29000, '💊', 4.6, 340, '무료배송', '관절 및 혈행 개선에 도움을 줄 수 있는 건강기능식품. 원료 함량 표준화 제품.'),
-  Product('p9', 'healthlab', '헬스케어기기', '스마트 체성분 체중계', 59000, '⚖️', 4.5, 187, '무료배송', '앱 연동 체성분 측정 체중계. 체지방·근육량을 FIT LINK 식단 기록과 함께 관리할 수 있습니다.', flag: '신상'),
-  Product('p10', 'corefit', '운동장비', '프리미엄 저항밴드 세트', 24000, '🔗', 4.6, 265, '무료배송 · 오늘출발', '5단계 강도 저항밴드 세트. 홈트와 워밍업에 두루 활용 가능합니다.'),
-  Product('p11', 'corefit', '헬스케어기기', '마사지건 프로', 89000, '🔫', 4.7, 412, '무료배송', '운동 후 근육 이완용 마사지건. 6단계 강도와 4종 헤드를 제공합니다.'),
-  Product('p12', 'ptlink', 'PT·이용권', '스틸핏 강남 · 1개월 이용권', 99000, '🎟️', 4.8, 88, '모바일 즉시발급', '기구 매칭으로 찾은 스틸핏 강남점 1개월 이용권. 앱에서 바로 발급되는 모바일 이용권입니다.', flag: '제휴'),
-  Product('p13', 'ptlink', 'PT·이용권', 'PT 10회 패키지', 650000, '💪', 4.9, 34, '모바일 즉시발급', '제휴 헬스장 전문 트레이너 1:1 PT 10회권. 유효기간 6개월.'),
-];
-
-Product productById(String id) => products.firstWhere((p) => p.id == id);
-
-class Review {
-  final String author, stars, text;
-  const Review(this.author, this.stars, this.text);
-}
-
-const reviews = <String, List<Review>>{
-  'p1': [
-    Review('김O훈', '★★★★★', '손목 아팠는데 이거 쓰고 데드리프트 무게 늘었어요. 재질도 튼튼합니다.'),
-    Review('이O연', '★★★★☆', '그립감 좋아요. 다만 처음엔 좀 뻣뻣해서 길들이는 시간이 필요해요.')
-  ],
-  'p6': [
-    Review('박O성', '★★★★★', '벌크업 시즌마다 재구매합니다. 초코맛 물에도 잘 녹아요.'),
-    Review('정O우', '★★★★★', '정품관이라 믿고 삽니다. 배송도 빨라요.'),
-    Review('최O진', '★★★★☆', '가성비 좋은데 스쿱이 가끔 안 들어있을 때가 있네요.')
-  ],
-  'p12': [
-    Review('한O규', '★★★★★', '앱에서 바로 발급돼서 편했어요. 기구 매칭으로 찾은 곳이라 딱 맞았습니다.'),
-    Review('서O민', '★★★★☆', '시설 좋아요. 피크타임엔 좀 붐빕니다.')
-  ],
-};
-const defaultReviews = [
-  Review('구매자', '★★★★★', '만족스러운 상품이에요. 추천합니다.'),
-  Review('구매자', '★★★★☆', '배송 빠르고 품질 좋습니다.')
-];
-
-const marketCats = ['전체', '운동장비', '운동복', '보충제·건기식', '헬스케어기기', 'PT·이용권'];
-
-/// 타임특가: 상품 id · 할인율(%)
-const deals = [
-  (productId: 'p6', off: 40), (productId: 'p1', off: 30), (productId: 'p11', off: 35), (productId: 'p10', off: 45), (productId: 'p9', off: 25), (productId: 'p5', off: 20),
 ];
 
 /* ===== B2B ===== */
@@ -377,113 +301,3 @@ const bkDays = [
   (label: '토', date: '13'), (label: '일', date: '14'), (label: '월', date: '15'),
 ];
 const bkTimes = ['07:00', '09:00', '11:00', '14:00', '18:00', '20:00'];
-
-/* ===== 배달 ===== */
-class DShop {
-  final String id, name, em, tags, menu;
-  final double rating, dist;
-  final int time, tip, cheap, price, was;
-  final bool fast;
-  const DShop(this.id, this.name, this.em, this.tags, this.rating, this.dist, this.time, this.tip, this.cheap, this.menu, this.price, this.was, this.fast);
-}
-
-const dshops = [
-  DShop('s1', '그린테이블 샐러드', '🥗', '샐러드·포케', 4.9, 1.2, 15, 0, 12, '시그니처 닭가슴살 샐러드', 8900, 10900, true),
-  DShop('s2', '프로틴키친', '🍱', '닭가슴살·도시락', 4.8, 0.8, 12, 0, 15, '저염 닭가슴살 도시락', 7500, 8900, true),
-  DShop('s3', '포케볼 클린', '🥙', '포케·저당식', 4.7, 1.5, 20, 900, 10, '연어 포케볼', 11000, 12500, false),
-  DShop('s4', '클린박스 도시락', '🍚', '도시락·저염', 4.6, 0.5, 10, 0, 14, '닭가슴살 현미 도시락', 6900, 7900, true),
-  DShop('s5', '브로콜리마켓', '🥦', '샐러드·저당', 4.8, 2.1, 22, 1200, 8, '그릴 치킨 콥샐러드', 9500, 10500, false),
-  DShop('s6', '닭신 닭가슴살', '🍗', '닭가슴살·구이', 4.5, 1.8, 18, 500, 18, '수비드 닭가슴살 도시락', 7200, 8500, false),
-];
-
-class DMenu {
-  final String id, cat, em, name, desc;
-  final int price;
-  final bool best;
-  const DMenu(this.id, this.cat, this.em, this.name, this.desc, this.price, {this.best = false});
-}
-
-const dmenu = [
-  DMenu('d1', '베스트', '🍱', '저염 닭가슴살 도시락', '현미밥·닭가슴살·채소 · 단백질 42g', 7500, best: true),
-  DMenu('d2', '베스트', '🥗', '그릴드 치킨 샐러드', '닭가슴살·로메인·발사믹 · 단백질 38g', 8900, best: true),
-  DMenu('d3', '도시락', '🍚', '소불고기 현미 도시락', '저지방 소불고기·현미밥 · 단백질 35g', 8500),
-  DMenu('d4', '도시락', '🐟', '연어 스테이크 도시락', '구운 연어·퀴노아 · 단백질 40g', 10500),
-  DMenu('d5', '샐러드', '🥙', '연어 포케 볼', '연어·아보카도·현미 · 단백질 30g', 9900),
-  DMenu('d6', '음료', '🥤', '프로틴 쉐이크 (초코)', '단백질 25g · 무설탕', 3500),
-];
-
-DMenu menuById(String id) => dmenu.firstWhere((m) => m.id == id);
-
-/* ===== 포인트 ===== */
-class Tier {
-  final String en, name;
-  final double rate;
-  final int min;
-  const Tier(this.en, this.name, this.rate, this.min);
-  String get rateStr => rate == rate.roundToDouble() ? rate.toInt().toString() : rate.toString();
-}
-
-const tiers = [Tier('Bronze', '브론즈', 1, 0), Tier('Silver', '실버', 1.5, 1000), Tier('Gold', '골드', 2, 3000), Tier('Platinum', '플래티넘', 3, 5000)];
-
-class PtDeal {
-  final String em, name;
-  final int was, pts;
-  int left;
-  PtDeal(this.em, this.name, this.was, this.pts, this.left);
-}
-
-/// 주간 미션 종류. 각 행동이 일어나면 [AppState]가 진행도를 올리고, 매주 월요일 0으로 초기화한다.
-enum MissionKind {
-  attend('출석 3일', 3), // 출석 체크
-  workoutPost('운동 인증 2회', 2), // 커뮤니티 '운동 인증' 글
-  delivery('배달 주문 1회', 1), // 배달 결제
-  review('리뷰 작성 1개', 1), // 포인트 허브의 리뷰 쓰기
-  personalRecord('PR 기록 갱신 1회', 1); // 운동 기록에서 신기록
-
-  const MissionKind(this.label, this.goal);
-  final String label;
-  final int goal;
-}
-
-class Mission {
-  final MissionKind kind;
-  int progress;
-  Mission(this.kind, [this.progress = 0]);
-  String get name => kind.label;
-  int get goal => kind.goal;
-  bool get isDone => progress >= goal;
-}
-
-List<Mission> seedMissions() => [for (final k in MissionKind.values) Mission(k)];
-
-/// 포인트 적립(+)·사용(−) 내역
-class PointLog {
-  final String reason;
-  final int amount; // 적립은 양수, 사용은 음수
-  final String when; // 목업 내역의 표시용 날짜 ('8월 9일')
-  final DateTime? time; // 앱에서 생긴 내역의 실제 시각
-
-  const PointLog(this.reason, this.amount, this.when) : time = null;
-  const PointLog.timed(this.reason, this.amount, DateTime this.time) : when = '';
-
-  bool get isSpend => amount < 0;
-
-  /// '+2,000' / '-3,900'
-  String get signed => '${isSpend ? '-' : '+'}${comma(amount.abs())}';
-
-  /// 내역에 표시할 시각: 1분 이내 '방금', 같은 날 '오늘', 그 외 'M월 D일'
-  String label(DateTime now) {
-    final t = time;
-    if (t == null) return when;
-    if (now.difference(t).inMinutes < 1) return '방금';
-    if (t.year == now.year && t.month == now.month && t.day == now.day) return '오늘';
-    return '${t.month}월 ${t.day}일';
-  }
-
-  Map<String, Object?> toJson() => {'reason': reason, 'amount': amount, if (time == null) 'when': when, if (time != null) 'time': time!.toIso8601String()};
-
-  factory PointLog.fromJson(Map<String, dynamic> j) {
-    final t = j['time'] as String?;
-    return t != null ? PointLog.timed(j['reason'] as String, j['amount'] as int, DateTime.parse(t)) : PointLog(j['reason'] as String, j['amount'] as int, j['when'] as String);
-  }
-}
