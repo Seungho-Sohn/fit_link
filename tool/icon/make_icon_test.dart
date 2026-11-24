@@ -17,7 +17,7 @@ const _size = 1024.0;
 const _onyx = Color(0xFF0A0A0B), _charcoal = Color(0xFF1B1A14);
 const _gold = Color(0xFFC9A24B), _goldBright = Color(0xFFF0DA92), _goldDim = Color(0xFF8A6F35);
 
-/// GW(GYMWAY) 모노그램 + 금색 링. [scale]은 1024 캔버스 대비 크기(적응형 아이콘 전경은 안전 영역에 맞춰 작게).
+/// GV(GYMVIA) 모노그램 + 금색 링. [scale]은 1024 캔버스 대비 크기(적응형 아이콘 전경은 안전 영역에 맞춰 작게).
 class _Mark extends StatelessWidget {
   final double scale;
   final bool background;
@@ -47,7 +47,7 @@ class _Mark extends StatelessWidget {
               child: Transform.translate(
                 offset: Offset(0, 16 * scale), // 글꼴 위아래 여백 차이 보정 — 글자를 링 중심에 맞춤
                 child: Text(
-                  'GW',
+                  'GV',
                   style: TextStyle(fontFamily: 'IconCormorant', fontSize: 280 * scale, fontWeight: FontWeight.w600, letterSpacing: 2 * scale, height: 1, color: Colors.white),
                 ),
               ),

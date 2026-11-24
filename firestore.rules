@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// 짐웨이(GYMWAY) Firestore 보안 규칙 (원본: 저장소의 firestore.rules)
+// 짐비아(GYMVIA) Firestore 보안 규칙 (원본: 저장소의 firestore.rules)
 // 콘솔 → Firestore → 규칙 탭에 이 파일 내용을 그대로 붙여넣고 "게시".
 //
 // - 회원 제보(gear_reports)만 공유한다. 누구나 읽을 수 있고, 쓰기·지우기는 익명 로그인한 앱이

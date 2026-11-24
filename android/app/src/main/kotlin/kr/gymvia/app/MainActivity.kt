@@ -1,4 +1,4 @@
-package kr.gymway.app
+package kr.gymvia.app
 
 import io.flutter.embedding.android.FlutterActivity
 

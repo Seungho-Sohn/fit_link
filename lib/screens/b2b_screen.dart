@@ -450,7 +450,7 @@ class _B2BViewState extends State<B2BView> {
         Align(
           alignment: Alignment.centerLeft,
           child: TapArea(
-            onTap: () => _s.toast('기구 추가 요청이 짐웨이 운영팀에 전달됐어요'),
+            onTap: () => _s.toast('기구 추가 요청이 짐비아 운영팀에 전달됐어요'),
             label: '목록에 없는 기구 추가 요청',
             minSize: 36,
             alignment: Alignment.centerLeft,

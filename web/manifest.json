@@ -1,11 +1,11 @@
 {
-    "name": "짐웨이 GYMWAY",
-    "short_name": "짐웨이",
+    "name": "짐비아 GYMVIA",
+    "short_name": "짐비아",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0A0A0B",
     "theme_color": "#15140F",
-    "description": "짐웨이 GYMWAY — 내 운동 기구가 있는 헬스장 찾기 · 운동 기록 · 식단 (데모)",
+    "description": "짐비아 GYMVIA — 내 운동 기구가 있는 헬스장 찾기 · 운동 기록 · 식단 (데모)",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -8,7 +8,7 @@
 PRODUCT_NAME = fit_link
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = kr.gymway.app
+PRODUCT_BUNDLE_IDENTIFIER = kr.gymvia.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 GYMWAY. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 GYMVIA. All rights reserved.
