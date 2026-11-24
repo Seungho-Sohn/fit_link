@@ -6,7 +6,7 @@
 import 'gym_data.dart';
 import 'mock_data.dart';
 
-export 'gym_data.dart' show gearCatalog, gymGear;
+export 'gym_data.dart' show gearCatalog, gymGear, exercises;
 
 /// 기구 종류
 enum GearCategory {
@@ -88,6 +88,35 @@ List<GymMatch> matchGyms(GearModel target, {List<Gym> from = gyms, Map<String, L
     if (best != null) result.add(best);
   }
   result.sort((a, b) => a.level.index.compareTo(b.level.index));
+  return result;
+}
+
+/// 운동 하나와 그 운동을 할 수 있는 기구 종류 ([needs] 중 하나만 있어도 됨)
+class Exercise {
+  final String id, name, part;
+  final List<GearCategory> needs;
+  const Exercise(this.id, this.name, this.part, this.needs);
+}
+
+/// 헬스장 한 곳에서 루틴의 운동을 할 수 있는지: 가능한 운동 · 기구가 없어 못 하는 운동
+typedef RoutineMatch = ({Gym gym, List<Exercise> ok, List<Exercise> missing});
+
+/// 루틴([plan])의 운동을 하나라도 할 수 있는 헬스장들. 할 수 있는 운동이 많은 순 (같으면 [from] 순서).
+/// 보유 기구는 [gear] (앱에서는 운영자 등록·회원 제보를 반영한 `AppState.gymGearNow`).
+List<RoutineMatch> routineGyms(List<Exercise> plan, {List<Gym> from = gyms, Map<String, List<String>> gear = gymGear}) {
+  final result = <RoutineMatch>[];
+  for (final gym in from) {
+    final have = {for (final id in gear[gym.name] ?? const <String>[]) gearById(id).category};
+    final ok = [for (final e in plan) if (e.needs.any(have.contains)) e];
+    if (ok.isEmpty) continue;
+    result.add((gym: gym, ok: ok, missing: [for (final e in plan) if (!ok.contains(e)) e]));
+  }
+  // List.sort는 같은 값의 순서를 보장하지 않으므로 [from] 순서를 직접 비교한다
+  final order = {for (final (i, g) in from.indexed) g.name: i};
+  result.sort((a, b) {
+    final c = b.ok.length.compareTo(a.ok.length);
+    return c != 0 ? c : order[a.gym.name]!.compareTo(order[b.gym.name]!);
+  });
   return result;
 }
 

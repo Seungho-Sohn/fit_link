@@ -1,5 +1,5 @@
 // 자동 생성 파일 — 직접 고치지 마세요.
-// 원본: data/gear_catalog.csv · data/gyms.csv · data/gym_gear.csv
+// 원본: data/gear_catalog.csv · data/gyms.csv · data/gym_gear.csv · data/exercises.csv
 // 다시 만들기: dart run tool/data/import_gym_data.dart (data/README.md)
 import 'package:latlong2/latlong.dart';
 
@@ -22,13 +22,15 @@ const gearCatalog = [
   GearModel('matrix-leg-press', 'Matrix', 'Aura', '레그 프레스', 'Leg Press', GearCategory.legPress, DriveType.selectorized, '대퇴사두 · 둔근'),
 ];
 
-/// 헬스장 (이름 · 현재 인원(데모) · 면적(평) · 좌표)
+/// 헬스장 (이름 · 현재 인원(데모) · 면적(평) · 좌표 · 체인)
 const gyms = [
-  Gym('스틸핏 강남점', 37, 150, LatLng(37.4997, 127.03), rating: 4.8, hours: '06:00–24:00', perk: 'PT 가능'),
-  Gym('코어짐24 역삼', 90, 120, LatLng(37.5009, 127.0368), rating: 4.6, hours: '24시간', perk: '24시간'),
+  Gym('스틸핏 강남점', 37, 150, LatLng(37.4997, 127.03), rating: 4.8, hours: '06:00–24:00', perk: 'PT 가능', chain: '스틸핏'),
+  Gym('코어짐24 역삼', 90, 120, LatLng(37.5009, 127.0368), rating: 4.6, hours: '24시간', perk: '24시간', chain: '코어짐24'),
   Gym('바디스퀘어 논현', 62, 200, LatLng(37.5085, 127.0236), rating: 4.4, hours: '06:00–23:00', perk: '주차 가능'),
   Gym('아이언짐 삼성', 128, 140, LatLng(37.5088, 127.0631), rating: 4.5, hours: '05:00–24:00', perk: '샤워실'),
   Gym('머슬팩토리 선릉', 200, 320, LatLng(37.5045, 127.049), rating: 4.7, hours: '24시간', perk: '프리웨이트 존'),
+  Gym('스틸핏 역삼점', 55, 130, LatLng(37.5006, 127.0447), rating: 4.6, hours: '06:00–24:00', perk: 'PT 가능', chain: '스틸핏'),
+  Gym('코어짐24 선릉', 48, 110, LatLng(37.5051, 127.0522), rating: 4.5, hours: '24시간', perk: '24시간', chain: '코어짐24'),
 ];
 
 /// 헬스장별 보유 기구. 키는 [Gym.name].
@@ -38,4 +40,15 @@ const gymGear = <String, List<String>>{
   '바디스퀘어 논현': ['lf-ins-pulldown', 'lf-ins-row', 'matrix-leg-press', 'tg-sel-chest'],
   '아이언짐 삼성': ['newtech-pulldown', 'hs-pl-chest', 'cybex-leg-press'],
   '머슬팩토리 선릉': ['cybex-pulldown', 'hs-pl-pulldown', 'hs-pl-leg-press', 'lf-ins-row'],
+  '스틸핏 역삼점': ['hs-pl-pulldown', 'hs-pl-chest', 'hs-pl-leg-press'],
+  '코어짐24 선릉': ['hs-sel-pulldown', 'lf-ins-row', 'tg-sel-chest', 'cybex-leg-press'],
 };
+
+/// 운동과 필요한 기구 종류 (내 루틴 되는 헬스장 찾기)
+const exercises = [
+  Exercise('lat-pulldown', '랫풀다운', '등', [GearCategory.pulldown]),
+  Exercise('seated-row', '시티드 로우', '등', [GearCategory.row]),
+  Exercise('back-pull', '등 당기기 (풀다운 또는 로우)', '등', [GearCategory.pulldown, GearCategory.row]),
+  Exercise('chest-press', '머신 체스트 프레스', '가슴', [GearCategory.chestPress]),
+  Exercise('leg-press', '레그 프레스', '하체', [GearCategory.legPress]),
+];

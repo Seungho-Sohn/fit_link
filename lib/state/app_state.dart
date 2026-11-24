@@ -176,6 +176,24 @@ class AppState extends ChangeNotifier {
   final Map<String, bool> gearReports = {}; // 내 제보 '헬스장|기구id' → 있음(true) / 없음(false)
   bool _uploadedLocal = false; // 서버 연결 전에 쌓인 내 제보를 올렸는지
 
+  /* ---------- 내 이용권 (체인 이용권 모드, F-SIG-8) ---------- */
+  /// 이용권이 있는 체인. 비어 있으면 모든 헬스장에서 찾는다.
+  final Set<String> myChains = {};
+
+  /// 헬스장 찾기에 쓰는 헬스장: 이용권 체인을 골랐으면 그 체인 지점만
+  List<Gym> get gymsForMe => myChains.isEmpty ? gyms : [for (final g in gyms) if (myChains.contains(g.chain)) g];
+
+  void toggleChain(String chain) {
+    if (!myChains.remove(chain)) myChains.add(chain);
+    notifyListeners();
+  }
+
+  void clearChains() {
+    if (myChains.isEmpty) return;
+    myChains.clear();
+    notifyListeners();
+  }
+
   GearCloud? _cloud;
   StreamSubscription<List<CloudReport>>? _cloudSub;
   List<CloudReport> sharedReports = const [];
@@ -372,6 +390,7 @@ class AppState extends ChangeNotifier {
         'operatorGear': operatorGear,
         'gearReports': gearReports,
         'uploadedLocal': _uploadedLocal,
+        'myChains': myChains.toList(),
       };
 
   /// 전부 파싱에 성공한 뒤에만 반영한다 (일부만 복원된 어중간한 상태 방지).
@@ -396,6 +415,7 @@ class AppState extends ChangeNotifier {
         return i < 0 || !knownGym(k.substring(0, i)) || !knownGear(k.substring(i + 1));
       });
     final uploaded = j['uploadedLocal'] as bool? ?? false;
+    final chains = [for (final c in j['myChains'] as List? ?? const []) if (gymChains.contains(c)) c as String]; // 데이터에서 사라진 체인은 버림
 
     onboarded = j['onboarded'] as bool;
     goal = j['goal'] as String;
@@ -416,5 +436,8 @@ class AppState extends ChangeNotifier {
       ..clear()
       ..addAll(reports);
     _uploadedLocal = uploaded;
+    myChains
+      ..clear()
+      ..addAll(chains);
   }
 }

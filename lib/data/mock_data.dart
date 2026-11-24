@@ -269,7 +269,8 @@ class Gym {
   final LatLng pos;
   final double rating;
   final String hours, perk; // 운영 시간, 대표 편의 (목록 태그)
-  const Gym(this.name, this.now, this.area, this.pos, {required this.rating, required this.hours, required this.perk});
+  final String chain; // 체인(프랜차이즈) 이름. 단독 헬스장은 ''
+  const Gym(this.name, this.now, this.area, this.pos, {required this.rating, required this.hours, required this.perk, this.chain = ''});
   double get spp => area / now; // 1인당 평수
   int get dens {
     final d = (130 / spp).round();
@@ -279,6 +280,9 @@ class Gym {
 
 // 헬스장 목록 [gyms]는 data/gyms.csv 에서 만든 gym_data.dart 에 있다 (목업: 강남 일대 가상 위치).
 Gym gymByName(String name) => gyms.firstWhere((g) => g.name == name);
+
+/// 헬스장 데이터에 있는 체인 이름 (처음 나온 순서)
+List<String> get gymChains => [for (final g in gyms) g.chain].where((c) => c.isNotEmpty).toSet().toList();
 
 /* ===== PT 트레이너 ===== */
 class Trainer {
