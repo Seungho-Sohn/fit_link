@@ -1,4 +1,4 @@
-// data/*.csv(기구 카탈로그 · 헬스장 · 헬스장별 보유 기구)를 읽고 검사해서
+// data/*.csv(기구 카탈로그 · 헬스장 · 헬스장별 보유 기구 · 운동)를 읽고 검사해서
 // 앱 코드 lib/data/gym_data.dart 를 만든다. 사용법은 data/README.md.
 //
 // 순수 Dart라 `dart run tool/data/import_gym_data.dart`로 돌고,
@@ -6,18 +6,23 @@
 import 'package:fit_link/data/equipment.dart';
 
 /// CSV 파일 이름 (data/ 아래)
-const catalogFile = 'gear_catalog.csv', gymsFile = 'gyms.csv', gymGearFile = 'gym_gear.csv';
+const catalogFile = 'gear_catalog.csv', gymsFile = 'gyms.csv', gymGearFile = 'gym_gear.csv', exercisesFile = 'exercises.csv';
 
 /// 각 파일의 열 이름 (순서는 자유, 이름은 정확히)
 const catalogCols = ['기구ID', '브랜드', '제품라인', '이름(한글)', '이름(영문)', '종류', '구동방식', '타겟부위'];
-const gymsCols = ['헬스장', '위도', '경도', '면적(평)', '평점', '운영시간', '대표편의', '현재인원(데모)'];
+const gymsCols = ['헬스장', '위도', '경도', '면적(평)', '평점', '운영시간', '대표편의', '현재인원(데모)', '체인'];
 const gymGearCols = ['헬스장', '기구ID'];
+const exercisesCols = ['운동ID', '운동', '부위', '필요기구종류'];
+
+/// 비워 둬도 되는 열 (체인: 단독 헬스장은 빈칸)
+const _optionalCols = {'체인'};
 
 typedef CatalogRow = ({String id, String brand, String line, String nameKo, String nameEn, GearCategory category, DriveType drive, String target});
-typedef GymRow = ({String name, double lat, double lng, int area, double rating, String hours, String perk, int now});
+typedef GymRow = ({String name, double lat, double lng, int area, double rating, String hours, String perk, int now, String chain});
+typedef ExerciseRow = ({String id, String name, String part, List<GearCategory> needs});
 
 /// 검사를 통과한 데이터 (CSV 순서 그대로)
-typedef GymDataSet = ({List<CatalogRow> catalog, List<GymRow> gyms, Map<String, List<String>> gymGear});
+typedef GymDataSet = ({List<CatalogRow> catalog, List<GymRow> gyms, Map<String, List<String>> gymGear, List<ExerciseRow> exercises});
 
 /// 검사 결과: 데이터 또는 오류 목록 ('gyms.csv 3행: …')
 typedef ImportResult = ({GymDataSet? data, List<String> errors});
@@ -106,8 +111,8 @@ T? _enumByLabel<T extends Enum>(List<T> values, String s, String Function(T) lab
   return null;
 }
 
-/// 세 CSV의 내용을 검사한다. 오류가 하나라도 있으면 data는 null.
-ImportResult importGymData({required String catalog, required String gyms, required String gymGear}) {
+/// 네 CSV의 내용을 검사한다. 오류가 하나라도 있으면 data는 null.
+ImportResult importGymData({required String catalog, required String gyms, required String gymGear, required String exercises}) {
   final errors = <String>[];
   void err(String file, int line, String msg) => errors.add('$file $line행: $msg');
 
@@ -152,7 +157,7 @@ ImportResult importGymData({required String catalog, required String gyms, requi
     final name = v['헬스장']!;
     var ok = true;
     for (final c in gymsCols) {
-      if (v[c]!.isEmpty) {
+      if (v[c]!.isEmpty && !_optionalCols.contains(c)) {
         err(gymsFile, at, '"$c"이(가) 비어 있어요');
         ok = false;
       }
@@ -185,7 +190,7 @@ ImportResult importGymData({required String catalog, required String gyms, requi
     final rating = num('평점', 0, 5, '0~5');
     final area = whole('면적(평)', 1), now = whole('현재인원(데모)', 0);
     if (lat == null || lng == null || rating == null || area == null || now == null) continue;
-    gymRows.add((name: name, lat: lat, lng: lng, area: area, rating: rating, hours: v['운영시간']!, perk: v['대표편의']!, now: now));
+    gymRows.add((name: name, lat: lat, lng: lng, area: area, rating: rating, hours: v['운영시간']!, perk: v['대표편의']!, now: now, chain: v['체인']!));
   }
 
   // 헬스장별 보유 기구
@@ -208,9 +213,44 @@ ImportResult importGymData({required String catalog, required String gyms, requi
     if (owned[g.name]!.isEmpty) errors.add('$gymGearFile: "${g.name}"의 보유 기구가 하나도 없어요');
   }
 
+  // 운동 (내 루틴 되는 헬스장 찾기)
+  final exRows = <ExerciseRow>[];
+  final exIds = <String>{};
+  for (final r in _table(exercisesFile, exercises, exercisesCols, errors)) {
+    final v = r.v, at = r.line;
+    final id = v['운동ID']!;
+    final empty = [for (final c in exercisesCols) if (v[c]!.isEmpty) c];
+    if (empty.isNotEmpty) {
+      for (final c in empty) {
+        err(exercisesFile, at, '"$c"이(가) 비어 있어요');
+      }
+      continue;
+    }
+    if (!_idPattern.hasMatch(id)) {
+      err(exercisesFile, at, '운동ID "$id"는 영문 소문자·숫자·하이픈(-)만 쓸 수 있어요 (예: lat-pulldown)');
+      continue;
+    }
+    if (!exIds.add(id)) {
+      err(exercisesFile, at, '운동ID "$id"가 이미 위에 있어요');
+      continue;
+    }
+    final needs = <GearCategory>[];
+    for (final label in v['필요기구종류']!.split('/').map((x) => x.trim()).where((x) => x.isNotEmpty)) {
+      final c = _enumByLabel(GearCategory.values, label, (c) => c.label);
+      if (c == null) {
+        err(exercisesFile, at, '필요기구종류 "$label"를 모르겠어요 (${GearCategory.values.map((c) => c.label).join(' / ')} 중에서, 여러 개는 / 로 구분)');
+      } else if (!needs.contains(c)) {
+        needs.add(c);
+      }
+    }
+    if (needs.isEmpty) continue;
+    exRows.add((id: id, name: v['운동']!, part: v['부위']!, needs: needs));
+  }
+
   if (cat.isEmpty && errors.isEmpty) errors.add('$catalogFile: 기구가 하나도 없어요');
   if (gymRows.isEmpty && errors.isEmpty) errors.add('$gymsFile: 헬스장이 하나도 없어요');
-  return errors.isEmpty ? (data: (catalog: cat, gyms: gymRows, gymGear: owned), errors: const <String>[]) : (data: null, errors: errors);
+  if (exRows.isEmpty && errors.isEmpty) errors.add('$exercisesFile: 운동이 하나도 없어요');
+  return errors.isEmpty ? (data: (catalog: cat, gyms: gymRows, gymGear: owned, exercises: exRows), errors: const <String>[]) : (data: null, errors: errors);
 }
 
 /* ---------------- 코드 만들기 ---------------- */
@@ -221,7 +261,7 @@ String _str(String s) => "'${s.replaceAll(r'\', r'\\').replaceAll("'", r"\'").re
 String generateGymData(GymDataSet d) {
   final b = StringBuffer()
     ..writeln('// 자동 생성 파일 — 직접 고치지 마세요.')
-    ..writeln('// 원본: data/$catalogFile · data/$gymsFile · data/$gymGearFile')
+    ..writeln('// 원본: data/$catalogFile · data/$gymsFile · data/$gymGearFile · data/$exercisesFile')
     ..writeln('// 다시 만들기: dart run tool/data/import_gym_data.dart (data/README.md)')
     ..writeln("import 'package:latlong2/latlong.dart';")
     ..writeln()
@@ -236,10 +276,11 @@ String generateGymData(GymDataSet d) {
   b
     ..writeln('];')
     ..writeln()
-    ..writeln('/// 헬스장 (이름 · 현재 인원(데모) · 면적(평) · 좌표)')
+    ..writeln('/// 헬스장 (이름 · 현재 인원(데모) · 면적(평) · 좌표 · 체인)')
     ..writeln('const gyms = [');
   for (final g in d.gyms) {
-    b.writeln('  Gym(${_str(g.name)}, ${g.now}, ${g.area}, LatLng(${g.lat}, ${g.lng}), rating: ${g.rating}, hours: ${_str(g.hours)}, perk: ${_str(g.perk)}),');
+    final chain = g.chain.isEmpty ? '' : ', chain: ${_str(g.chain)}';
+    b.writeln('  Gym(${_str(g.name)}, ${g.now}, ${g.area}, LatLng(${g.lat}, ${g.lng}), rating: ${g.rating}, hours: ${_str(g.hours)}, perk: ${_str(g.perk)}$chain),');
   }
   b
     ..writeln('];')
@@ -249,6 +290,14 @@ String generateGymData(GymDataSet d) {
   for (final e in d.gymGear.entries) {
     b.writeln('  ${_str(e.key)}: [${e.value.map(_str).join(', ')}],');
   }
-  b.writeln('};');
+  b
+    ..writeln('};')
+    ..writeln()
+    ..writeln('/// 운동과 필요한 기구 종류 (내 루틴 되는 헬스장 찾기)')
+    ..writeln('const exercises = [');
+  for (final e in d.exercises) {
+    b.writeln('  Exercise(${[e.id, e.name, e.part].map(_str).join(', ')}, [${e.needs.map((c) => 'GearCategory.${c.name}').join(', ')}]),');
+  }
+  b.writeln('];');
   return b.toString();
 }

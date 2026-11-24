@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/equipment.dart';
+import '../data/mock_data.dart';
 import '../services/gear_recognizer.dart';
 import '../services/location.dart';
 import '../services/photo_picker.dart';
@@ -12,9 +13,11 @@ import '../widgets/gym_map.dart';
 
 const _filters = ['동일 모델만', '거리순', '평점순', '24시간'];
 
-/// 시그니처 기능: 기구 사진(또는 직접 선택) → 기구 확인 → 같은 기구가 있는 헬스장 매칭 → 지도 → 확정
+/// 헬스장 찾기 탭 (시그니처 기능): 기구 사진(또는 직접 선택) → 기구 확인 → 같은 기구가 있는 헬스장 매칭 → 지도 → 확정
 ///
 /// 1 사진 · 2 분석 · 3 기구 확인(인식 후보 또는 직접 찾기) · 4 헬스장 매칭 · 5 지도 · 6 확정.
+/// 1단계에서 "오늘 할 운동으로 찾기"(F-SIG-7: 루틴의 운동을 모두 할 수 있는 헬스장)로 갈 수 있고,
+/// "내 이용권"(F-SIG-8)으로 고른 체인 지점만 찾을 수 있다 (`AppState.myChains`).
 /// 인식은 [GearRecognizer]가 후보를 주고 사용자가 고르는 방식이라, AI를 붙여도 화면은 그대로다.
 /// 기구·헬스장 데이터와 매칭 규칙은 lib/data/equipment.dart.
 class GearFlow extends StatefulWidget {
@@ -41,6 +44,10 @@ class _GearFlowState extends State<GearFlow> {
   MyLocation? loc;
   String? selectedGym;
   int _run = 0; // 오래된 분석 결과를 버리기 위한 번호
+  // 오늘 할 운동으로 찾기 (F-SIG-7)
+  bool routine = false, routineResults = false;
+  final Set<String> plan = {}; // 고른 운동 id
+  String? routineGym;
 
   AppState get s => AppState.I;
   LatLng get here => loc?.pos ?? gangnamStation;
@@ -111,8 +118,8 @@ class _GearFlowState extends State<GearFlow> {
     });
   }
 
-  /// 운영자 등록 · 이용자 제보까지 반영한 매칭
-  List<GymMatch> _match(GearModel g) => matchGyms(g, gear: s.gymGearNow);
+  /// 운영자 등록 · 이용자 제보 · 내 이용권(체인)까지 반영한 매칭
+  List<GymMatch> _match(GearModel g) => matchGyms(g, from: s.gymsForMe, gear: s.gymGearNow);
 
   /// 고른 기구 기준 매칭 결과에 필터 적용
   List<GymMatch> get _results {
@@ -140,8 +147,7 @@ class _GearFlowState extends State<GearFlow> {
     return all.firstWhere((m) => m.gym.name == selectedGym, orElse: () => all.first);
   }
 
-  Future<void> _directions() async {
-    final g = _selectedMatch.gym;
+  Future<void> _directions(Gym g) async {
     // 카카오맵 길찾기 공개 링크 (키 불필요). 앱이 있으면 앱, 없으면 웹으로 열린다.
     final url = Uri.parse('https://map.kakao.com/link/to/${Uri.encodeComponent(g.name)},${g.pos.latitude},${g.pos.longitude}');
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) s.toast('지도 앱을 열지 못했어요');
@@ -150,8 +156,9 @@ class _GearFlowState extends State<GearFlow> {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      // 6단계 진행 바
-      Padding(
+      // 6단계 진행 바 (운동으로 찾기에는 없음)
+      if (!routine)
+        Padding(
         padding: const EdgeInsets.fromLTRB(22, 2, 22, 16),
         child: Row(children: [
           for (int i = 1; i <= 6; i++)
@@ -164,11 +171,12 @@ class _GearFlowState extends State<GearFlow> {
             ),
         ]),
       ),
-      Expanded(child: KeyedSubtree(key: ValueKey('$step-$browsing'), child: _screen())),
+      if (routine) const SizedBox(height: 17),
+      Expanded(child: KeyedSubtree(key: ValueKey('$step-$browsing-$routine-$routineResults'), child: _screen())),
     ]);
   }
 
-  Widget _screen() => switch (step) {
+  Widget _screen() => routine ? (routineResults ? _routineResults() : _routinePick()) : switch (step) {
         2 => _analyzing(),
         3 => _confirm(),
         4 => _matching(),
@@ -187,7 +195,200 @@ class _GearFlowState extends State<GearFlow> {
         children: [
           DropZone('사진 선택 또는 촬영', onTap: _pick),
           const HintCard('Tip.', '브랜드 로고나 각인이 보이면 모델까지 더 정확하게 인식됩니다. 사진 속 다른 사람은 나오지 않게 찍어 주세요.'),
+          Box(
+            onTap: () => setState(() {
+              routine = true;
+              routineResults = false;
+            }),
+            margin: const EdgeInsets.only(top: 16),
+            border: C.goldDim,
+            gradient: softGold(.08),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(children: [
+              const Text('🏋️', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('오늘 할 운동으로 찾기', style: F.inter(size: 13.5, w: FontWeight.w500)),
+                  const SizedBox(height: 3),
+                  Text('고른 운동을 모두 할 수 있는 헬스장을 가까운 순으로', style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300)),
+                ]),
+              ),
+              Text('›', style: F.inter(size: 18, color: C.gold)),
+            ]),
+          ),
+          _chainPicker(),
         ],
+      );
+
+  /// 내 이용권: 고른 체인 지점에서만 찾기 (F-SIG-8)
+  Widget _chainPicker() {
+    final mine = s.myChains;
+    Widget chip(String label, bool on, VoidCallback onTap) => Semantics(selected: on, child: SelChip(label, on: on, onTap: onTap));
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('내 이용권', style: F.inter(size: 12.5, w: FontWeight.w500, ls: .04)),
+        const SizedBox(height: 4),
+        Text(mine.isEmpty ? '모든 헬스장에서 찾아요. 이용권이 있는 체인을 고르면 그 지점만 보여드려요.' : '${mine.join(' · ')} 지점에서만 찾아요.',
+            style: F.inter(size: 10.5, color: C.textDim, w: FontWeight.w300, h: 1.5)),
+        const SizedBox(height: 10),
+        Wrap(runSpacing: 7, children: [
+          chip('전체 헬스장', mine.isEmpty, () => setState(s.clearChains)),
+          for (final c in gymChains) chip(c, mine.contains(c), () => setState(() => s.toggleChain(c))),
+        ]),
+        const SizedBox(height: 8),
+        Text('이용 가능한 지점 범위는 체인마다 달라요. 방문 전에 체인에 확인해 주세요.', style: F.inter(size: 9.5, color: C.textFaint, h: 1.5)),
+      ]),
+    );
+  }
+
+  /// 이용권을 골랐을 때 결과 위에 보여주는 안내 (전체 보기로 되돌리기)
+  Widget _chainNote() {
+    if (s.myChains.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(children: [
+        Expanded(child: Text('내 이용권 · ${s.myChains.join(' · ')} 지점만', style: F.inter(size: 10.5, color: C.goldBright))),
+        TapArea(
+          onTap: () => setState(s.clearChains),
+          label: '모든 헬스장 보기',
+          minSize: 36,
+          alignment: Alignment.centerRight,
+          child: Text('전체 보기 ›', style: F.inter(size: 10.5, color: C.gold)),
+        ),
+      ]),
+    );
+  }
+
+  /* ---------------- 오늘 할 운동으로 찾기 (F-SIG-7) ---------------- */
+  List<Exercise> get _plan => [for (final e in exercises) if (plan.contains(e.id)) e];
+
+  /// 할 수 있는 운동이 많은 순, 같으면 가까운 순
+  List<RoutineMatch> get _routine {
+    final list = routineGyms(_plan, from: s.gymsForMe, gear: s.gymGearNow);
+    double d(RoutineMatch m) => metersBetween(here, m.gym.pos);
+    list.sort((a, b) {
+      final c = b.ok.length.compareTo(a.ok.length);
+      return c != 0 ? c : d(a).compareTo(d(b));
+    });
+    return list;
+  }
+
+  Widget _routinePick() {
+    final parts = {for (final e in exercises) e.part};
+    return ScreenFrame(
+      header: StepTitle(
+        eyebrow: '← 헬스장 찾기',
+        onBack: () => setState(() => routine = false),
+        title: '오늘 할 운동을 고르세요',
+        desc: '고른 운동을 모두 할 수 있는 헬스장을 가까운 순으로 찾아요.',
+      ),
+      footer: [
+        GoldButton(plan.isEmpty ? '운동을 골라 주세요' : '운동 ${plan.length}개가 되는 헬스장 찾기',
+            onTap: plan.isEmpty
+                ? null
+                : () {
+                    setState(() {
+                      routineResults = true;
+                      routineGym = null;
+                    });
+                    if (loc == null) _locate();
+                  }),
+      ],
+      children: [
+        for (final part in parts) ...[
+          Padding(padding: const EdgeInsets.only(top: 6, bottom: 9), child: Text(part, style: F.inter(size: 11, color: C.textDim, ls: .06))),
+          Wrap(runSpacing: 7, children: [
+            for (final e in exercises.where((e) => e.part == part))
+              Semantics(
+                selected: plan.contains(e.id),
+                child: SelChip(e.name, on: plan.contains(e.id), onTap: () => setState(() => plan.contains(e.id) ? plan.remove(e.id) : plan.add(e.id))),
+              ),
+          ]),
+          const SizedBox(height: 8),
+        ],
+        const HintCard('기구 기준.', '같은 종류의 기구가 있으면 브랜드가 달라도 할 수 있는 운동으로 봐요. 회원들의 "없어요" 제보도 반영돼요.', top: 12),
+      ],
+    );
+  }
+
+  Widget _routineResults() {
+    final list = _routine;
+    final n = plan.length;
+    final full = list.where((m) => m.missing.isEmpty).length;
+    final sel = list.where((m) => m.gym.name == routineGym).firstOrNull ?? list.firstOrNull;
+    final where = loc == null ? '내 위치를 확인하고 있어요…' : (loc!.real ? '내 위치 기준 거리예요.' : '위치를 확인할 수 없어 강남역 기준 거리예요.');
+    return ScreenFrame(
+      header: StepTitle(
+        eyebrow: '← 운동 다시 고르기',
+        onBack: () => setState(() => routineResults = false),
+        title: full > 0 ? '오늘 루틴이 전부 되는 헬스장 $full곳' : (list.isEmpty ? '루틴이 되는 헬스장이 없어요' : '루틴 일부가 되는 헬스장 ${list.length}곳'),
+        desc: '${_plan.map((e) => e.name).join(' · ')} · $where',
+      ),
+      footer: [
+        GoldButton(sel == null ? '헬스장이 없어요' : '${sel.gym.name} 길찾기', upper: false, onTap: sel == null ? null : () => _directions(sel.gym)),
+      ],
+      children: [
+        _chainNote(),
+        if (sel != null)
+          GymMap(
+            key: ValueKey('routine-$here'),
+            me: here,
+            meIsReal: loc?.real ?? false,
+            pins: [for (final m in list) (id: m.gym.name, pos: m.gym.pos, label: '${m.gym.name.split(' ').first} · ${m.ok.length}/$n')],
+            selectedId: sel.gym.name,
+            onSelect: (id) => setState(() => routineGym = id),
+            showTiles: widget.mapTiles,
+          ),
+        const SizedBox(height: 8),
+        for (final m in list) _routineRow(m, n, m.gym.name == sel?.gym.name),
+        if (list.isEmpty) Padding(padding: const EdgeInsets.only(top: 20), child: Text('고른 운동을 할 수 있는 헬스장이 없어요. 운동을 바꾸거나 이용권을 "전체 헬스장"으로 바꿔 보세요.', style: F.inter(size: 11, color: C.textFaint, h: 1.5))),
+      ],
+    );
+  }
+
+  Widget _routineRow(RoutineMatch m, int n, bool on) => GestureDetector(
+        onTap: () => setState(() => routineGym = m.gym.name),
+        child: Semantics(
+          selected: on,
+          child: Divided(
+            top: true,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 2),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(border: Border.all(color: on ? C.gold : (m.missing.isEmpty ? C.goldDim : C.hairline))),
+                padding: const EdgeInsets.all(3),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Text('${m.ok.length}/$n', style: F.gnum(size: 14)),
+                    Text('운동', style: F.inter(size: 7, color: C.textFaint)),
+                  ]),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(m.gym.name, style: F.inter(size: 14, w: on ? FontWeight.w600 : FontWeight.w500, color: on ? C.goldBright : C.ivory)),
+                  const SizedBox(height: 4),
+                  Text('${distanceLabel(here, m.gym.pos)} · ${m.gym.rating}', style: F.inter(size: 11, color: C.textDim, w: FontWeight.w300)),
+                  const SizedBox(height: 9),
+                  Wrap(spacing: 6, runSpacing: 6, children: [
+                    if (m.missing.isEmpty)
+                      Tag('✓ 오늘 루틴 전부 가능', color: C.cLow, border: C.cLow.op(.42))
+                    else
+                      Tag('기구 없음 · ${m.missing.map((e) => e.name).join(', ')}', color: C.textDim, border: C.hairlineSoft),
+                    if (m.gym.chain.isNotEmpty) Tag(m.gym.chain, color: C.goldBright, border: C.goldDim),
+                    Tag(m.gym.perk),
+                  ]),
+                ]),
+              ),
+            ]),
+          ),
+        ),
       );
 
   /* ---------------- 2. 분석 ---------------- */
@@ -335,6 +536,7 @@ class _GearFlowState extends State<GearFlow> {
       ),
       footer: [GoldButton('지도에서 보기', onTap: all.isEmpty ? null : () => go(5))],
       children: [
+        _chainNote(),
         ChipRow(items: _filters, selected: _filters[filter], solid: true, onSelect: (v) => setState(() => filter = _filters.indexOf(v))),
         const SizedBox(height: 16),
         for (final m in list) _gymRow(m),
@@ -434,7 +636,7 @@ class _GearFlowState extends State<GearFlow> {
     return ScreenFrame(
       header: const StepTitle(eyebrow: '06 · Confirmed', title: '헬스장이 선택됐습니다'),
       footer: [
-        GoldButton('길찾기 시작 (카카오맵)', onTap: _directions),
+        GoldButton('길찾기 시작 (카카오맵)', onTap: () => _directions(m.gym)),
         GoldButton('헬스장 운영자이신가요? 보유 기구 등록하기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.b2b)),
       ],
       children: [

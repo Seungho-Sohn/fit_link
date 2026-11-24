@@ -58,6 +58,42 @@ void main() {
     });
   });
 
+  group('내 루틴 되는 헬스장 (F-SIG-7)', () {
+    Exercise ex(String id) => exercises.firstWhere((e) => e.id == id);
+    final fullBody = [ex('lat-pulldown'), ex('seated-row'), ex('chest-press'), ex('leg-press')];
+
+    test('모든 운동이 되는 헬스장이 먼저, 못 하는 운동을 알려 준다', () {
+      final r = routineGyms(fullBody);
+      final full = [for (final m in r) if (m.missing.isEmpty) m.gym.name];
+      expect(full, ['스틸핏 강남점', '코어짐24 역삼', '바디스퀘어 논현', '코어짐24 선릉']);
+      expect(r.take(full.length).every((m) => m.ok.length == 4), isTrue);
+      final iron = r.firstWhere((m) => m.gym.name == '아이언짐 삼성');
+      expect(iron.missing.map((e) => e.id), ['seated-row']); // 로우 기구 없음
+      expect(r.firstWhere((m) => m.gym.name == '머슬팩토리 선릉').missing.map((e) => e.id), ['chest-press']);
+    });
+
+    test('기구 종류가 여러 개인 운동은 하나만 있어도 된다', () {
+      final r = routineGyms([ex('back-pull')], gear: {'아이언짐 삼성': ['newtech-pulldown'], '스틸핏 강남점': ['hs-pl-low-row'], '코어짐24 역삼': ['hs-pl-chest']});
+      expect(r.map((m) => m.gym.name), ['스틸핏 강남점', '아이언짐 삼성']); // gyms 순서, 체스트 프레스만 있는 곳은 빠짐
+    });
+
+    test('하나도 못 하는 헬스장은 빠지고, 보유 기구가 바뀌면(제보 반영) 결과도 바뀐다', () {
+      final gear = {for (final e in gymGear.entries) e.key: [...e.value]};
+      gear['스틸핏 강남점']!.remove('hs-pl-chest'); // 회원 "없어요"로 빠졌다고 가정
+      final r = routineGyms([ex('chest-press')], gear: gear);
+      expect(r.map((m) => m.gym.name), isNot(contains('스틸핏 강남점')));
+      expect(r.every((m) => m.missing.isEmpty), isTrue);
+    });
+
+    test('체인 지점만 넘기면 그 안에서만 찾는다 (F-SIG-8)', () {
+      final steel = [for (final g in gyms) if (g.chain == '스틸핏') g];
+      expect(steel.map((g) => g.name), ['스틸핏 강남점', '스틸핏 역삼점']);
+      final r = routineGyms(fullBody, from: steel);
+      expect([for (final m in r) (m.gym.name, m.ok.length)], [('스틸핏 강남점', 4), ('스틸핏 역삼점', 3)]);
+      expect(gymChains, ['스틸핏', '코어짐24']);
+    });
+  });
+
   test('을/를은 받침에 따라', () {
     expect(objectParticle('랫 풀다운'), '을');
     expect(objectParticle('레그 프레스'), '를');

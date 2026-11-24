@@ -19,7 +19,7 @@ void main() {
     return f.readAsStringSync();
   }
 
-  final r = importGymData(catalog: read(catalogFile), gyms: read(gymsFile), gymGear: read(gymGearFile));
+  final r = importGymData(catalog: read(catalogFile), gyms: read(gymsFile), gymGear: read(gymGearFile), exercises: read(exercisesFile));
   final d = r.data;
   if (d == null) {
     stderr.writeln('데이터에 고칠 곳이 ${r.errors.length}개 있어요. 앱 코드는 바꾸지 않았어요.\n');
@@ -34,5 +34,5 @@ void main() {
   final changed = !out.existsSync() || out.readAsStringSync() != code;
   if (changed) out.writeAsStringSync(code);
   final pairs = d.gymGear.values.fold<int>(0, (n, l) => n + l.length);
-  stdout.writeln('${changed ? '$outFile 를 새로 만들었어요' : '바뀐 내용이 없어요'} — 기구 ${d.catalog.length}종 · 헬스장 ${d.gyms.length}곳 · 보유 기록 $pairs건');
+  stdout.writeln('${changed ? '$outFile 를 새로 만들었어요' : '바뀐 내용이 없어요'} — 기구 ${d.catalog.length}종 · 헬스장 ${d.gyms.length}곳 · 보유 기록 $pairs건 · 운동 ${d.exercises.length}개');
 }

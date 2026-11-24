@@ -164,6 +164,23 @@ void main() {
     });
   });
 
+  test('내 이용권(체인)이 다음 실행에도 남고, 데이터에서 사라진 체인은 버린다', () {
+    final store = MemoryStore();
+    final a = newState(store);
+    a.toggleChain('스틸핏');
+    expect(a.gymsForMe.map((g) => g.name), ['스틸핏 강남점', '스틸핏 역삼점']);
+    a.toggleChain('코어짐24');
+    a.toggleChain('스틸핏'); // 다시 누르면 해제
+    final b = newState(MemoryStore(store.data));
+    expect(b.myChains, {'코어짐24'});
+    expect(b.gymsForMe.every((g) => g.chain == '코어짐24'), isTrue);
+    b.clearChains();
+    expect(b.gymsForMe.length, gyms.length);
+
+    final j = a.toJson()..['myChains'] = ['스틸핏', '없어진 체인'];
+    expect(newState(MemoryStore(jsonEncode(j))).myChains, {'스틸핏'});
+  });
+
   test('글·댓글 시각 표시', () {
     final at = DateTime(2026, 11, 13, 10);
     expect(agoLabel(at, DateTime(2026, 11, 13, 10, 0, 30)), '방금');

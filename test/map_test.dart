@@ -63,7 +63,7 @@ void main() {
     await tapText(t, '분석 결과 보기');
     expect(find.text('이 기구가 맞나요?'), findsOneWidget);
     expect(find.text('데모 후보'), findsOneWidget);
-    expect(rich('동일 모델 2곳.'), findsOneWidget); // Hammer Strength 프론트 풀다운
+    expect(rich('동일 모델 3곳.'), findsOneWidget); // Hammer Strength 프론트 풀다운 (스틸핏 2곳 · 머슬팩토리)
     await t.tap(find.text('뉴텍 · PLATE'));
     await t.pump();
     expect(rich('동일 모델 1곳.'), findsOneWidget);
@@ -73,10 +73,10 @@ void main() {
     // 4: 매칭 — 실제 거리, 일치 정도, 필터
     await tapText(t, '이 기구가 있는 헬스장 찾기');
     expect(located, 1);
-    expect(find.text('같은 기구가 있는 헬스장 2곳'), findsOneWidget);
+    expect(find.text('같은 기구가 있는 헬스장 3곳'), findsOneWidget);
     final steelDist = distanceLabel(gangnamStation, gymByName('스틸핏 강남점').pos);
     expect(find.text('$steelDist · 4.8'), findsOneWidget);
-    expect(find.text('같은 브랜드 · Hammer Strength 랫 풀다운'), findsOneWidget); // 코어짐24
+    expect(find.text('같은 브랜드 · Hammer Strength 랫 풀다운'), findsNWidgets(2)); // 코어짐24 역삼 · 선릉
     expect(find.text('바디스퀘어 논현'), findsOneWidget);
 
     await t.tap(find.text('동일 모델만'));
@@ -139,6 +139,68 @@ void main() {
     expect(AppState.I.gearReport('바디스퀘어 논현', 'matrix-leg-press'), isFalse);
     expect(find.textContaining('비슷한 기구가 있는 헬스장'), findsOneWidget); // 동일 모델 0곳 → 대체 기구 목록
     expect(find.text('바디스퀘어 논현'), findsNothing);
+  });
+
+  testWidgets('오늘 할 운동으로 찾기: 전부 되는 헬스장이 가까운 순으로, 못 하는 운동 표시 (F-SIG-7)', (t) async {
+    await openFlow(t, () async => (pos: gangnamStation, real: true));
+    await t.tap(find.text('오늘 할 운동으로 찾기'));
+    await t.pump();
+    expect(find.text('오늘 할 운동을 고르세요'), findsOneWidget);
+    expect(find.text('운동을 골라 주세요'.toUpperCase()), findsOneWidget); // 고르기 전에는 진행 불가
+
+    for (final e in ['랫풀다운', '시티드 로우', '머신 체스트 프레스', '레그 프레스']) {
+      await t.tap(find.text(e));
+      await t.pump();
+    }
+    await tapText(t, '운동 4개가 되는 헬스장 찾기');
+    expect(find.text('오늘 루틴이 전부 되는 헬스장 4곳'), findsOneWidget);
+    // 전부 되는 곳 중 가장 가까운 곳이 먼저 선택된다 (강남역 기준 스틸핏 강남점)
+    expect(find.text('스틸핏 강남점 길찾기'), findsOneWidget);
+    // 목록(지도 아래)에서 다른 헬스장을 고르면 길찾기 대상이 바뀐다
+    final list = find.byType(Scrollable).first;
+    final body = find.text('바디스퀘어 논현');
+    await t.scrollUntilVisible(body, 200, scrollable: list);
+    await t.tap(body);
+    await t.pump();
+    expect(find.text('바디스퀘어 논현 길찾기'), findsOneWidget);
+    // 일부만 되는 헬스장은 아래에, 못 하는 운동과 함께
+    final muscle = find.text('기구 없음 · 머신 체스트 프레스'); // 머슬팩토리 선릉
+    await t.scrollUntilVisible(muscle, 200, scrollable: list);
+    expect(muscle, findsOneWidget);
+
+    // 운동 다시 고르기 → 선택이 남아 있다
+    await t.tap(find.text('← 운동 다시 고르기'));
+    await t.pump();
+    expect(find.text('운동 4개가 되는 헬스장 찾기'.toUpperCase()), findsOneWidget);
+  });
+
+  testWidgets('내 이용권: 고른 체인 지점만 찾고, 전체 보기로 되돌린다 (F-SIG-8)', (t) async {
+    addTearDown(AppState.I.myChains.clear);
+    await openFlow(t, () async => (pos: gangnamStation, real: false));
+    expect(find.textContaining('모든 헬스장에서 찾아요'), findsOneWidget);
+    await t.ensureVisible(find.text('스틸핏'));
+    await t.tap(find.text('스틸핏'));
+    await t.pump();
+    expect(AppState.I.myChains, {'스틸핏'});
+    expect(find.text('스틸핏 지점에서만 찾아요.'), findsOneWidget);
+
+    // 기구로 찾기: Matrix 레그 프레스(바디스퀘어 논현만 보유) → 스틸핏 지점의 대체 기구만
+    await tapText(t, '사진 없이 직접 찾기');
+    await t.tap(find.text('레그 프레스').first);
+    await t.pump();
+    await t.tap(find.text('MATRIX · AURA'));
+    await t.pump();
+    await tapText(t, '이 기구가 있는 헬스장 찾기');
+    expect(find.text('비슷한 기구가 있는 헬스장 2곳'), findsOneWidget);
+    expect(find.text('내 이용권 · 스틸핏 지점만'), findsOneWidget);
+    expect(find.text('바디스퀘어 논현'), findsNothing);
+    expect(find.text('스틸핏 역삼점'), findsOneWidget);
+
+    await t.tap(find.text('전체 보기 ›'));
+    await t.pump();
+    expect(AppState.I.myChains, isEmpty);
+    expect(find.text('같은 기구가 있는 헬스장 1곳'), findsOneWidget);
+    expect(find.text('바디스퀘어 논현'), findsOneWidget);
   });
 }
 

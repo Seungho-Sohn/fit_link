@@ -8,8 +8,8 @@ import '../tool/data/gym_data_csv.dart';
 
 void main() {
   String read(String name) => File('data/$name').readAsStringSync();
-  ImportResult importWith({String? catalog, String? gyms, String? gymGear}) =>
-      importGymData(catalog: catalog ?? read(catalogFile), gyms: gyms ?? read(gymsFile), gymGear: gymGear ?? read(gymGearFile));
+  ImportResult importWith({String? catalog, String? gyms, String? gymGear, String? exercises}) => importGymData(
+      catalog: catalog ?? read(catalogFile), gyms: gyms ?? read(gymsFile), gymGear: gymGear ?? read(gymGearFile), exercises: exercises ?? read(exercisesFile));
 
   test('data/*.csv 에 오류가 없고, lib/data/gym_data.dart 가 CSV와 일치한다', () {
     final r = importWith();
@@ -17,6 +17,7 @@ void main() {
     final code = File('lib/data/gym_data.dart').readAsStringSync().replaceAll('\r\n', '\n');
     expect(code, generateGymData(r.data!), reason: 'CSV를 고친 뒤 dart run tool/data/import_gym_data.dart 를 실행하세요');
     expect(gearCatalog.length, r.data!.catalog.length);
+    expect(exercises.length, r.data!.exercises.length);
   });
 
   group('CSV 읽기', () {
@@ -41,7 +42,8 @@ void main() {
   });
 
   group('잘못된 데이터는 행 번호와 함께 알려 준다', () {
-    List<String> errorsOf({String? catalog, String? gyms, String? gymGear}) => importWith(catalog: catalog, gyms: gyms, gymGear: gymGear).errors;
+    List<String> errorsOf({String? catalog, String? gyms, String? gymGear, String? exercises}) =>
+        importWith(catalog: catalog, gyms: gyms, gymGear: gymGear, exercises: exercises).errors;
 
     test('기구 카탈로그: 중복 id, 잘못된 id, 모르는 종류, 빈 칸', () {
       final head = catalogCols.join(',');
@@ -64,16 +66,17 @@ void main() {
       final lines = read(gymsFile).trim().split('\n');
       final e = errorsOf(gyms: [
         ...lines,
-        '새 헬스장,abc,127.0,100,4.5,24시간,샤워실,10',
-        '먼 헬스장,40.7,-74.0,100,4.5,24시간,샤워실,10',
-        '별점 헬스장,37.5,127.0,100,5.5,24시간,샤워실,10',
-        '스틸핏 강남점,37.5,127.0,100,4.5,24시간,샤워실,10',
+        '새 헬스장,abc,127.0,100,4.5,24시간,샤워실,10,',
+        '먼 헬스장,40.7,-74.0,100,4.5,24시간,샤워실,10,',
+        '별점 헬스장,37.5,127.0,100,5.5,24시간,샤워실,10,',
+        '스틸핏 강남점,37.5,127.0,100,4.5,24시간,샤워실,10,',
       ].join('\n'));
-      expect(e, contains(startsWith('gyms.csv 7행: 위도 "abc"')));
-      expect(e, contains(startsWith('gyms.csv 8행: 위도 "40.7"')));
-      expect(e, contains(startsWith('gyms.csv 8행: 경도 "-74.0"')));
-      expect(e, contains(startsWith('gyms.csv 9행: 평점 "5.5"')));
-      expect(e, contains(startsWith('gyms.csv 10행: 헬스장 "스틸핏 강남점"이(가) 이미')));
+      final n = lines.length; // 머리글 포함 줄 수 → 추가한 줄은 n+1행부터
+      expect(e, contains(startsWith('gyms.csv ${n + 1}행: 위도 "abc"')));
+      expect(e, contains(startsWith('gyms.csv ${n + 2}행: 위도 "40.7"')));
+      expect(e, contains(startsWith('gyms.csv ${n + 2}행: 경도 "-74.0"')));
+      expect(e, contains(startsWith('gyms.csv ${n + 3}행: 평점 "5.5"')));
+      expect(e, contains(startsWith('gyms.csv ${n + 4}행: 헬스장 "스틸핏 강남점"이(가) 이미')));
     });
 
     test('보유 기구: 없는 헬스장·기구, 중복, 보유 기구 없는 헬스장', () {
@@ -90,6 +93,31 @@ void main() {
       expect(e, contains('gym_gear.csv: "바디스퀘어 논현"의 보유 기구가 하나도 없어요'));
     });
 
+    test('체인은 비워도 되고(단독 헬스장), 다른 칸은 비우면 안 된다', () {
+      final r = importWith();
+      expect(r.data!.gyms.firstWhere((g) => g.name == '바디스퀘어 논현').chain, '');
+      expect(r.data!.gyms.where((g) => g.chain == '스틸핏').map((g) => g.name), ['스틸핏 강남점', '스틸핏 역삼점']);
+      final e = errorsOf(gyms: '${gymsCols.join(',')}\n이름없는짐,37.5,127.0,100,4.5,,샤워실,10,\n');
+      expect(e, contains(startsWith('gyms.csv 2행: "운영시간"이(가) 비어')));
+    });
+
+    test('운동: 중복·잘못된 id, 모르는 기구 종류, 빈 칸, 여러 종류는 / 로', () {
+      final e = errorsOf(exercises: [
+        exercisesCols.join(','),
+        'a,A,등,랫풀다운/로우',
+        'a,A,등,로우',
+        'Bad,B,등,로우',
+        'c,C,하체,스쿼트 랙',
+        'd,,하체,레그 프레스',
+      ].join('\n'));
+      expect(e, contains(startsWith('exercises.csv 3행: 운동ID "a"가 이미')));
+      expect(e, contains(startsWith('exercises.csv 4행: 운동ID "Bad"')));
+      expect(e, contains(startsWith('exercises.csv 5행: 필요기구종류 "스쿼트 랙"')));
+      expect(e, contains(startsWith('exercises.csv 6행: "운동"이(가) 비어')));
+      final ok = importWith(exercises: '${exercisesCols.join(',')}\nx,X,등,랫풀다운 / 로우\n');
+      expect(ok.data!.exercises.single.needs, [GearCategory.pulldown, GearCategory.row]);
+    });
+
     test('머리글에 필요한 열이 없으면 알려 준다', () {
       final e = errorsOf(gyms: '헬스장,위도\n스틸핏 강남점,37.5\n');
       expect(e, contains(startsWith('gyms.csv 1행: 머리글에 "경도"')));
@@ -99,7 +127,13 @@ void main() {
   test('만든 코드의 문자열은 따옴표·\$·\\ 를 이스케이프한다', () {
     final r = importWith();
     final d = r.data!;
-    final tricky = (catalog: d.catalog, gyms: [(name: "O'Neil \$gym \\ 1", lat: 37.5, lng: 127.0, area: 10, rating: 4.0, hours: '24시간', perk: 'x', now: 1)], gymGear: {"O'Neil \$gym \\ 1": ['hs-pl-pulldown']});
+    final tricky = (
+      catalog: d.catalog,
+      gyms: [(name: "O'Neil \$gym \\ 1", lat: 37.5, lng: 127.0, area: 10, rating: 4.0, hours: '24시간', perk: 'x', now: 1, chain: "O'Chain")],
+      gymGear: {"O'Neil \$gym \\ 1": ['hs-pl-pulldown']},
+      exercises: d.exercises,
+    );
     expect(generateGymData(tricky), contains(r"Gym('O\'Neil \$gym \\ 1'"));
+    expect(generateGymData(tricky), contains(r"chain: 'O\'Chain'"));
   });
 }

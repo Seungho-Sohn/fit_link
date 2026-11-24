@@ -88,6 +88,21 @@ void main() {
     await tapGo('지도에서 보기', '기구 5');
     await tapGo('이 헬스장 선택', '기구 6');
 
+    // 오늘 할 운동으로 찾기 (F-SIG-7)
+    await t.pumpWidget(MaterialApp(
+      home: Scaffold(body: GearFlow(key: const ValueKey('routine'), locate: () async => (pos: gangnamStation, real: false), mapTiles: false)),
+    ));
+    final routineCard = find.text('오늘 할 운동으로 찾기');
+    await t.scrollUntilVisible(routineCard, 200, scrollable: find.byType(Scrollable).first);
+    await t.tap(routineCard);
+    await t.pump();
+    await check('루틴 1 운동 고르기');
+    for (final e in ['랫풀다운', '레그 프레스']) {
+      await t.tap(find.text(e));
+      await t.pump();
+    }
+    await tapGo('운동 2개가 되는 헬스장 찾기', '루틴 2 결과');
+
     await t.pumpWidget(const MaterialApp(home: Scaffold(body: CalorieScreen())));
     await check('칼로리 1');
     await tapGo('사진으로 계산하기', '칼로리 2');
