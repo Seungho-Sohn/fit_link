@@ -69,10 +69,10 @@ jobs:
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
           "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee signer.txt
           grep -q "CN=FIT LINK" signer.txt
-          mv build/app/outputs/flutter-apk/app-release.apk "fitlink-${{ steps.ver.outputs.name }}.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "gymway-${{ steps.ver.outputs.name }}.apk"
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: FIT LINK ${{ steps.ver.outputs.name }}
-          files: fitlink-${{ steps.ver.outputs.name }}.apk
+          name: 짐웨이 GYMWAY ${{ steps.ver.outputs.name }}
+          files: gymway-${{ steps.ver.outputs.name }}.apk
           generate_release_notes: true

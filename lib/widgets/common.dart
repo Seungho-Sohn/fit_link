@@ -379,17 +379,19 @@ class _LiveDotState extends State<LiveDot> with SingleTickerProviderStateMixin {
   }
 }
 
-/// WILD WEAR 홀로그램 금색 로고: 마스크 PNG 위에 흐르는 그라데이션
-class WwHolo extends StatefulWidget {
-  final double width, height;
-  final bool deep;
-  const WwHolo({super.key, required this.width, required this.height, this.deep = true});
+/// 홀로그램 금색 글자 로고 (GYMWAY): 글자 위로 흐르는 금색 그라데이션
+class HoloWordmark extends StatefulWidget {
+  final String text;
+  final double size;
+  const HoloWordmark(this.text, {super.key, this.size = 30});
   @override
-  State<WwHolo> createState() => _WwHoloState();
+  State<HoloWordmark> createState() => _HoloWordmarkState();
 }
 
-class _WwHoloState extends State<WwHolo> with SingleTickerProviderStateMixin {
+class _HoloWordmarkState extends State<HoloWordmark> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat();
+
+  static const _colors = [Color(0xFF8B5A2B), Color(0xFFC99A46), Color(0xFFE6C46E), Color(0xFFF5E3A8), Color(0xFFFFF6D8), Color(0xFFF5E3A8), Color(0xFFE6C46E), Color(0xFFC99A46), Color(0xFF8B5A2B)];
 
   @override
   void dispose() {
@@ -399,21 +401,18 @@ class _WwHoloState extends State<WwHolo> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final colors = widget.deep
-        ? const [Color(0xFF4E2E14), Color(0xFF8B5A2B), Color(0xFFB8823C), Color(0xFFD9A94E), Color(0xFFF0D48A), Color(0xFFFBEFC0), Color(0xFFF0D48A), Color(0xFFD9A94E), Color(0xFFB8823C), Color(0xFF8B5A2B), Color(0xFF4E2E14)]
-        : const [Color(0xFF8B5A2B), Color(0xFFC99A46), Color(0xFFE6C46E), Color(0xFFF5E3A8), Color(0xFFFFF6D8), Color(0xFFF5E3A8), Color(0xFFE6C46E), Color(0xFFC99A46), Color(0xFF8B5A2B)];
     return AnimatedBuilder(
       animation: _c,
       builder: (_, child) => ShaderMask(
         blendMode: BlendMode.srcIn,
         shaderCallback: (r) {
           final shift = _c.value * 2.8 * r.width;
-          return LinearGradient(colors: colors, tileMode: TileMode.repeated, transform: GradientRotation(.35))
+          return LinearGradient(colors: _colors, tileMode: TileMode.repeated, transform: const GradientRotation(.35))
               .createShader(Rect.fromLTWH(-shift, 0, r.width * 2.8, r.height));
         },
         child: child,
       ),
-      child: Image.asset('assets/images/ww_mask.png', width: widget.width, height: widget.height, fit: BoxFit.contain),
+      child: Text(widget.text, style: F.serif(size: widget.size, w: FontWeight.w600, color: Colors.white, ls: .3)),
     );
   }
 }

@@ -1,4 +1,4 @@
-// FIT LINK 화면 스모크 테스트.
+// 짐웨이 화면 스모크 테스트.
 // 글꼴은 assets/google_fonts/ 에 내장되어 있으므로 네트워크 없이 화면을 띄울 수 있다.
 // 내장되지 않은 굵기·글꼴을 요청하거나 레이아웃이 넘치면 테스트가 실패한다.
 
@@ -19,7 +19,7 @@ void main() {
 
     await tester.pumpWidget(const FitLinkApp());
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('FIT LINK'), findsWidgets); // 온보딩 오버레이 포함
+    expect(find.text('GYMWAY'), findsWidgets); // 온보딩 오버레이 포함
 
     Future<void> check(String what) async {
       await tester.pump(const Duration(milliseconds: 500));

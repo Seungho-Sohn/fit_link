@@ -93,7 +93,7 @@ class _FitLinkAppState extends State<FitLinkApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'FIT LINK',
+      title: '짐웨이',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       scaffoldMessengerKey: AppState.I.messengerKey,
@@ -174,7 +174,7 @@ class _Wordmark extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 12),
       child: Column(children: [
-        Text('FIT LINK', style: F.serif(size: 15, color: C.goldBright, ls: .42)),
+        Text('GYMWAY', style: F.serif(size: 15, color: C.goldBright, ls: .42)),
         const SizedBox(height: 6),
         Container(width: 36, height: 1, decoration: const BoxDecoration(gradient: LinearGradient(colors: [Colors.transparent, C.gold, Colors.transparent]))),
       ]),
