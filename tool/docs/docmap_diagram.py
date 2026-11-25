@@ -1,4 +1,4 @@
-# FIT LINK 문서 체계 지도 — 5종 (PNG)
+# 짐비아(GYMVIA) 문서 체계 지도 — 5종 (PNG)
 import os
 import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,12 +22,12 @@ ax.set_xlim(0, 160)
 ax.set_ylim(0, 96)
 ax.axis('off')
 
-ax.text(80, 95.5, 'FIT LINK 문서 체계 (제안 · 5종)', fontsize=16, weight='bold', ha='center', va='top', color=INK)
+ax.text(80, 95.5, '짐비아(GYMVIA) 문서 체계 · 5종', fontsize=16, weight='bold', ha='center', va='top', color=INK)
 
 cols = [
     ('1', '서비스·기능 정의서', '[기준선] 무엇을 만드는가', '#EEF4FB', '범위·기능이 바뀔 때',
      ['1부 서비스 정의', '  비전 · 사용자 · 범위 · 수익 모델', '2부 기능 명세', '  12개 영역 · 기능별 동작 규칙', '  화면 목록(주소)', '부록 원본 요약 · 용어집']),
-    ('2', '버전 보고서 (v1.0.3)', '[현재] 어디까지 왔는가', '#EEF7EE', '릴리스마다 새 판',
+    ('2', '버전 보고서 (v2.0.0)', '[현재] 어디까지 왔는가', '#EEF7EE', '릴리스마다 새 판',
      ['1부 버전 현황', '  구현 상태 · 원본 대비 차이', '  미완성 이유 · 알려진 문제', '2부 테스트 가이드', '  설치 · 바로가기 · 시나리오', '  피드백 양식']),
     ('3', '시스템 설계서', '[현재→목표] 어떻게 만드는가', '#F1EEF8', '구조가 바뀔 때 (장별)',
      ['1장 아키텍처 개요', '2장 앱   3장 서버', '4장 데이터베이스', '5장 인터페이스', '6장 보안·개인정보', '7장 운영·배포   8장 처리 흐름']),
@@ -65,7 +65,7 @@ for i, lab in enumerate(['기준선 대비', '남은 것', '만들 순서·비�
 ax.add_patch(FancyBboxPatch((3, 13), 154, 12, boxstyle='round,pad=0.4,rounding_size=1.5', fc='#FFF5E0', ec=GOLD, lw=1.6))
 ax.text(4.4, 24, '5', fontsize=20, weight='bold', color=GOLD, va='top')
 ax.text(9.6, 23.4, '기능 추적표 (Excel) — 단일 원천', fontsize=12.5, weight='bold', color=INK, va='top')
-ax.text(9.6, 19.4, '기능 ID 한 줄에:  원본 위치 ↔ 1.0.3 상태 ↔ 목표 동작 ↔ 설계 위치 ↔ 비용 항목 ↔ 단계 ↔ 결정 ↔ 테스트',
+ax.text(9.6, 19.4, '기능 ID 한 줄에:  원본 위치 ↔ 현재 상태 ↔ 목표 동작 ↔ 설계 위치 ↔ 비용 항목 ↔ 단계 ↔ 결정 ↔ 테스트',
         fontsize=9.2, color='#444444', va='top')
 ax.text(9.6, 16.0, '시트: 기능 목록 · 요약(자동 집계) · 점검(빈 칸 자동 표시) · 문서 목록 · 범례     갱신: 기능·상태가 바뀔 때마다',
         fontsize=8.4, color='#6B5A33', va='top')

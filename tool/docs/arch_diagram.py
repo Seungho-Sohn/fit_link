@@ -1,4 +1,4 @@
-# FIT LINK 목표 아키텍처 구성도 (PNG)
+# 짐비아(GYMVIA) 목표 아키텍처 구성도 (PNG)
 import os
 import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -47,36 +47,36 @@ def arrow(x1, y1, x2, y2, label=None, both=False, dy=0.9, color='#6B5A33', ls='-
                 bbox=dict(fc='white', ec='none', pad=0.6, alpha=0.9))
 
 
-ax.text(80, 106.2, 'FIT LINK 목표 아키텍처 (서버리스 · Firebase 중심)', fontsize=16, weight='bold', ha='center', va='top', color=INK)
+ax.text(80, 106.2, '짐비아(GYMVIA) 목표 아키텍처 (서버리스 · Firebase 중심)', fontsize=16, weight='bold', ha='center', va='top', color=INK)
 
 # 1) 사용자 기기
 group(2, 44, 46, 55, '사용자 기기 · Flutter 앱', C_APP, 'Android(현재) · 웹(현재) · iOS(예정)')
-box(4.5, 78.5, 41, 10, '화면 (6개 탭 + 하위 화면)', ['홈 · 커뮤니티 · 마켓 · 배달 · 칼로리 · 마이', '기구 찾기 · AI 코치 · 인바디 · 포인트'])
+box(4.5, 78.5, 41, 10, '화면 (5개 탭 + 하위 화면)', ['홈 · 헬스장 찾기 · 커뮤니티 · 칼로리 · 마이', 'AI 코치 · 인바디 · 운영자 전용관'])
 box(4.5, 66, 41, 9.5, '앱 상태 · 화면 이동', ['AppState(상태) · go_router(웹 주소)', '저장소 계층: 로컬 캐시 + 서버 동기화'])
 box(4.5, 55.7, 19.5, 8.8, '로컬 저장', ['설정·캐시·오프라인 대기열', '체성분·사진(기기 안)'])
 box(26, 55.7, 19.5, 8.8, '휴대폰 안 AI', ['ML Kit 글자·포즈', '음식 분류 · Gemini Nano'])
 box(4.5, 45.6, 19.5, 8.6, '기기 기능', ['카메라·앨범 · GPS', 'Health Connect'])
-box(26, 45.6, 19.5, 8.6, '외부 앱 연결', ['카카오맵 길찾기', '지도 타일(OSM→Mapbox)'])
+box(26, 45.6, 19.5, 8.6, '외부 앱 연결', ['네이버 지도 앱 길찾기', '지도(OSM→네이버 NCP Maps)'])
 
 
 # 2) Firebase
 group(56, 30, 54, 69, 'Firebase (Google Cloud · 서울 리전)', C_FB, '개발용 / 운영용 프로젝트 분리')
 box(58.5, 80, 24, 8.5, 'Authentication', ['익명 → 카카오·이메일 연결', '권한: 회원·운영자·관리자'])
 box(84.5, 80, 23, 8.5, 'App Check', ['우리 앱만 접근 허용', 'Play Integrity'])
-box(58.5, 60.5, 24, 15, 'Cloud Firestore', ['회원 · 포인트 내역', '글 · 챌린지 · 랭킹', '헬스장 · 기구 · 제보', '상품 · 주문 · 결제 상태'])
-box(84.5, 60.5, 23, 15, 'Cloud Functions', ['서버 코드 (TypeScript)', 'AI 중계 · 포인트 · 결제 승인', '사업자 인증 · 집계', '예약 작업(스케줄러)'])
+box(58.5, 60.5, 24, 15, 'Cloud Firestore', ['회원 · 배지 · 이용권', '글 · 챌린지 · 랭킹', '헬스장 · 기구 · 운동 · 제보', 'PT 예약 요청'])
+box(84.5, 60.5, 23, 15, 'Cloud Functions', ['서버 코드 (TypeScript)', 'AI 중계 · 운영자 권한', '사업자 인증 · 집계', '예약 작업(스케줄러)'])
 box(58.5, 50, 24, 9.3, 'Cloud Storage', ['커뮤니티·매물 사진', '썸네일 자동 생성'])
-box(84.5, 50, 23, 9.3, 'Cloud Messaging', ['푸시 알림', '리마인더 · 주문 상태'])
-box(58.5, 33, 49, 13.5, '보안 · 비밀 · 운영 도구', ['보안 규칙(자기 것만 쓰기 · 돈/포인트는 서버만)', 'Secret Manager(API 키) · Cloud Scheduler', 'Cloud Logging · Crashlytics · 예산 알림 · 매일 백업'], fc='#FFFBF2')
+box(84.5, 50, 23, 9.3, 'Cloud Messaging', ['푸시 알림', '리마인더 · 예약 요청'])
+box(58.5, 33, 49, 13.5, '보안 · 비밀 · 운영 도구', ['보안 규칙(자기 것만 쓰기 · 권한은 서버만)', 'Secret Manager(API 키) · Cloud Scheduler', 'Cloud Logging · Crashlytics · 예산 알림 · 매일 백업'], fc='#FFFBF2')
 
 # 3) 외부 서비스
 group(117, 30, 41, 69, '외부 서비스', C_EXT, '서버(Functions)를 거쳐서만 호출 — 키는 서버에만')
 ext = [('Anthropic Claude API', ['AI 코치 · 인식 실패 보조 (Haiku 5.5)']),
-       ('토스페이먼츠', ['결제창(앱) · 결제 승인(서버)']),
+       ('네이버 클라우드 (NCP Maps)', ['지도 화면 (Client ID, 앱에서 직접)']),
        ('국세청 사업자 진위확인', ['운영자 인증 (공공데이터)']),
        ('식약처 식품영양성분 DB', ['음식 칼로리·탄단지']),
        ('카카오 로그인', ['토큰 확인 → Firebase 계정']),
-       ('택배 조회 · 배달 대행', ['주문·배송 상태 (제휴 후)'])]
+       ('결제 · 택배 · 배달 [보류]', ['마켓·배달 재개 시 (D-010)'])]
 for i, (t, l) in enumerate(ext):
     box(119.5, 82 - i * 8.6, 36, 7.2, t, l)
 
@@ -86,7 +86,7 @@ ops = [('GitHub 저장소', ['앱 · 서버 · 규칙 · 데이터(CSV)']),
        ('GitHub Actions', ['분석 · 테스트 · 에뮬레이터 테스트', '웹 배포 · APK 릴리스 · firebase deploy']),
        ('GitHub Pages', ['웹 데모 / 웹 앱']),
        ('GitHub Releases → Play 스토어', ['서명된 APK (현재)', 'Play 출시 (예정)']),
-       ('관리자 도구', ['Firebase 콘솔 · 간단한 관리 웹', '상품·헬스장·신고 관리'])]
+       ('관리자 도구', ['Firebase 콘솔 · 간단한 관리 웹', '헬스장·기구·신고 관리'])]
 for i, (t, l) in enumerate(ops):
     box(4.5 + i * 31, 4, 28.5, 12.5, t, l)
 
