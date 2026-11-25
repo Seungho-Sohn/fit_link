@@ -1,4 +1,4 @@
-# FITLINK-5 기능 추적표 r1 (Excel)
+# GYMVIA-5 기능 추적표 r2 (Excel) — 2.0.0(짐비아) 기준
 import os
 import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -13,13 +13,15 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.formatting.rule import FormulaRule
 
-OUT = os.path.join(DOCS, 'FITLINK-5_기능추적표_r1.xlsx')
+OUT = os.path.join(DOCS, 'GYMVIA-5_기능추적표_r2.xlsx')
 PROTO = os.path.join(ROOT, 'FIT_LINK_prototype.html')
 FONT = '맑은 고딕'
 WEB = 'https://seungho-sohn.github.io/fit_link/'
 
 # ---------------- 기존 데이터(기능_구현현황 수정본) ----------------
 from feature_rows import R as ROWS  # (번호, 기능, 실행 방법, 구현 상태, 세부 구분, 1.0.3 동작, 미구현 내용, 웹 주소)
+import scope_v2  # 2.0.0 범위 조정(보류·변경·신규) 덧씌우기
+ROWS = scope_v2.rows(ROWS)
 
 AREA = {  # 번호: (코드, 원본 위치 기본값, 코드 위치 기본값)
     '1': ('APP', '온보딩 오버레이 · renderOb()', 'lib/screens/onboarding.dart'),
@@ -29,7 +31,7 @@ AREA = {  # 번호: (코드, 원본 위치 기본값, 코드 위치 기본값)
     '5': ('INB', 'tab-inbody · openInbody()', 'lib/screens/inbody_screen.dart'),
     '6': ('COMM', 'tab-comm · commView()', 'lib/screens/community_screen.dart'),
     '7': ('MKT', 'tab-market · goMarket()', 'lib/screens/market_screen.dart'),
-    '8': ('B2B', "tab-market · goMarket('b2b')", 'lib/screens/market_b2b.dart'),
+    '8': ('B2B', "tab-market · goMarket('b2b')", 'lib/screens/b2b_screen.dart'),
     '9': ('DLV', 'tab-delivery · goDeliv()', 'lib/screens/delivery_screen.dart'),
     '10': ('CAL', 'tab-cal · goCal()', 'lib/screens/calorie_screen.dart'),
     '11': ('MY', 'tab-my · tab-points', 'lib/screens/my_screen.dart'),
@@ -182,6 +184,7 @@ X = {
  '12.6': (NEW_, '—', 'App Check(Play Integrity) 적용', '3-6', 'App Check', 'C-6', '5단계 출시', '', 'Play 배포 앱만 지원'),
  '12.7': (NEW_, '—', '카카오·이메일 로그인, 기기 데이터 이전, 계정 삭제', '3-3, 3-6', 'Firebase Auth · 카카오 로그인', 'C-2, C-12', '1단계 기반', 'D-004', ''),
 }
+X.update(scope_v2.NEW_X)
 
 # ---------------- 상태 변환 (기존 3단계 + 세부 → 5단계) ----------------
 def status(num, old, kind):
@@ -199,22 +202,24 @@ def status(num, old, kind):
 STATUSES = ['실동작', '화면 동작', '데모', '미구현', '범위 제외']
 SCOL = {'실동작': ('DFF0E3', '1E6B34'), '화면 동작': ('FFF1D6', '8A5A00'), '데모': ('ECECEC', '4A4A4A'),
         '미구현': ('F6E0E0', '9A2B2B'), '범위 제외': ('F4F4F4', '6E6E6E')}
-STAGES = ['완료', '1단계 기반', '2단계 공유', '3단계 AI', '4단계 결제', '5단계 출시', '미정', '범위 제외', '—']
+STAGES = ['완료', '1단계 기반', '2단계 공유', '3단계 AI', '4단계 결제', '5단계 출시', '미정', '보류', '범위 제외', '—']
 
 # ---------------- 행 만들기 ----------------
 data = []
 area_name = ''
 for num, name, how, old, kind, does, missing, url in ROWS:
+    url = scope_v2.URLS.get(url, url)
     top = num.split('.')[0]
     code, proto_d, code_d = AREA[top]
     level = num.count('.') + 1
     if level == 1:
-        SHORT = {'APP': '앱 시작', 'HOME': '홈', 'SIG': '시그니처 기구→헬스장', 'COACH': 'AI 코치', 'INB': '인바디', 'COMM': '커뮤니티',
-                 'MKT': '마켓', 'B2B': '운영자 전용관', 'DLV': '배달', 'CAL': '칼로리', 'MY': '마이·포인트', 'SYS': '공통·운영'}
+        SHORT = {'APP': '앱 시작', 'HOME': '홈', 'SIG': '헬스장 찾기', 'COACH': 'AI 코치', 'INB': '인바디', 'COMM': '커뮤니티',
+                 'MKT': '마켓 (보류)', 'B2B': '운영자 전용관', 'DLV': '배달 (보류)', 'CAL': '칼로리', 'MY': '마이', 'SYS': '공통·운영'}
         area_name = f'{code} · {SHORT[code]}'
         data.append(dict(id=f'F-{code}', num=num, lv=1, area=area_name, name=name, how=how, proto='', origin='', st='',
                          does='', code='', left='', target='', design='', iface='', cost='', stage='', dec='', test='',
                          url=(WEB + url) if url.startswith('#') else url, note=''))
+        scope_v2.apply(data[-1], num)
         continue
     if num not in X:
         raise SystemExit(f'누락: {num}')
@@ -232,6 +237,12 @@ for num, name, how, old, kind, does, missing, url in ROWS:
         proto=p if p is not None else proto_d, origin='신규' if (kind == '신규' or (p or '').startswith('— (원본에 없음')) else '원본',
         st=st, does=does, code=c if c is not None else code_d, left=missing, target=tgt, design=des, iface=ifc,
         cost=cost, stage=stg, dec=dec, test=test, url=(WEB + url) if url.startswith('#') else url, note=note))
+    d = scope_v2.apply(data[-1], num)
+    d['test'] = f'T-{code}-{l2}' if d['st'] in ('실동작', '화면 동작', '데모') else '—'
+
+for d in data:  # 덧씌운 주소(#/…)에 웹 주소 붙이기
+    if d['url'].startswith('#'):
+        d['url'] = WEB + d['url']
 
 ids = [d['id'] for d in data]
 assert len(ids) == len(set(ids)), 'ID 중복'
@@ -270,19 +281,19 @@ COLS = [  # (머리글, 키, 너비, 묶음)
     ('기능 ID', 'id', 13, '연결'), ('번호', 'num', 7, '연결'), ('수준', 'lv', 5, '연결'), ('영역', 'area', 16, '연결'),
     ('기능명 (실행 순서)', 'name', 34, '연결'), ('실행 방법 (누르는 곳)', 'how', 26, '연결'),
     ('원본 위치\n(HTML 화면·함수)', 'proto', 28, '기준선'), ('원본 / 신규', 'origin', 8, '기준선'),
-    ('상태', 'st', 10, '현재'), ('1.0.3 동작', 'does', 36, '현재'), ('코드 위치', 'code', 30, '현재'), ('남은 일 · 필요한 것', 'left', 34, '현재'),
+    ('상태', 'st', 10, '현재'), ('2.0.0 동작', 'does', 36, '현재'), ('코드 위치', 'code', 30, '현재'), ('남은 일 · 필요한 것', 'left', 34, '현재'),
     ('목표 동작', 'target', 34, '목표'), ('설계 위치\n(3번 장)', 'design', 10, '목표'), ('인터페이스 · 데이터', 'iface', 28, '목표'),
     ('비용 항목\n(4번 1장)', 'cost', 11, '목표'), ('단계\n(4번 2장)', 'stage', 11, '목표'), ('관련 결정\n(4번 3장)', 'dec', 10, '공통'),
     ('테스트\n(2번 2부)', 'test', 11, '공통'), ('웹 바로가기', 'url', 30, '공통'), ('비고', 'note', 26, '공통'), ('점검 (자동)', 'chk', 18, '공통'),
 ]
 NC = len(COLS)
 KEYCOL = {k: get_column_letter(i + 1) for i, (_, k, _, _) in enumerate(COLS)}
-ws['A1'] = 'FITLINK-5 기능 추적표 r1 — 기능 ID 하나로 원본 · 1.0.3 · 목표 · 설계 · 비용 · 단계 · 결정 · 테스트 연결 (2026-11-18)'
+ws['A1'] = 'GYMVIA-5 기능 추적표 r2 — 짐비아 2.0.0 기준 · 기능 ID 하나로 원본 · 현재 · 목표 · 설계 · 비용 · 단계 · 결정 · 테스트 연결 (2026-11-25)'
 ws['A1'].font = f(13, True)
 ws['A2'] = '수준 1 = 영역, 2 = 화면·단계, 3 = 세부 동작 · 왼쪽 [1][2][3] 버튼으로 접고 펼치기 · 상태·단계는 목록에서 선택 → 요약·점검 시트 자동 재계산 · 각 열의 뜻은 "범례" 시트'
 ws['A2'].font = f(9, color='666666')
 # 묶음 머리글 (3행) + 열 머리글 (4행)
-GROUPS = {'연결': '식별', '기준선': '[기준선] 원본 설계', '현재': '[현재] 1.0.3', '목표': '[목표] 앞으로', '공통': '연결 · 관리'}
+GROUPS = {'연결': '식별', '기준선': '[기준선] 원본 설계', '현재': '[현재] 2.0.0', '목표': '[목표] 앞으로', '공통': '연결 · 관리'}
 start = 1
 for i in range(1, NC + 1):
     grp = COLS[i - 1][3]
@@ -366,7 +377,7 @@ sm['A1'].font = f(13, True)
 sm['A2'] = '→ 2번 버전 보고서 1부 "영역별 구현 현황"의 출처'
 sm['A2'].font = f(9, color='666666')
 areas = [d['area'] for d in data if d['lv'] == 1]
-heads = ['영역'] + STATUSES + ['합계', '실동작 비율', '원본 기능', '신규 기능']
+heads = ['영역'] + STATUSES + ['합계', '실동작 비율 (범위 안)', '원본 기능', '신규 기능']
 head_row(sm, 4, heads, [26, 10, 10, 10, 10, 10, 9, 11, 10, 10])
 r0 = 5
 for i, a in enumerate(areas):
@@ -375,14 +386,14 @@ for i, a in enumerate(areas):
     for j, s in enumerate(STATUSES):
         sm.cell(r, 2 + j, f'=COUNTIFS({col("area")},$A{r},{col("st")},"{s}")')
     sm.cell(r, 7, f'=SUM(B{r}:F{r})')
-    sm.cell(r, 8, f'=IF(G{r}=0,0,B{r}/G{r})')
+    sm.cell(r, 8, f'=IF(G{r}-F{r}=0,0,B{r}/(G{r}-F{r}))')
     sm.cell(r, 9, f'=COUNTIFS({col("area")},$A{r},{col("origin")},"원본")')
     sm.cell(r, 10, f'=COUNTIFS({col("area")},$A{r},{col("origin")},"신규")')
 tot = r0 + len(areas)
 sm.cell(tot, 1, '전체')
 for c in range(2, 11):
     L = get_column_letter(c)
-    sm.cell(tot, c, f'=IF(G{tot}=0,0,B{tot}/G{tot})' if c == 8 else f'=SUM({L}{r0}:{L}{tot - 1})')
+    sm.cell(tot, c, f'=IF(G{tot}-F{tot}=0,0,B{tot}/(G{tot}-F{tot}))' if c == 8 else f'=SUM({L}{r0}:{L}{tot - 1})')
 for r in range(r0, tot + 1):
     for c in range(1, 11):
         cell = sm.cell(r, c)
@@ -510,20 +521,20 @@ ck.conditional_formatting.add(f'B{sumr}', FormulaRule(formula=[f'B{sumr}=0'], fi
 
 # ================= 시트 4: 문서 목록 =================
 dl = wb.create_sheet('문서 목록')
-dl['A1'] = '문서 목록 — FIT LINK 문서 체계 5종 (최신 판)'
+dl['A1'] = '문서 목록 — 짐비아(GYMVIA) 문서 체계 5종 (최신 판)'
 dl['A1'].font = f(13, True)
 head_row(dl, 3, ['번호', '문서', '시점', '파일명 (docs/)', '판', '상태', '마지막 갱신', '담당', '원천 자료 (기존 파일)'], [6, 22, 12, 40, 8, 10, 12, 14, 60])
 DOCS = [
-    ('1', '서비스·기능 정의서', '[기준선]', 'FITLINK-1_서비스기능정의서_r1.docx', 'r1', '작성 완료', '2026-11-18', '책임자',
-     'FIT_LINK_prototype.html, 중간결과 보고서 1부, 이 추적표, README 대응표'),
-    ('2', '버전 보고서', '[현재]', 'FITLINK-2_버전보고서_v1.0.3.docx', 'v1.0.3', '작성 완료', '2026-11-18', '릴리스 담당',
-     '구현현황 보고서(개조식·수정본), 중간결과 보고서 2·3부, 이 추적표 "요약" 시트'),
-    ('3', '시스템 설계서', '[현재→목표]', 'FITLINK-3_시스템설계서_r1.docx', 'r1', '작성 완료', '2026-11-18', '개발',
-     'FIT_LINK_시스템_아키텍처_설계서.docx 1~9장, CLAUDE.md, data/README.md, firestore.rules'),
-    ('4', '구축 계획서', '[목표]', 'FITLINK-4_구축계획서_r1.docx', 'r1', '작성 완료', '2026-11-18', '책임자',
-     'FIT_LINK_비용_보고서_2026-11-18.docx, 아키텍처 설계서 11·12장'),
-    ('5', '기능 추적표', '공통', 'FITLINK-5_기능추적표_r1.xlsx', 'r1', '작성 완료', '2026-11-18', '개발',
-     'FIT_LINK_1.0.3_기능_구현현황_수정본.xlsx (152행)'),
+    ('1', '서비스·기능 정의서', '[기준선]', 'GYMVIA-1_서비스기능정의서_r2.docx', 'r2', '작성 완료', '2026-11-25', '책임자',
+     'FIT_LINK_prototype.html, 범위 조정안(2026-11-21), 이 추적표, README 대응표'),
+    ('2', '버전 보고서', '[현재]', 'GYMVIA-2_버전보고서_v2.0.0.docx', 'v2.0.0', '작성 완료', '2026-11-25', '릴리스 담당',
+     '이전 판 FITLINK-2 v1.0.3(_보관), 이 추적표 "요약" 시트, GitHub Releases'),
+    ('3', '시스템 설계서', '[현재→목표]', 'GYMVIA-3_시스템설계서_r2.docx', 'r2', '작성 완료', '2026-11-25', '개발',
+     '이전 판 FITLINK-3 r1(_보관), CLAUDE.md, data/README.md, firestore.rules'),
+    ('4', '구축 계획서', '[목표]', 'GYMVIA-4_구축계획서_r2.docx', 'r2', '작성 완료', '2026-11-25', '책임자',
+     '이전 판 FITLINK-4 r1(_보관), 범위조정 영향보고서·네이버클라우드 전환방안(2026-11-21, _보관)'),
+    ('5', '기능 추적표', '공통', 'GYMVIA-5_기능추적표_r2.xlsx', 'r2', '작성 완료', '2026-11-25', '개발',
+     'FITLINK-5 r1 (152행) + 범위 조정안 넣기/빼기 + 신규 3행'),
 ]
 for i, row in enumerate(DOCS):
     r = 4 + i
@@ -532,7 +543,7 @@ for i, row in enumerate(DOCS):
         cell.font = f(10, c == 2)
         cell.border = BORDER
         cell.alignment = Alignment(vertical='top', wrap_text=True, horizontal='center' if c in (1, 3, 5, 6, 7) else 'left')
-dl.cell(10, 1, '문서 안내: docs/README (1쪽) — 이 시트와 같은 목록 · 체계 근거: FIT_LINK_문서체계_제안서_r2.docx').font = f(9, color='666666')
+dl.cell(10, 1, '문서 안내: docs/README (1쪽) — 이 시트와 같은 목록 · 이전 판(FITLINK-n)은 docs/_보관/').font = f(9, color='666666')
 
 # ================= 시트 5: 범례 =================
 lg = wb.create_sheet('범례')
@@ -548,39 +559,49 @@ LEG = [
     ('기능 ID', None),
     ('형식', 'F-영역코드-번호 — 번호는 영역 안 계층 번호 (예: 번호 3.4.2 → F-SIG-4.2), 영역 행은 F-영역코드'),
     ('규칙', '한 번 부여한 ID는 변경·재사용 금지 · 삭제 기능은 비고에 "폐기" 표시 · 새 기능은 다음 번호'),
-    ('영역 코드', 'APP 앱 시작 · HOME 홈 · SIG 기구→헬스장 · COACH AI 코치 · INB 인바디 · COMM 커뮤니티 · MKT 마켓 · B2B 운영자 전용관 · DLV 배달 · CAL 칼로리 · MY 마이·포인트 · SYS 공통'),
+    ('영역 코드', 'APP 앱 시작 · HOME 홈 · SIG 헬스장 찾기(시그니처) · COACH AI 코치 · INB 인바디 · COMM 커뮤니티 · MKT 마켓 · B2B 운영자 전용관 · DLV 배달 · CAL 칼로리 · MY 마이·포인트 · SYS 공통'),
     ('테스트 번호', 'T-영역코드-화면번호 (예: T-SIG-4 = 기구 찾기 4단계 시나리오) · 실동작·화면 동작·데모만 부여, 나머지 "—"'),
     ('열 묶음', None),
     ('[기준선] 원본 설계', '원본 위치: FIT_LINK_prototype.html의 화면(tab-…)·함수 이름 · 원본/신규: 원본에 없던 기능은 "신규"'),
-    ('[현재] 1.0.3', '상태 · 1.0.3 동작 · 코드 위치(저장소 경로) · 남은 일'),
+    ('[현재] 2.0.0', '상태 · 2.0.0 동작 · 코드 위치(저장소 경로) · 남은 일'),
     ('[목표] 앞으로', '목표 동작("현재 유지" = 더 할 일 없음, "하위 기능 참조" = 묶음 행) · 설계 위치(3번 시스템 설계서 장) · 인터페이스·데이터 · 비용 항목 · 단계'),
     ('연결 · 관리', '관련 결정 · 테스트 · 웹 바로가기 · 비고 · 점검(자동 — 빈 칸·불일치 표시)'),
     ('설계 위치 (3번 장)', None),
     ('3-1 ~ 3-8', '3-1 아키텍처 개요 · 3-2 앱 · 3-3 서버 · 3-4 데이터베이스 · 3-5 인터페이스 · 3-6 보안·개인정보 · 3-7 운영·배포 · 3-8 처리 흐름 (절 번호는 3번 작성 시 추가)'),
     ('비용 항목 (4번 1장)', None),
-] + [(k, nm + (' — 현재 FIT_LINK_비용_보고서_2026-11-18 "3-' + k[2:] + '"') ) for k, nm in COSTS] + [
+] + [(k, nm + ' — 4번 구축 계획서 1-3') for k, nm in COSTS] + [
     ('없음 / — / 미집계', '"없음" = 남은 일이 있으나 비용 없음 · "—" = 남은 일 없음 · "미집계" = 제휴·견적 필요'),
     ('단계 (4번 2장)', None),
-    ('완료', '1.0.3에서 끝남(더 할 일 없음)'),
-    ('1단계 기반', '계정·로그인, 포인트·출석·미션 서버화, 기기 기록 저장, 개인정보 처리방침(1.0.4)'),
+    ('완료', '2.0.0까지 끝남(더 할 일 없음)'),
+    ('1단계 기반', '계정·로그인, 기기 기록 저장, 네이버 지도, 개발·운영 서버 분리'),
     ('2단계 공유', '헬스장·기구 데이터 서버 이전, 사업자 인증, 커뮤니티·챌린지·랭킹, 푸시'),
     ('3단계 AI', '휴대폰 안 AI(ML Kit·Health Connect), 서버 AI(코치·기구·음식 인식), 리포트'),
-    ('4단계 결제', '상품·매장 데이터, 주문·결제, 배송·배달, 예약'),
+    ('4단계 결제', '결제가 필요한 기능 — 마켓·배달 재개 시 (현재 보류)'),
     ('5단계 출시', 'Play 스토어, App Check, 상용 지도, iOS(선택)'),
-    ('미정 / 범위 제외 / —', '미정 = 범위·제휴 결정 필요(4번 3장 미결정) · 범위 제외 = 만들지 않음 · — = 하위 기능에 위임'),
+    ('미정 / 보류 / 범위 제외 / —', '미정 = 범위·제휴 결정 필요(4번 3장 미결정) · 보류 = 인지도가 생긴 뒤 추가(D-010, 코드는 태그 보관) · 범위 제외 = 만들지 않음 · — = 하위 기능에 위임'),
     ('관련 결정 (4번 3장)', None),
     ('D-001 (2026-11-12)', 'Flutter 단일 코드로 Android·웹(이후 iOS) 제작'),
-    ('D-002 (2026-11-12)', '지도: 공개 OpenStreetMap 사용, 상용 시 타일 제공자 교체'),
+    ('D-002 (2026-11-12)', '지도: 공개 OpenStreetMap 사용, 상용 시 타일 제공자 교체 → D-016(네이버 지도)으로 구체화'),
     ('D-003 (2026-11-14)', '헬스장·기구 데이터는 CSV로 관리 → 앱 코드 자동 생성'),
     ('D-004 (2026-11-14)', 'Firebase 익명 로그인 + Firestore, 서울 리전'),
     ('D-005 (2026-11-14)', '서버 공유는 회원 제보만, 운영자 등록은 사업자 인증 전까지 기기 저장'),
     ('D-006 (2026-11-14)', '"없어요" 제보는 다른 회원 2명 이상 + "있어요"보다 많을 때만 전체 반영'),
     ('D-007 (2026-11-17)', '헬스장 실시간 인원("현재 인원")은 범위 제외'),
     ('D-008 (2026-11-17)', 'AI는 휴대폰 안 처리 우선, 서버 AI는 Claude Haiku 최소 사용'),
-    ('D-009 (2026-11-21)', '개인정보 처리방침 문의처: FIT LINK 운영팀 · fitlink.cs@gmail.com'),
+    ('D-009 (2026-11-21, 11-24 갱신)', '개인정보 처리방침 문의처: 짐비아 운영팀 · gymvia.cs@gmail.com'),
+    ('D-010 (2026-11-21)', '범위 조정: 마켓·배달·포인트 허브와 연결 버튼 보류(인지도가 생긴 뒤), 코드는 태그 보관 후 삭제'),
+    ('D-011 (2026-11-24)', '이름 짐비아(GYMVIA), 앱 ID kr.gymvia.app, WILD WEAR 표기 제거'),
+    ('D-012 (2026-11-24)', '하단 탭: 홈 · 헬스장 찾기 · 커뮤니티 · 칼로리 · 마이'),
+    ('D-013 (2026-11-24)', '운영자 전용관 진입: 마이 메뉴 + 확정 화면 링크'),
+    ('D-014 (2026-11-24)', '칼로리 "마켓 보기" 빼기'),
+    ('D-015 (2026-11-24)', '포인트 전체 보류, 보상은 배지·연속 기록'),
+    ('D-016 (2026-11-21)', '지도·길찾기는 네이버 지도 — 길찾기는 앱 URL Scheme(키 없음, 2.0.1), 지도 화면은 NCP Maps'),
+    ('D-017 (2026-11-24)', 'PT 예약은 예약 요청만, 결제는 현장'),
+    ('D-018 (2026-11-21)', '신규 기능: 오늘 할 운동으로 찾기, 내 이용권(체인), 헬스 소개팅(조건부)'),
     ('기준', None),
-    ('기준 버전', '1.0.3 (2026-11-14 배포, Android 앱·웹 데모 동일) · 원본 FIT_LINK_prototype.html 대비'),
+    ('기준 버전', '2.0.0 (2026-11-24 배포, Android 앱·웹 데모 동일) · 원본 FIT_LINK_prototype.html 대비'),
     ('출처', 'FIT_LINK_1.0.3_기능_구현현황_수정본.xlsx의 152행을 이어받아 열 추가 · 상태 변환: 구현→실동작(화면만 동작하면 화면 동작), 부분 구현→화면 동작(데모면 데모), 미구현→데모 또는 미구현'),
+    ('2.0.0 변경', 'tool/docs/scope_v2.py — 범위 조정안(2026-11-21) 넣기/빼기와 Q-14~Q-23 결정을 1.0.3 행 위에 덧씌움 · 보류 기능은 ID 유지(재사용 금지), 상태 "범위 제외" + 단계 "보류"'),
 ]
 for r, (k, v) in enumerate(LEG, 1):
     a, b = lg.cell(r, 1, k), lg.cell(r, 2, v)
