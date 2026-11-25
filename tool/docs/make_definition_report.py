@@ -23,7 +23,7 @@ for r in ws.iter_rows(min_row=5, values_only=True):
         continue
     gv = lambda k: (r[K[k]] if r[K[k]] is not None else '')
     rows.append(dict(id=gv('기능 ID'), lv=int(gv('수준')), area=gv('영역'), name=gv('기능명 (실행 순서)'), how=gv('실행 방법 (누르는 곳)'),
-                     proto=gv('원본 위치'), origin=gv('원본 / 신규'), st=gv('상태'), does=gv('2.0.0 동작'), target=gv('목표 동작'),
+                     proto=gv('원본 위치'), origin=gv('원본 / 신규'), st=gv('상태'), does=gv('현재 동작'), target=gv('목표 동작'),
                      dec=gv('관련 결정'), stage=gv('단계'), url=gv('웹 바로가기')))
 feats = [d for d in rows if d['lv'] > 1]
 areas = [d for d in rows if d['lv'] == 1]
@@ -50,7 +50,7 @@ R.meta([
     ['시점', '[기준선] — 원본 프로토타입(FIT_LINK_prototype.html)의 설계 + 범위 조정(2026-11-21)으로 합의된 지향 모습'],
     ['작성 기준', '구현 여부와 무관하게 "어떻게 동작해야 하는가"만 기술 — 구현 상태는 2번 버전 보고서·5번 기능 추적표'],
     ['참조 표기', '"F-SIG-4.1" = 기능 ID · "S-GEAR" = 화면 ID · "D-007" = 결정 · "Q-08" = 미결정 (4번 3장)'],
-    ['문서 체계', ['**1 서비스·기능 정의서 r2 (이 문서)**', '2 버전 보고서 v2.0.0', '3 시스템 설계서 r2', '4 구축 계획서 r2', '5 기능 추적표 r2']],
+    ['문서 체계', ['**1 서비스·기능 정의서 r2 (이 문서)**', '2 버전 보고서 v2.0.1', '3 시스템 설계서 r2', '4 구축 계획서 r2', '5 기능 추적표 r2']],
     ['확인 필요', '1부의 비전·사용자·수익 모델·성공 지표는 원본 화면에서 읽어 낸 해석 + 제안 — 최초 개발자·책임자 확인 대상(표시: 해석 / 제안)'],
 ])
 R.toc()
