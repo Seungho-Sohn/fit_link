@@ -4,7 +4,10 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
-/// 첫 실행 온보딩 (목표 · 빈도 · 관심 3단계)
+/// 대표이미지 (assets/brand/gymvia_hero.jpg — tool/brand/make_brand_assets.py 가 생성)
+const heroImage = 'assets/brand/gymvia_hero.jpg';
+
+/// 첫 실행 온보딩 (소개 화면 → 목표 · 빈도 · 관심 3단계)
 class OnboardingOverlay extends StatefulWidget {
   const OnboardingOverlay({super.key});
   @override
@@ -12,6 +15,7 @@ class OnboardingOverlay extends StatefulWidget {
 }
 
 class _OnboardingOverlayState extends State<OnboardingOverlay> {
+  bool intro = true; // 맨 처음: 짐비아 대표이미지 소개 화면
   int idx = 0;
   final List<int?> sel = [null, null, null];
 
@@ -27,8 +31,47 @@ class _OnboardingOverlayState extends State<OnboardingOverlay> {
     }
   }
 
+  static Widget _fadeEdges(Axis axis, Widget child) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (r) => LinearGradient(
+          begin: axis == Axis.vertical ? Alignment.topCenter : Alignment.centerLeft,
+          end: axis == Axis.vertical ? Alignment.bottomCenter : Alignment.centerRight,
+          colors: const [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
+          stops: const [0, .16, .84, 1],
+        ).createShader(r),
+        child: child,
+      );
+
+  /// 소개 화면: 대표이미지 + 시작하기
+  Widget _intro() {
+    return Container(
+      color: const Color(0xFF0E0D09), // 대표이미지 가장자리 색
+      padding: const EdgeInsets.fromLTRB(26, 44, 26, 30),
+      child: Column(children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TapArea(onTap: () => AppState.I.finishOnboard(sel[0]), label: '온보딩 건너뛰기', minSize: 36, child: Text('건너뛰기', style: F.inter(size: 11, color: C.textFaint))),
+        ),
+        Expanded(
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 3 / 2,
+              // 이미지 네 변을 배경으로 서서히 흐리게 — 사각형 경계가 보이지 않게
+              child: _fadeEdges(
+                Axis.vertical,
+                _fadeEdges(Axis.horizontal, Image.asset(heroImage, fit: BoxFit.contain, semanticLabel: '짐비아 GYMVIA — AI가 운동기구를 알아보고, 내게 딱 맞는 헬스장으로 안내합니다')),
+              ),
+            ),
+          ),
+        ),
+        GoldButton('시작하기', onTap: () => setState(() => intro = false)),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (intro) return _intro();
     final s = obSteps[idx];
     final pick = sel[idx];
     return Container(
