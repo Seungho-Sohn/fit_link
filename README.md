@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo_dark.png">
+    <img src="assets/brand/logo_light.png" alt="짐비아 GYMVIA" width="200">
+  </picture>
+</p>
+
 # 짐비아 (GYMVIA)
 
 🌐 웹 데모: **https://seungho-sohn.github.io/fit_link/**
@@ -101,7 +108,7 @@ assets/
   - 웹 주소 예: `…/fit_link/#/gear`, `#/b2b/quote`, `#/b2b/gear`, `#/coach/live`. 모르는 주소(예전 마켓·배달 주소 포함)는 홈으로 갑니다.
   - 화면을 추가하면 `routes.dart`의 enum · `locationOf` · `parseLocation`, `router.dart`의 `routePaths`, `main.dart`의 `switch`를 함께 고칩니다. `test/routes_test.dart`가 빠진 곳을 잡아냅니다.
 - **글꼴**은 모두 앱에 들어 있습니다. 새 굵기·글꼴을 쓰려면 `assets/google_fonts/`에 파일부터 추가해야 합니다 (없으면 실행 중 오류).
-- **앱 아이콘**: `tool/icon/make_icon_test.dart`가 앱 색과 내장 글꼴로 원본(`assets/icon/`)을 그리고, `flutter_launcher_icons`가 각 플랫폼 아이콘을 만듭니다: `flutter test tool/icon/make_icon_test.dart && dart run flutter_launcher_icons`. 실행 뒤 `ios/Runner.xcodeproj/project.pbxproj` 변경은 되돌립니다(도구 버그).
+- **브랜드 · 앱 아이콘**: 디자인 시안(`assets/brand/짐비아_*.png`)에서 `python tool/brand/make_brand_assets.py`가 앱 아이콘 원본(`assets/icon/`), 웹 공유 이미지(`web/og-image.jpg`), 탭 아이콘, 시작 화면 아이콘, 온보딩 소개 이미지, 밝은·어두운 배경용 로고(`assets/brand/logo_light.png`·`logo_dark.png`)를 만들고, `dart run flutter_launcher_icons`가 각 플랫폼 아이콘을 만듭니다. 실행 뒤 `ios/Runner.xcodeproj/project.pbxproj` 변경과 `web/manifest.json` 끝 줄바꿈은 되돌립니다(도구 버그).
 - **지도 타일**: OpenStreetMap 공개 타일 서버는 소량 사용만 허용합니다. 실서비스 전에는 타일 제공 업체로 바꿔야 합니다 (`GymMap.tileUrl`).
 - **접근성 규칙**(버튼 이름, 터치 영역, 글자 대비, 고정 높이 금지)과 저장 구조 등 더 자세한 내용은 [`CLAUDE.md`](CLAUDE.md)에 있습니다.
 

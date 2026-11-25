@@ -36,6 +36,8 @@ flutter:
     # google_fonts가 네트워크 대신 쓰는 내장 글꼴 (파일명 규칙: Family-Weight.ttf)
     # NotoSerifKR은 KS X 1001 한글 2,350자 + 앱 문구에 쓰인 글자로 서브셋
     - assets/google_fonts/
+    # 온보딩 소개 화면 (tool/brand/make_brand_assets.py 가 대표이미지에서 생성)
+    - assets/brand/gymvia_hero.jpg
   # 한글 글꼴 통일용 (SIL OFL 1.1 — assets/fonts/pretendard/OFL.txt)
   # theme.dart에서 모든 라틴 글꼴의 fontFamilyFallback으로 지정
   fonts:
@@ -52,20 +54,20 @@ flutter:
         - asset: assets/fonts/pretendard/Pretendard-Bold.otf
           weight: 700
 
-# 앱 아이콘: 원본은 tool/icon/make_icon_test.dart 가 assets/icon/ 에 그린다.
-#   flutter test tool/icon/make_icon_test.dart && dart run flutter_launcher_icons
+# 앱 아이콘: 브랜드 시안(assets/brand/)에서 tool/brand/make_brand_assets.py 가 assets/icon/ 을 만든다.
+#   python tool/brand/make_brand_assets.py && dart run flutter_launcher_icons
 flutter_launcher_icons:
   image_path: assets/icon/icon.png
   android: true
   min_sdk_android: 24
-  adaptive_icon_background: "#15140F"
+  adaptive_icon_background: "#12100A"
   adaptive_icon_foreground: assets/icon/icon_foreground.png
   ios: true
   remove_alpha_ios: true
   web:
     generate: true
-    background_color: "#0A0A0B"
-    theme_color: "#15140F"
+    background_color: "#12100A"
+    theme_color: "#12100A"
   windows:
     generate: true
     icon_size: 256
