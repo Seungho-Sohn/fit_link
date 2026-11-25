@@ -72,5 +72,9 @@
 	<string>운동기구를 촬영해 같은 기구가 있는 헬스장을 찾습니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>앨범의 운동기구 사진으로 같은 기구가 있는 헬스장을 찾습니다.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>nmap</string>
+	</array>
 </dict>
 </plist>
