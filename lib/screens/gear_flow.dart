@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../data/equipment.dart';
 import '../data/mock_data.dart';
+import '../services/directions.dart';
 import '../services/gear_recognizer.dart';
 import '../services/location.dart';
 import '../services/photo_picker.dart';
@@ -148,9 +148,17 @@ class _GearFlowState extends State<GearFlow> {
   }
 
   Future<void> _directions(Gym g) async {
-    // 카카오맵 길찾기 공개 링크 (키 불필요). 앱이 있으면 앱, 없으면 웹으로 열린다.
-    final url = Uri.parse('https://map.kakao.com/link/to/${Uri.encodeComponent(g.name)},${g.pos.latitude},${g.pos.longitude}');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) s.toast('지도 앱을 열지 못했어요');
+    // 네이버 지도 앱 도보 길찾기 (URL Scheme, 키 불필요) — lib/services/directions.dart
+    switch (await openNaverDirections(g.pos.latitude, g.pos.longitude, g.name)) {
+      case DirectionsResult.opened:
+        break;
+      case DirectionsResult.store:
+        s.toast('네이버 지도 앱을 설치하면 길찾기가 열려요');
+      case DirectionsResult.unsupported:
+        s.toast('길찾기는 휴대폰의 네이버 지도 앱에서 열려요');
+      case DirectionsResult.failed:
+        s.toast('네이버 지도를 열지 못했어요');
+    }
   }
 
   @override
@@ -636,7 +644,7 @@ class _GearFlowState extends State<GearFlow> {
     return ScreenFrame(
       header: const StepTitle(eyebrow: '06 · Confirmed', title: '헬스장이 선택됐습니다'),
       footer: [
-        GoldButton('길찾기 시작 (카카오맵)', onTap: () => _directions(m.gym)),
+        GoldButton('길찾기 시작 (네이버 지도)', onTap: () => _directions(m.gym)),
         GoldButton('헬스장 운영자이신가요? 보유 기구 등록하기', ghost: true, upper: false, margin: const EdgeInsets.only(top: 10), onTap: () => s.go(AppPage.b2b)),
       ],
       children: [

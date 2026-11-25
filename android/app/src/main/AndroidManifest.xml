@@ -46,10 +46,19 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <!-- 길찾기 링크(카카오맵 등)를 외부 앱/브라우저로 열기 -->
+        <!-- 외부 링크(개인정보 처리방침 등)를 브라우저로 열기 -->
         <intent>
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="https"/>
+        </intent>
+        <!-- 네이버 지도 길찾기(nmap://), 앱이 없을 때 Play 스토어(market://) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="nmap"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="market"/>
         </intent>
     </queries>
 </manifest>
